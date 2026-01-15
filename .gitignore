@@ -1,0 +1,31 @@
+# --- Java / Spring Boot ---
+/build/
+/out/
+/target/
+*.class
+*.jar
+*.war
+*.ear
+.gradle/
+/bin/
+
+# --- React / JavaScript ---
+node_modules/
+/dist/
+.DS_Store
+npm-debug.log*
+
+# --- Docker ---
+*.log
+/var/lib/docker/
+
+# --- AWS & Security  ---
+.aws/
+*.pem
+.env
+.env.local
+
+# --- IDE IntelliJ, VS Code  ---
+.idea/
+*.iml
+.vscode/
