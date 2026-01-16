@@ -1,4 +1,4 @@
-package com.bizsync.backend.dto;
+package com.bizsync.backend.dto.request;
 
 import com.bizsync.backend.domain.entity.Role;
 import com.bizsync.backend.domain.entity.User;
