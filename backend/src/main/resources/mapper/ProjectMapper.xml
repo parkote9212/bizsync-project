@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bizsync.backend.mapper.ProjectMapper">
+
+    <resultMap id="ProjectBoardMap"
+               type="com.bizsync.backend.dto.response.kanban.ProjectBoardDTO">
+        <id property="projectId" column="project_id"/>
+        <result property="name" column="project_name"/>
+        <result property="totalBudget" column="total_budget"/>
+        <result property="usedBudget" column="used_budget"/>
+
+        <collection property="columns"
+                    ofType="com.bizsync.backend.dto.response.kanban.KanbanColumnDTO"
+                    javaType="java.util.ArrayList">
+            <id property="columnId" column="column_id"/>
+            <result property="name" column="column_name"/>
+            <result property="sequence" column="column_seq"/>
+
+            <collection property="tasks"
+                        ofType="com.bizsync.backend.dto.response.kanban.TaskDTO"
+                        javaType="java.util.ArrayList">
+                <id property="taskId" column="task_id"/>
+                <result property="title" column="task_title"/>
+                <result property="sequence" column="task_seq"/>
+                <result property="deadline" column="deadline"/>
+                <result property="workerName" column="worker_name"/>
+            </collection>
+        </collection>
+    </resultMap>
+
+    <select id="selectProjectBoard" resultMap="ProjectBoardMap">
+        SELECT
+            p.project_id,
+            p.name AS project_name,
+            p.total_budget,
+            p.used_budget,
+
+            c.column_id,
+            c.name          AS column_name,
+            c.sequence      AS column_seq,
+
+            t.task_id,
+            t.title         AS task_title,
+            t.sequence      AS task_seq,
+            t.deadline,
+            u.name          AS worker_name
+
+        FROM project p
+
+        LEFT JOIN kanban_column c ON p.project_id = c.project_id
+        LEFT JOIN task t ON c.column_id = t.column_id
+        LEFT JOIN users u ON t.worker_id = u.user_id
+
+        WHERE p.project_id = #{projectId}
+
+        ORDER BY c.sequence ASC, t.sequence ASC
+    </select>
+
+</mapper>

@@ -29,3 +29,10 @@ mybatis:
   type-aliases-package: com.bizsync.backend.domain
   configuration:
     map-underscore-to-camel-case: true
+
+# JWT 설정
+app:
+  jwt:
+    secret: ${JWT_SECRET:your-secret-key-must-be-at-least-256-bits-long-for-HS256-algorithm-security}
+    expiration-ms: ${JWT_EXPIRATION_MS:3600000}  # 1시간 (밀리초)
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7일 (밀리초)

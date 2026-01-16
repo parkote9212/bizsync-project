@@ -31,9 +31,11 @@ mybatis:
 app:
   jwt:
     # Use JWT_SECRET env var if provided, otherwise fall back to a safe development default
-    secret: ${JWT_SECRET:change-me-to-a-secure-value}
+    secret: ${JWT_SECRET:your-secret-key-must-be-at-least-256-bits-long-for-HS256-algorithm-security}
     # expiration in milliseconds; fallback to 3600000 (1 hour)
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
+    # refresh token expiration in milliseconds; fallback to 604800000 (7 days)
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7일 (밀리초)
 
 # Additional dev-only settings can go here
 server:
