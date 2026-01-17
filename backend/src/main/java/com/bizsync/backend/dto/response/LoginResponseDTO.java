@@ -5,7 +5,7 @@ public record LoginResponseDTO(
         String tikenType
 ) {
 
-    public static LoginResponseDTO of(String accessToken){
+    public static LoginResponseDTO of(String accessToken) {
         return new LoginResponseDTO(accessToken, "Bearer");
     }
 }

@@ -16,20 +16,20 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 public class JwtTokenResponse {
-    
+
     private String accessToken;
     private String refreshToken;
     private String tokenType;  // "Bearer"
     private Long expiresIn;    // Access Token 만료까지 남은 시간 (초)
     private Long userId;
     private String role;
-    
+
     /**
      * Bearer 토큰 형식으로 생성
      */
     public static JwtTokenResponse of(String accessToken, String refreshToken, Date expirationDate, Long userId, String role) {
         long expiresIn = (expirationDate.getTime() - System.currentTimeMillis()) / 1000;
-        
+
         return JwtTokenResponse.builder()
                 .accessToken(accessToken)
                 .refreshToken(refreshToken)

@@ -5,6 +5,7 @@ import com.bizsync.backend.domain.entity.Role;
 import com.bizsync.backend.domain.entity.User;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.request.LoginRequestDTO;
+import com.bizsync.backend.dto.response.JwtTokenResponse;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
+import java.util.Date;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -52,13 +54,17 @@ class AuthServiceTest {
         given(userRepository.findByEmail(request.email())).willReturn(Optional.of(testUser));
         given(passwordEncoder.matches(request.password(), testUser.getPassword())).willReturn(true);
 
-         given(jwtProvider.createToken(any(), any())).willReturn("access_token_sample");
+        given(jwtProvider.createToken(any(), any())).willReturn("access_token_sample");
+        given(jwtProvider.createRefreshToken(any())).willReturn("refresh_token_sample");
+        given(jwtProvider.getExpirationDate("access_token_sample")).willReturn(new Date(System.currentTimeMillis() + 3600_000));
 
         //when
-        String token = authService.login(request);
+        JwtTokenResponse token = authService.login(request);
 
         //then
         assertThat(token).isNotNull();
+        assertThat(token.getAccessToken()).isEqualTo("access_token_sample");
+        assertThat(token.getRefreshToken()).isEqualTo("refresh_token_sample");
 
     }
 

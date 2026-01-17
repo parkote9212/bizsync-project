@@ -57,12 +57,12 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             response.setCharacterEncoding("UTF-8");
-                            
+
                             Map<String, Object> errorResponse = new HashMap<>();
                             errorResponse.put("error", "Unauthorized");
                             errorResponse.put("message", "인증이 필요합니다. 로그인 후 다시 시도해주세요.");
                             errorResponse.put("path", request.getRequestURI());
-                            
+
                             ObjectMapper objectMapper = new ObjectMapper();
                             response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
                         })
@@ -70,12 +70,12 @@ public class SecurityConfig {
                             response.setStatus(HttpServletResponse.SC_FORBIDDEN);
                             response.setContentType(MediaType.APPLICATION_JSON_VALUE);
                             response.setCharacterEncoding("UTF-8");
-                            
+
                             Map<String, Object> errorResponse = new HashMap<>();
                             errorResponse.put("error", "Forbidden");
                             errorResponse.put("message", "접근 권한이 없습니다.");
                             errorResponse.put("path", request.getRequestURI());
-                            
+
                             ObjectMapper objectMapper = new ObjectMapper();
                             response.getWriter().write(objectMapper.writeValueAsString(errorResponse));
                         })

@@ -31,13 +31,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private final UserRepository userRepository;
 
     @Override
-    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) 
+    protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
-        
+
         try {
             // Authorization 헤더에서 토큰 추출
             String token = extractToken(request);
-            
+
             // 토큰이 있고 유효한 경우
             if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
                 // Access Token인지 확인
@@ -52,7 +52,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // 인증 실패 시 SecurityContext를 초기화
             SecurityContextHolder.clearContext();
         }
-        
+
         filterChain.doFilter(request, response);
     }
 
@@ -73,24 +73,24 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private void authenticateUser(String token) {
         Long userId = jwtProvider.getUserId(token);
         Optional<User> userOpt = userRepository.findById(userId);
-        
+
         if (userOpt.isPresent()) {
             User user = userOpt.get();
             String role = jwtProvider.getRole(token);
-            
+
             // 권한 설정 (ROLE_ prefix 추가)
             List<SimpleGrantedAuthority> authorities = List.of(
                     new SimpleGrantedAuthority("ROLE_" + (role != null ? role : user.getRole().name()))
             );
-            
+
             // 인증 객체 생성 및 SecurityContext에 설정
             Authentication auth = new UsernamePasswordAuthenticationToken(
-                    String.valueOf(userId), 
-                    null, 
+                    String.valueOf(userId),
+                    null,
                     authorities
             );
             SecurityContextHolder.getContext().setAuthentication(auth);
-            
+
             log.debug("User {} authenticated successfully with role {}", userId, role);
         } else {
             log.warn("User {} not found in database", userId);

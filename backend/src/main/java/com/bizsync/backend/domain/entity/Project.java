@@ -45,14 +45,14 @@ public class Project {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-        if(this.usedBudget == null) this.usedBudget = BigDecimal.ZERO;
+        if (this.usedBudget == null) this.usedBudget = BigDecimal.ZERO;
     }
 
-    public void spendBudget(BigDecimal amount){
+    public void spendBudget(BigDecimal amount) {
 
         BigDecimal expectedUsage = this.usedBudget.add(amount);
 
-        if(this.totalBudget.compareTo(expectedUsage) < 0){
+        if (this.totalBudget.compareTo(expectedUsage) < 0) {
             throw new IllegalStateException("예산이 초과되었습니다.");
         }
         this.usedBudget = expectedUsage;

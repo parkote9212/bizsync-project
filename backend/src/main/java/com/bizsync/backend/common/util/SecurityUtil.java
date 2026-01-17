@@ -17,18 +17,18 @@ public class SecurityUtil {
 
     /**
      * 현재 인증된 사용자의 ID를 반환
-     * 
+     *
      * @return 인증된 사용자 ID, 인증되지 않은 경우 Optional.empty()
      */
     public static Optional<Long> getCurrentUserId() {
         try {
             Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            
-            if (authentication == null || !authentication.isAuthenticated() || 
-                "anonymousUser".equals(authentication.getPrincipal())) {
+
+            if (authentication == null || !authentication.isAuthenticated() ||
+                    "anonymousUser".equals(authentication.getPrincipal())) {
                 return Optional.empty();
             }
-            
+
             String userId = (String) authentication.getPrincipal();
             return Optional.of(Long.parseLong(userId));
         } catch (Exception e) {
@@ -39,7 +39,7 @@ public class SecurityUtil {
 
     /**
      * 현재 인증된 사용자의 ID를 반환 (인증되지 않은 경우 예외 발생)
-     * 
+     *
      * @return 인증된 사용자 ID
      * @throws IllegalStateException 인증되지 않은 경우
      */
@@ -50,19 +50,19 @@ public class SecurityUtil {
 
     /**
      * 현재 요청이 인증되었는지 확인
-     * 
+     *
      * @return 인증 여부
      */
     public static boolean isAuthenticated() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        return authentication != null && 
-               authentication.isAuthenticated() && 
-               !"anonymousUser".equals(authentication.getPrincipal());
+        return authentication != null &&
+                authentication.isAuthenticated() &&
+                !"anonymousUser".equals(authentication.getPrincipal());
     }
 
     /**
      * 현재 인증된 사용자가 특정 권한을 가지고 있는지 확인
-     * 
+     *
      * @param role 확인할 권한 (예: "USER", "ADMIN")
      * @return 권한 보유 여부
      */
@@ -71,7 +71,7 @@ public class SecurityUtil {
         if (authentication == null) {
             return false;
         }
-        
+
         String roleWithPrefix = "ROLE_" + role;
         return authentication.getAuthorities().stream()
                 .anyMatch(grantedAuthority -> grantedAuthority.getAuthority().equals(roleWithPrefix));

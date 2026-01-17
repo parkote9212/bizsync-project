@@ -30,7 +30,7 @@ public class AuthService {
         if (userRepository.findByEmail(dto.email()).isPresent()) {
             throw new IllegalArgumentException("이미 존재하는 이메일입니다.");
         }
-        
+
         // 사번 중복 체크
         if (userRepository.existsByEmpNo(dto.empNo())) {
             throw new IllegalArgumentException("이미 존재하는 사번입니다.");
@@ -42,7 +42,7 @@ public class AuthService {
         // 사용자 저장
         User savedUser = userRepository.save(dto.toEntity(encodedPassword));
         log.info("새로운 사용자 가입: userId={}, email={}", savedUser.getUserId(), savedUser.getEmail());
-        
+
         return savedUser.getUserId();
     }
 
@@ -62,7 +62,7 @@ public class AuthService {
 
         // Access Token 생성
         String accessToken = jwtProvider.createToken(user.getUserId(), user.getRole());
-        
+
         // Refresh Token 생성
         String refreshToken = jwtProvider.createRefreshToken(user.getUserId());
 
@@ -100,7 +100,7 @@ public class AuthService {
 
         // 새로운 Access Token 생성
         String newAccessToken = jwtProvider.createToken(user.getUserId(), user.getRole());
-        
+
         // 새로운 Refresh Token 생성 (Refresh Token Rotation)
         String newRefreshToken = jwtProvider.createRefreshToken(user.getUserId());
 

@@ -25,7 +25,7 @@ public class KanbanService {
     private final UserRepository userRepository;
 
     // 칼럼 생성
-    public Long createColumn(Long projectId, ColumnCreateRequestDTO dto){
+    public Long createColumn(Long projectId, ColumnCreateRequestDTO dto) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트가 없습니다."));
 
@@ -42,12 +42,12 @@ public class KanbanService {
     }
 
     // 업무 생성
-    public Long createTask(Long columId, TaskCreateRequestDTO dto){
+    public Long createTask(Long columId, TaskCreateRequestDTO dto) {
         KanbanColumn column = kanbanColumnRepository.findById(columId)
                 .orElseThrow(() -> new IllegalArgumentException("칼럼이 없습니다."));
 
         User worker = null;
-        if (dto.workerId() != null){
+        if (dto.workerId() != null) {
             worker = userRepository.findById(dto.workerId())
                     .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 담당자입니다."));
         }

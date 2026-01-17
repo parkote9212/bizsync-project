@@ -42,7 +42,7 @@ public class GlobalExceptionHandler {
         });
 
         //첫번쨰 에러 메시지만 대표로 보냄
-        String firstErrorMessage =errors.values().stream().findFirst().orElse("입력값이 올바르지 않습니다.");
+        String firstErrorMessage = errors.values().stream().findFirst().orElse("입력값이 올바르지 않습니다.");
 
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
@@ -58,5 +58,6 @@ public class GlobalExceptionHandler {
     }
 
     // 응답용 record
-    public record ErrorResponse(String code, String message) {}
+    public record ErrorResponse(String code, String message) {
+    }
 }
