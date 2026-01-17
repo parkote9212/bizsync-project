@@ -29,6 +29,7 @@ public class ApprovalService {
     private final ApprovalDocumentRepository approvalDocumentRepository;
     private final ApprovalLineRepository approvalLineRepository;
     private final UserRepository userRepository;
+    private final NotificationService notificationService;
 
     /**
      * 기안 상신 (문서 생성 + 결재선 등록)
@@ -102,13 +103,17 @@ public class ApprovalService {
 
         if (dto.status() == ApprovalStatus.REJECTED) {
             myLine.reject(dto.comment());
+            Long drafterId = myLine.getDocument().getDrafter().getUserId();
+            notificationService.sendToUser(drafterId, "문서가 반려되었습니다: " + dto.comment(), documentId);
         } else if (dto.status() == ApprovalStatus.APPROVED) {
             myLine.approve(dto.comment());
 
             int maxSequence = approvalLineRepository.findMaxSequence(documentId);
-            if (myLine.getSequence() == maxSequence) {
 
+            if (myLine.getSequence() == maxSequence) {
                 myLine.getDocument().approve();
+                Long drafterId = myLine.getDocument().getDrafter().getUserId();
+                notificationService.sendToUser(drafterId, "문서가 최종 승인되었습니다!", documentId);
             }
         } else {
             throw new IllegalArgumentException("잘못된 결재 상태입니다.");

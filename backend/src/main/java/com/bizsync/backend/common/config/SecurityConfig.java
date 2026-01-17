@@ -46,7 +46,8 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth/**").permitAll()
                         .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
-                        .requestMatchers("/actuator/health").permitAll()  // 헬스체크
+                        .requestMatchers("/actuator/health").permitAll()
+                        .requestMatchers("/ws/**").permitAll()// 헬스체크
                         .anyRequest().authenticated()
                 )
                 // JWT 필터 추가
