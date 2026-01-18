@@ -2,6 +2,7 @@ package com.bizsync.backend.controller;
 
 import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.dto.request.ProjectCreateRequestDTO;
+import com.bizsync.backend.dto.response.ProjectListResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
 import com.bizsync.backend.service.ProjectService;
 import jakarta.validation.Valid;
@@ -10,6 +11,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
 import java.util.Map;
 
 @RestController
@@ -48,6 +50,15 @@ public class ProjectController {
 
         ProjectBoardDTO board = projectService.getProjectBoard(projectId);
         return ResponseEntity.ok(board);
+    }
+
+    /**
+     * 내 프로젝트 목록 조회
+     */
+    @GetMapping
+    public ResponseEntity<List<ProjectListResponseDTO>>  getProjectList(){
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        return ResponseEntity.ok(projectService.getMyProjects(userId));
     }
 
 

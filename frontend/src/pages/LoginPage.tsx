@@ -37,7 +37,7 @@ const LoginPage = () => {
       // 메인 페이지(프로젝트 목록)로 이동
       alert("로그인 성공!");
       navigate("/projects");
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error(err);
       setError("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
     }

@@ -8,6 +8,7 @@ import com.bizsync.backend.domain.repository.ProjectMemberRepository;
 import com.bizsync.backend.domain.repository.ProjectRepository;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.request.ProjectCreateRequestDTO;
+import com.bizsync.backend.dto.response.ProjectListResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
 import com.bizsync.backend.mapper.ProjectMapper;
 import lombok.RequiredArgsConstructor;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 @Service
 @RequiredArgsConstructor
@@ -69,6 +71,19 @@ public class ProjectService {
 
         return projectMapper.selectProjectBoard(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
+    }
+
+    @Transactional(readOnly = true)
+    public List<ProjectListResponseDTO> getMyProjects(Long userId){
+        return projectMemberRepository.findAllByUser_UserId(userId).stream()
+                .map(pm -> new ProjectListResponseDTO(
+                        pm.getProject().getProjectId(),
+                        pm.getProject().getName(),
+                        pm.getProject().getDescription(),
+                        pm.getProject().getStartDate(),
+                        pm.getProject().getEndDate()
+                ))
+                .toList();
     }
 
 
