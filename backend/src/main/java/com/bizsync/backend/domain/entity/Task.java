@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import lombok.*;
 import org.hibernate.annotations.ColumnDefault;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 
 @Entity
@@ -35,7 +36,7 @@ public class Task {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    private LocalDateTime deadline;
+    private LocalDate deadline;
 
     @Column(nullable = false)
     @ColumnDefault("0")
@@ -48,5 +49,22 @@ public class Task {
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
         if (this.sequence == null) this.sequence = 0;
+    }
+
+    public void updateDetails(String title, String content, LocalDate deadline, User worker) {
+        if (title != null) this.title = title;
+        if (this.content != null) this.content = content;
+        if (deadline != null) this.deadline = deadline;
+        if (worker != null) this.worker = worker;
+    }
+
+    // 편의 메서드: 컬럼(이동)과 순서를 한 번에 업데이트
+    public void updatePosition(KanbanColumn col, Integer seq) {
+        if (col != null) {
+            this.column = col;
+        }
+        if (seq != null) {
+            this.sequence = seq;
+        }
     }
 }

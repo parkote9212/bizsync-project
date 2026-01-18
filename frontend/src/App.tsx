@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "./pages/LoginPage";
 import ProjectListPage from "./pages/ProjectListPage";
+import KanbanBoardPage from "./pages/KanbanBoeardPage";
 
 function App() {
   return (
@@ -12,6 +13,8 @@ function App() {
         <Route path="/login" element={<LoginPage />} />
 
         <Route path="/projects" element={<ProjectListPage />} />
+
+        <Route path="/projects/:projectId" element={<KanbanBoardPage />} />
       </Routes>
     </BrowserRouter>
   );
