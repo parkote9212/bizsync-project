@@ -12,18 +12,20 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // Handshake
+        // 채팅용(
         registry.addEndpoint("/ws")
-                .setAllowedOriginPatterns("*")
-                .withSockJS();
+                .setAllowedOriginPatterns("*");
+        // 칸반 보드용(WebSocket)
+        registry.addEndpoint("/ws-kanban")
+                .setAllowedOriginPatterns("*");
     }
 
     @Override
     public void configureMessageBroker(MessageBrokerRegistry registry) {
         // Subscribe
-        registry.enableSimpleBroker("/sub");
+        registry.enableSimpleBroker("/sub", "/topic");
 
         // Publish
-        registry.setApplicationDestinationPrefixes("/pub");
+        registry.setApplicationDestinationPrefixes("/pub", "/app");
     }
 }

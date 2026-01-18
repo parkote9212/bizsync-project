@@ -32,7 +32,7 @@ public class User {
     private String empNo;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
     @Column(length = 50)

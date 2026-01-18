@@ -67,4 +67,13 @@ public class Task {
             this.sequence = seq;
         }
     }
+
+    // 편의 메서드: 이 Task가 속한 Project의 ID를 반환 (널 안전성)
+    public Long getProjectId() {
+        if (this.column == null) return null;
+        KanbanColumn col = this.column;
+        if (col.getProject() == null) return null;
+        return col.getProject().getProjectId();
+    }
+
 }

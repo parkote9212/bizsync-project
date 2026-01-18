@@ -1,5 +1,15 @@
 import { useState } from "react";
 import { useParams } from "react-router-dom";
+// 컴포넌트 Import
+import TaskDetailDialog from "../components/TaskDetailDialog";
+import TaskCreateDialog from "../components/TaskCreateDialog";
+import ProjectInviteDialog from "../components/ProjectInviteDialog";
+// Hooks Import
+import { useKanbanBoard } from "../hooks/useKanbanBoard";
+import { useBoardSocket } from "../hooks/useBoardSocket";
+// Types Import
+import type { TaskCreateData } from "../types/kanban";
+// Library Import
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
 import {
   Box,
@@ -14,12 +24,10 @@ import {
   IconButton,
   CircularProgress,
 } from "@mui/material";
+// Icons Import
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import TaskDetailDialog from "../components/TaskDetailDialog";
-import TaskCreateDialog from "../components/TaskCreateDialog";
-import { useKanbanBoard } from "../hooks/useKanbanBoard";
-import type { TaskCreateData } from "../types/kanban";
+import PersonAddIcon from "@mui/icons-material/PersonAdd"; // ★ 추가됨
 
 const KanbanBoardPage = () => {
   const { projectId } = useParams();
@@ -46,6 +54,12 @@ const KanbanBoardPage = () => {
   // 3. 업무 상세 모달용 State
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // 4. ★ 팀원 초대 모달용 State
+  const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  // --- WebSocket 연결 ---
+  useBoardSocket(projectId, refreshBoard);
 
   // --- Handlers ---
 
@@ -100,14 +114,27 @@ const KanbanBoardPage = () => {
         overflowX: "auto",
       }}
     >
-      <Typography
-        variant="h5"
-        fontWeight="bold"
+      {/* ★ 헤더 영역 수정: 제목과 초대 버튼을 양옆으로 배치 */}
+      <Stack
+        direction="row"
+        justifyContent="space-between"
+        alignItems="center"
         mb={3}
-        sx={{ color: "#172b4d" }}
       >
-        {boardData.name}
-      </Typography>
+        <Typography variant="h5" fontWeight="bold" sx={{ color: "#172b4d" }}>
+          {boardData.name}
+        </Typography>
+
+        <Button
+          variant="contained"
+          color="primary" // 혹은 'inherit', 'secondary' 등 취향대로
+          startIcon={<PersonAddIcon />}
+          onClick={() => setIsInviteOpen(true)}
+          sx={{ fontWeight: "bold" }}
+        >
+          팀원 초대
+        </Button>
+      </Stack>
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Stack direction="row" spacing={2} alignItems="flex-start">
@@ -197,7 +224,7 @@ const KanbanBoardPage = () => {
                 )}
               </Droppable>
 
-              {/* ★ 카드 추가 버튼 (모달 열기) */}
+              {/* 카드 추가 버튼 */}
               <Box sx={{ mt: 1 }}>
                 <Button
                   startIcon={<AddIcon />}
@@ -212,8 +239,6 @@ const KanbanBoardPage = () => {
                   카드 추가
                 </Button>
               </Box>
-
-              {/* 여기에 있던 잘못된 onClick 코드와 중복 Box 삭제함 */}
             </Paper>
           ))}
 
@@ -279,6 +304,13 @@ const KanbanBoardPage = () => {
             taskId={selectedTaskId}
             onClose={() => setIsDetailOpen(false)}
             onUpdate={refreshBoard}
+          />
+
+          {/* ★ 팀원 초대 모달 추가 */}
+          <ProjectInviteDialog
+            open={isInviteOpen}
+            onClose={() => setIsInviteOpen(false)}
+            projectId={projectId}
           />
         </Stack>
       </DragDropContext>

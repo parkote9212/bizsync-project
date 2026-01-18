@@ -86,5 +86,31 @@ public class ProjectService {
                 .toList();
     }
 
+    @Transactional
+    public void inviteMember(Long projectId, String email) {
+        // 1. 프로젝트 확인
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
+
+        // 2. 초대할 유저 확인
+        User user = userRepository.findByEmail(email)
+                .orElseThrow(() -> new IllegalArgumentException("해당 이메일의 사용자가 존재하지 않습니다."));
+
+        // 3. 이미 멤버인지 확인
+        boolean isAlreadyMember = projectMemberRepository.existsByProject_ProjectIdAndUser_UserId(projectId, user.getUserId());
+        if (isAlreadyMember) {
+            throw new IllegalArgumentException("이미 프로젝트의 멤버입니다.");
+        }
+
+        // 4. 멤버 등록 (기본 권한: MEMBER)
+        ProjectMember newMember = ProjectMember.builder()
+                .project(project)
+                .user(user)
+                .role(ProjectMember.Role.MEMBER) // Entity에 Role Enum이 있다고 가정
+                .build();
+
+        projectMemberRepository.save(newMember);
+    }
+
 
 }

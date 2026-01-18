@@ -1,6 +1,7 @@
 package com.bizsync.backend.controller;
 
 import com.bizsync.backend.common.util.SecurityUtil;
+import com.bizsync.backend.dto.request.MemberInviteRequestDTO;
 import com.bizsync.backend.dto.request.ProjectCreateRequestDTO;
 import com.bizsync.backend.dto.response.ProjectListResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
@@ -59,6 +60,15 @@ public class ProjectController {
     public ResponseEntity<List<ProjectListResponseDTO>>  getProjectList(){
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         return ResponseEntity.ok(projectService.getMyProjects(userId));
+    }
+
+    @PostMapping("/{projectId}/invite")
+    public ResponseEntity<String> inviteMember(
+            @PathVariable Long projectId,
+            @RequestBody @Valid MemberInviteRequestDTO dto
+    ) {
+        projectService.inviteMember(projectId, dto.email());
+        return ResponseEntity.ok("멤버 초대가 완료되었습니다.");
     }
 
 

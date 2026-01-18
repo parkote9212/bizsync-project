@@ -10,6 +10,7 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Map;
@@ -20,6 +21,7 @@ import java.util.Map;
 public class KanbanController {
 
     private final KanbanService kanbanService;
+    private final SimpMessagingTemplate messagingTemplate;
 
     // 1. 컬럼 생성
     @PostMapping("/projects/{projectId}/columns")
@@ -71,8 +73,10 @@ public class KanbanController {
             @PathVariable Long taskId,
             @RequestBody TaskMoveRequestDTO dto
     ) {
-        // kanbanService 또는 taskService 사용
         kanbanService.moveTask(taskId, dto.targetColumnId(), dto.newSequence());
+
+        Long projectId = kanbanService.getProjectIdByTaskId(taskId);
+        messagingTemplate.convertAndSend("/topic/projects/" + projectId, "BOARD_UPDATE");
 
         return ResponseEntity.ok("이동 완료");
     }

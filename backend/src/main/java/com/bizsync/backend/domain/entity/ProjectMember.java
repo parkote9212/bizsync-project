@@ -24,10 +24,11 @@ public class ProjectMember {
     private User user;
 
     @Enumerated(EnumType.STRING)
+    @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
     public enum Role {
-        PL, DEV, DESIGN, STAKEHOLDER
+        PL, DEV, DESIGN, STAKEHOLDER, MEMBER
     }
 
 }

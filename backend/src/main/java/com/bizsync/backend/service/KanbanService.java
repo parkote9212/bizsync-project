@@ -70,8 +70,6 @@ public class KanbanService {
         return taskRepository.save(task).getTaskId();
     }
 
-    // ... imports
-
     // 1. 상세 조회
     @Transactional(readOnly = true)
     public TaskDetailResponseDTO getTaskDetail(Long taskId) {
@@ -130,6 +128,16 @@ public class KanbanService {
 
         // 3. 컬럼과 순서 변경을 편의 메서드로 처리
         task.updatePosition(targetColumn, newSequence);
-        // Todo 다른 카드들의 sequence를 밀어주는 로직필요
+    }
+
+    // 지정된 taskId가 속한 프로젝트 ID를 반환
+    @Transactional(readOnly = true)
+    public Long getProjectIdByTaskId(Long taskId) {
+        Task task = taskRepository.findById(taskId)
+                .orElseThrow(() -> new IllegalArgumentException("업무를 찾을 수 없습니다."));
+
+        Long projectId = task.getProjectId();
+        if (projectId == null) throw new IllegalArgumentException("해당 업무에 연결된 프로젝트가 없습니다.");
+        return projectId;
     }
 }
