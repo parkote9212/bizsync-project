@@ -23,9 +23,11 @@
                         javaType="java.util.ArrayList">
                 <id property="taskId" column="task_id"/>
                 <result property="title" column="task_title"/>
+                <result property="content" column="task_content"/>
                 <result property="sequence" column="task_seq"/>
                 <result property="deadline" column="deadline"/>
                 <result property="workerName" column="worker_name"/>
+                <result property="workerId" column="worker_id"/>
             </collection>
         </collection>
     </resultMap>
@@ -44,6 +46,8 @@
                t.title    AS task_title,
                t.sequence AS task_seq,
                t.deadline,
+               t.content AS task_content,
+               u.user_id     AS worker_id,
                u.name     AS worker_name
 
         FROM project p

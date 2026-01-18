@@ -5,7 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.time.LocalDateTime;
+import java.time.LocalDate;
 
 @Data
 @NoArgsConstructor
@@ -14,7 +14,9 @@ import java.time.LocalDateTime;
 public class TaskDTO {
     private Long taskId;
     private String title;
+    private String content;
     private String workerName;
+    private Long workerId;
     private Integer sequence;
-    private LocalDateTime deadline;
+    private LocalDate deadline;
 }

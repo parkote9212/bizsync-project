@@ -1,7 +1,6 @@
-import { useEffect, useState, useCallback } from "react";
+import { useState } from "react";
 import { useParams } from "react-router-dom";
 import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
-import type { DropResult } from "@hello-pangea/dnd";
 import {
   Box,
   Typography,
@@ -13,163 +12,84 @@ import {
   Button,
   TextField,
   IconButton,
+  CircularProgress,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CloseIcon from "@mui/icons-material/Close";
-import client from "../api/client";
 import TaskDetailDialog from "../components/TaskDetailDialog";
-
-// --- DTO 정의 ---
-interface Task {
-  taskId: number;
-  title: string;
-  workerName?: string;
-  sequence: number;
-}
-interface KanbanColumn {
-  columnId: number;
-  name: string;
-  sequence: number;
-  tasks: Task[];
-}
-interface BoardData {
-  projectId: number;
-  name: string;
-  columns: KanbanColumn[];
-}
+import TaskCreateDialog from "../components/TaskCreateDialog";
+import { useKanbanBoard } from "../hooks/useKanbanBoard";
+import type { TaskCreateData } from "../types/kanban";
 
 const KanbanBoardPage = () => {
   const { projectId } = useParams();
-  const [boardData, setBoardData] = useState<BoardData | null>(null);
 
-  // 업무 생성 관련 State
-  const [addingColId, setAddingColId] = useState<number | null>(null);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
+  const {
+    boardData,
+    loading,
+    handleDragEnd,
+    createTask,
+    createColumn,
+    refreshBoard,
+  } = useKanbanBoard(projectId);
 
-  // ★ [추가] 컬럼 생성 관련 State
+  // --- State ---
+
+  // 1. 컬럼 추가용 State
   const [isAddingColumn, setIsAddingColumn] = useState(false);
   const [newColumnTitle, setNewColumnTitle] = useState("");
 
-  const fetchBoard = useCallback(async (): Promise<BoardData> => {
-    const response = await client.get(`/projects/${projectId}/board`);
-    return response.data as BoardData;
-  }, [projectId]);
+  // 2. 업무 생성 모달용 State
+  const [isCreateOpen, setIsCreateOpen] = useState(false);
+  const [createColId, setCreateColId] = useState<number | null>(null);
 
-  const refreshBoard = useCallback(async () => {
-    const data = await fetchBoard();
-    setBoardData(data);
-  }, [fetchBoard]);
-
+  // 3. 업무 상세 모달용 State
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+  // --- Handlers ---
+
+  // [모달 열기] 카드 추가 버튼 클릭 시
+  const openCreateDialog = (columnId: number) => {
+    setCreateColId(columnId);
+    setIsCreateOpen(true);
+  };
+
+  // [생성 완료] 모달에서 '생성' 눌렀을 때
+  const handleCreateSubmit = async (data: TaskCreateData) => {
+    if (createColId === null) return;
+    await createTask(createColId, data);
+    setIsCreateOpen(false); // 모달 닫기
+  };
+
+  const onColumnCreateSubmit = async () => {
+    await createColumn(newColumnTitle);
+    setNewColumnTitle("");
+    setIsAddingColumn(false);
+  };
 
   const handleCardClick = (taskId: number) => {
     setSelectedTaskId(taskId);
     setIsDetailOpen(true);
   };
 
-  useEffect(() => {
-    let cancelled = false;
+  // --- Render ---
 
-    const load = async () => {
-      try {
-        const data = await fetchBoard();
-        if (!cancelled) {
-          setBoardData(data);
-        }
-      } catch (error) {
-        console.error("보드 데이터 로드 실패:", error);
-      }
-    };
-
-    void load();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [fetchBoard]);
-
-  // 업무 생성 함수 (기존 유지)
-  const handleCreateTask = async (columnId: number) => {
-    if (!newTaskTitle.trim()) return;
-    try {
-      await client.post(`/columns/${columnId}/tasks`, {
-        title: newTaskTitle,
-        deadline: new Date().toISOString().split("T")[0],
-        sequence: 999,
-      });
-      setNewTaskTitle("");
-      setAddingColId(null);
-      await refreshBoard();
-    } catch (error) {
-      console.error("업무 생성 실패", error);
-      alert("업무 생성 중 오류가 발생했습니다.");
-    }
-  };
-
-  // ★ [추가] 컬럼 생성 함수
-  const handleCreateColumn = async () => {
-    if (!newColumnTitle.trim()) return;
-
-    try {
-      // 백엔드 API: POST /api/projects/{projectId}/columns
-      // DTO: ColumnCreateRequestDTO (name, sequence)
-      await client.post(`/projects/${projectId}/columns`, {
-        name: newColumnTitle,
-        sequence: boardData ? boardData.columns.length + 1 : 1, // 맨 뒤에 추가
-      });
-
-      setNewColumnTitle("");
-      setIsAddingColumn(false);
-      await refreshBoard(); // 목록 새로고침
-    } catch (error) {
-      console.error("컬럼 생성 실패", error);
-      alert("컬럼 생성 중 오류가 발생했습니다.");
-    }
-  };
-
-  // 드래그 앤 드롭 로직 (기존 유지)
-  const onDragEnd = async (result: DropResult) => {
-    const { source, destination, draggableId } = result;
-
-    if (!destination) return;
-    if (
-      source.droppableId === destination.droppableId &&
-      source.index === destination.index
-    )
-      return;
-    if (!boardData) return;
-
-    // 낙관적 업데이트
-    const newColumns = [...boardData.columns];
-    const sourceColIndex = newColumns.findIndex(
-      (col) => col.columnId.toString() === source.droppableId,
+  if (loading && !boardData) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        height="100vh"
+      >
+        <CircularProgress />
+      </Box>
     );
-    const destColIndex = newColumns.findIndex(
-      (col) => col.columnId.toString() === destination.droppableId,
-    );
+  }
 
-    const sourceCol = newColumns[sourceColIndex];
-    const destCol = newColumns[destColIndex];
-
-    const [movedTask] = sourceCol.tasks.splice(source.index, 1);
-    destCol.tasks.splice(destination.index, 0, movedTask);
-
-    setBoardData({ ...boardData, columns: newColumns });
-
-    // API 호출
-    try {
-      await client.put(`/tasks/${draggableId}/move`, {
-        targetColumnId: Number(destination.droppableId),
-        newSequence: destination.index + 1,
-      });
-    } catch (error) {
-      console.error("이동 저장 실패", error);
-      await refreshBoard();
-    }
-  };
-
-  if (!boardData) return <Typography sx={{ p: 4 }}>로딩 중...</Typography>;
+  if (!boardData)
+    return <Typography sx={{ p: 4 }}>데이터를 불러올 수 없습니다.</Typography>;
 
   return (
     <Box
@@ -189,10 +109,9 @@ const KanbanBoardPage = () => {
         {boardData.name}
       </Typography>
 
-      <DragDropContext onDragEnd={onDragEnd}>
-        {/* Stack 안에 컬럼들과 '컬럼 추가 버튼'을 나란히 배치 */}
+      <DragDropContext onDragEnd={handleDragEnd}>
         <Stack direction="row" spacing={2} alignItems="flex-start">
-          {/* 1. 기존 컬럼들 렌더링 */}
+          {/* 컬럼 리스트 */}
           {boardData.columns.map((column) => (
             <Paper
               key={column.columnId}
@@ -220,7 +139,6 @@ const KanbanBoardPage = () => {
                   sx={{ ml: 1, height: 20 }}
                 />
               </Typography>
-
               <Droppable droppableId={column.columnId.toString()}>
                 {(provided) => (
                   <Box
@@ -279,63 +197,27 @@ const KanbanBoardPage = () => {
                 )}
               </Droppable>
 
-              {/* 업무 추가 영역 */}
+              {/* ★ 카드 추가 버튼 (모달 열기) */}
               <Box sx={{ mt: 1 }}>
-                {addingColId === column.columnId ? (
-                  <Box sx={{ p: 1 }}>
-                    <TextField
-                      autoFocus
-                      fullWidth
-                      size="small"
-                      placeholder="업무 제목"
-                      value={newTaskTitle}
-                      onChange={(e) => setNewTaskTitle(e.target.value)}
-                      onKeyDown={(e) =>
-                        e.key === "Enter" && handleCreateTask(column.columnId)
-                      }
-                      sx={{ bgcolor: "white", mb: 1 }}
-                    />
-                    <Stack direction="row" spacing={1}>
-                      <Button
-                        variant="contained"
-                        size="small"
-                        onClick={() => handleCreateTask(column.columnId)}
-                      >
-                        추가
-                      </Button>
-                      <IconButton
-                        size="small"
-                        onClick={() => {
-                          setAddingColId(null);
-                          setNewTaskTitle("");
-                        }}
-                      >
-                        <CloseIcon fontSize="small" />
-                      </IconButton>
-                    </Stack>
-                  </Box>
-                ) : (
-                  <Button
-                    startIcon={<AddIcon />}
-                    fullWidth
-                    sx={{
-                      justifyContent: "flex-start",
-                      color: "#5e6c84",
-                      "&:hover": { bgcolor: "rgba(9, 30, 66, 0.08)" },
-                    }}
-                    onClick={() => {
-                      setAddingColId(column.columnId);
-                      setNewTaskTitle("");
-                    }}
-                  >
-                    카드 추가
-                  </Button>
-                )}
+                <Button
+                  startIcon={<AddIcon />}
+                  fullWidth
+                  sx={{
+                    justifyContent: "flex-start",
+                    color: "#5e6c84",
+                    "&:hover": { bgcolor: "rgba(9, 30, 66, 0.08)" },
+                  }}
+                  onClick={() => openCreateDialog(column.columnId)}
+                >
+                  카드 추가
+                </Button>
               </Box>
+
+              {/* 여기에 있던 잘못된 onClick 코드와 중복 Box 삭제함 */}
             </Paper>
           ))}
 
-          {/* ★ [추가] 2. 맨 오른쪽: 리스트(컬럼) 추가 버튼 영역 */}
+          {/* 리스트(컬럼) 추가 버튼 */}
           <Box sx={{ minWidth: 300, width: 300 }}>
             {isAddingColumn ? (
               <Paper
@@ -345,14 +227,14 @@ const KanbanBoardPage = () => {
                   autoFocus
                   fullWidth
                   size="small"
-                  placeholder="리스트 이름 입력"
+                  placeholder="리스트 이름"
                   value={newColumnTitle}
                   onChange={(e) => setNewColumnTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCreateColumn()}
+                  onKeyDown={(e) => e.key === "Enter" && onColumnCreateSubmit()}
                   sx={{ bgcolor: "white", mb: 1 }}
                 />
                 <Stack direction="row" spacing={1}>
-                  <Button variant="contained" onClick={handleCreateColumn}>
+                  <Button variant="contained" onClick={onColumnCreateSubmit}>
                     리스트 추가
                   </Button>
                   <IconButton
@@ -373,9 +255,8 @@ const KanbanBoardPage = () => {
                 sx={{
                   justifyContent: "flex-start",
                   backgroundColor: "rgba(255,255,255,0.24)",
-                  color: "black", // 배경색에 따라 가독성 조정 필요
+                  color: "black",
                   "&:hover": { backgroundColor: "rgba(255,255,255,0.32)" },
-                  height: "fit-content",
                   py: 1.5,
                 }}
                 onClick={() => setIsAddingColumn(true)}
@@ -384,12 +265,20 @@ const KanbanBoardPage = () => {
               </Button>
             )}
           </Box>
-          {/* ★ 화면 최하단에 모달 컴포넌트 */}
+
+          {/* 업무 생성 모달 */}
+          <TaskCreateDialog
+            open={isCreateOpen}
+            onClose={() => setIsCreateOpen(false)}
+            onSubmit={handleCreateSubmit}
+          />
+
+          {/* 업무 상세 모달 */}
           <TaskDetailDialog
             open={isDetailOpen}
             taskId={selectedTaskId}
             onClose={() => setIsDetailOpen(false)}
-            onUpdate={refreshBoard} // 수정/삭제 시 목록 새로고침
+            onUpdate={refreshBoard}
           />
         </Stack>
       </DragDropContext>

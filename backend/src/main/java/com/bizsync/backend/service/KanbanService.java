@@ -1,5 +1,6 @@
 package com.bizsync.backend.service;
 
+import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.domain.entity.KanbanColumn;
 import com.bizsync.backend.domain.entity.Project;
 import com.bizsync.backend.domain.entity.Task;
@@ -48,20 +49,21 @@ public class KanbanService {
         KanbanColumn column = kanbanColumnRepository.findById(columId)
                 .orElseThrow(() -> new IllegalArgumentException("칼럼이 없습니다."));
 
-        User worker = null;
-        if (dto.workerId() != null) {
-            worker = userRepository.findById(dto.workerId())
-                    .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 담당자입니다."));
+        Long workerId = dto.workerId();
+        if (workerId == null) {
+            workerId = SecurityUtil.getCurrentUserIdOrThrow();
         }
+        User worker = userRepository.findById(workerId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
 
         int nextSequence = taskRepository.findMaxSequence(columId) + 1;
 
         Task task = Task.builder()
-                .column(column)
                 .title(dto.title())
                 .content(dto.content())
-                .deadline(dto.deadline())
+                .column(column)
                 .worker(worker)
+                .deadline(dto.deadline())
                 .sequence(nextSequence)
                 .build();
 

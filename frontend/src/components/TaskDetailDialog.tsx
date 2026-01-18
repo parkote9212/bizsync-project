@@ -27,6 +27,7 @@ interface TaskDetail {
   content: string;
   deadline: string;
   workerName: string;
+  workerId: number | null;
   columnName: string;
 }
 
@@ -43,6 +44,8 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
   const [editForm, setEditForm] = useState({
     title: "",
     content: "",
+    workerName: "",
+    workerId: "",
     deadline: "",
   });
 
@@ -66,6 +69,8 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
           setEditForm({
             title: data.title,
             content: data.content || "",
+            workerName: data.workerName || "",
+            workerId: data.workerId ? String(data.workerId) : "",
             deadline: data.deadline || "",
           });
           setIsEditing(false); // 모달 열릴 땐 항상 조회 모드
@@ -86,8 +91,10 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
     if (!taskId) return;
     try {
       await client.put(`/tasks/${taskId}`, {
-        ...editForm,
-        workerId: null, // 담당자 변경은 일단 생략 (추후 구현)
+        title: editForm.title,
+        content: editForm.content,
+        deadline: editForm.deadline,
+        workerId: editForm.workerId ? Number(editForm.workerId) : null,
       });
       alert("수정되었습니다.");
       setIsEditing(false);
@@ -97,6 +104,8 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
         setEditForm({
           title: data.title,
           content: data.content || "",
+          workerName: data.workerName || "",
+          workerId: data.workerId ? String(data.workerId) : "",
           deadline: data.deadline || "",
         });
       }
@@ -154,6 +163,16 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
                 onChange={(e) =>
                   setEditForm({ ...editForm, deadline: e.target.value })
                 }
+              />
+              <TextField
+                label="담당자 ID"
+                type="number"
+                fullWidth
+                value={editForm.workerId}
+                onChange={(e) =>
+                  setEditForm({ ...editForm, workerId: e.target.value })
+                }
+                helperText="담당자 ID를 입력하거나 비워두면 변경하지 않습니다."
               />
             </Stack>
           </DialogContent>
