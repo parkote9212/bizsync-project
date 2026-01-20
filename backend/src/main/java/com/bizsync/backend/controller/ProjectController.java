@@ -57,7 +57,7 @@ public class ProjectController {
      * 내 프로젝트 목록 조회
      */
     @GetMapping
-    public ResponseEntity<List<ProjectListResponseDTO>>  getProjectList(){
+    public ResponseEntity<List<ProjectListResponseDTO>> getProjectList() {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         return ResponseEntity.ok(projectService.getMyProjects(userId));
     }

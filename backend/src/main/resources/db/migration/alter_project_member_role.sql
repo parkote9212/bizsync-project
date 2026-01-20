@@ -7,7 +7,7 @@
 
 -- 3) role 컬럼을 충분한 길이의 VARCHAR로 변경 (예: 50)
 ALTER TABLE project_member
-  MODIFY COLUMN role VARCHAR(50);
+    MODIFY COLUMN role VARCHAR(50);
 
 -- (선택) 모든 값이 비어있지 않다면 NOT NULL로 변경
 -- ALTER TABLE project_member

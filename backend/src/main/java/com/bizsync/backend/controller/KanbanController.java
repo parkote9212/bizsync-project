@@ -47,7 +47,7 @@ public class KanbanController {
 
     // 업무상세 조회
     @GetMapping("/tasks/{taskId}")
-    public ResponseEntity<TaskDetailResponseDTO> getTaskDetail(@PathVariable Long taskId){
+    public ResponseEntity<TaskDetailResponseDTO> getTaskDetail(@PathVariable Long taskId) {
         return ResponseEntity.ok(kanbanService.getTaskDetail(taskId));
     }
 

@@ -103,7 +103,7 @@ public class KanbanService {
         // Dirty Checking으로 업데이트
         task.updateDetails(dto.title(),
                 dto.content(),
-                dto.deadline() != null ? dto.deadline(): null,
+                dto.deadline() != null ? dto.deadline() : null,
                 worker);
     }
 

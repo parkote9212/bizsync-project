@@ -10,4 +10,5 @@ public record TaskDetailResponseDTO(
         String workerName,
         Long workerId,
         String columnName
-) {}
+) {
+}

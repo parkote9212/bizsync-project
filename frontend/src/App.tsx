@@ -1,7 +1,8 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute";
+import KanbanBoardPage from "./pages/KanbanBoardPage";
 import LoginPage from "./pages/LoginPage";
 import ProjectListPage from "./pages/ProjectListPage";
-import KanbanBoardPage from "./pages/KanbanBoeardPage";
 
 function App() {
   return (
@@ -12,9 +13,24 @@ function App() {
 
         <Route path="/login" element={<LoginPage />} />
 
-        <Route path="/projects" element={<ProjectListPage />} />
+        {/* 인증이 필요한 라우트 */}
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute>
+              <ProjectListPage />
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/projects/:projectId" element={<KanbanBoardPage />} />
+        <Route
+          path="/projects/:projectId"
+          element={
+            <ProtectedRoute>
+              <KanbanBoardPage />
+            </ProtectedRoute>
+          }
+        />
       </Routes>
     </BrowserRouter>
   );

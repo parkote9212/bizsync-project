@@ -46,8 +46,8 @@
                t.title    AS task_title,
                t.sequence AS task_seq,
                t.deadline,
-               t.content AS task_content,
-               u.user_id     AS worker_id,
+               t.content  AS task_content,
+               u.user_id  AS worker_id,
                u.name     AS worker_name
 
         FROM project p

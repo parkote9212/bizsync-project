@@ -17,9 +17,9 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
 
     /**
-    * 메시지 저장
-    */
-    public ChatMessageDTO saveMessage(ChatMessageDTO dto){
+     * 메시지 저장
+     */
+    public ChatMessageDTO saveMessage(ChatMessageDTO dto) {
         ChatMessage message = ChatMessage.builder()
                 .roomId(dto.roomId())
                 .sender(dto.sender())

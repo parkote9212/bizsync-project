@@ -39,13 +39,23 @@ public class ApprovalLine {
 
     public void approve(String comment) {
         this.status = ApprovalStatus.APPROVED;
-        this.approvedAt = LocalDateTime.now();
         this.comment = comment;
+        this.approvedAt = LocalDateTime.now();
     }
 
     public void reject(String comment) {
+        if (comment == null || comment.trim().isEmpty()) {
+            throw new IllegalArgumentException("반려 사유는 필수입니다.");
+        }
         this.status = ApprovalStatus.REJECTED;
-        this.approvedAt = LocalDateTime.now();
         this.comment = comment;
+        this.approvedAt = LocalDateTime.now();
+    }
+
+    @PrePersist
+    public void prePersist() {
+        if (this.status == null) {
+            this.status = ApprovalStatus.PENDING;
+        }
     }
 }

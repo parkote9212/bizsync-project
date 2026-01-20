@@ -1,5 +1,6 @@
 package com.bizsync.backend.domain.repository;
 
+import com.bizsync.backend.domain.entity.ApprovalDocument;
 import com.bizsync.backend.domain.entity.ApprovalLine;
 import com.bizsync.backend.domain.entity.ApprovalStatus;
 import org.springframework.data.domain.Page;
@@ -7,9 +8,12 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
+import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
+@Repository
 public interface ApprovalLineRepository extends JpaRepository<ApprovalLine, Long> {
     // 1. 특정 문서에서 특정 유저의 결재선 찾기
     Optional<ApprovalLine> findByDocument_DocumentIdAndApprover_UserId(Long documentId, Long userId);
@@ -25,4 +29,21 @@ public interface ApprovalLineRepository extends JpaRepository<ApprovalLine, Long
 
     // 결재 대김함 : 결재자가 나이고 내 상태가 PENDING인 것 조회
     Page<ApprovalLine> findByApprover_UserIdAndStatus(Long userId, ApprovalStatus status, Pageable pageable);
+
+    // 특정 문서에서 특정 승인자의 결재선 찾기
+    @Query("SELECT al FROM ApprovalLine al " +
+            "WHERE al.document = :document " +
+            "AND al.approver.userId = :approverId")
+    Optional<ApprovalLine> findByDocumentAndApprover(
+            @Param("document") ApprovalDocument document,
+            @Param("approverId") Long approverId
+    );
+
+    // 특정 문서의 모든 결재선을 순서대로 조회
+    @Query("SELECT al FROM ApprovalLine al " +
+            "WHERE al.document = :document " +
+            "ORDER BY al.sequence ASC")
+    List<ApprovalLine> findByDocumentOrderBySequence(
+            @Param("document") ApprovalDocument document
+    );
 }

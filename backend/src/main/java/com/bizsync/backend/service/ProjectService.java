@@ -74,7 +74,7 @@ public class ProjectService {
     }
 
     @Transactional(readOnly = true)
-    public List<ProjectListResponseDTO> getMyProjects(Long userId){
+    public List<ProjectListResponseDTO> getMyProjects(Long userId) {
         return projectMemberRepository.findAllByUser_UserId(userId).stream()
                 .map(pm -> new ProjectListResponseDTO(
                         pm.getProject().getProjectId(),

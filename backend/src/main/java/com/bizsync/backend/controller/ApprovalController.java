@@ -7,11 +7,11 @@ import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
 import com.bizsync.backend.service.ApprovalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
-import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -25,11 +25,16 @@ public class ApprovalController {
 
     private final ApprovalService approvalService;
 
-    // 기안 상신 (문서 생성)
+    /**
+     * 결재 기안 (상신)
+     */
     @PostMapping
     public ResponseEntity<Map<String, Object>> createApproval(
             @Valid @RequestBody ApprovalCreateRequestDTO dto
     ) {
+        // 비용 결재 검증
+        dto.validateExpenseApproval();
+        
         // 로그인한 사용자(기안자) ID 가져오기
         Long drafterId = SecurityUtil.getCurrentUserIdOrThrow();
 
@@ -53,6 +58,7 @@ public class ApprovalController {
 
         return ResponseEntity.ok("결재가 정상적으로 처리되었습니다.");
     }
+
     @GetMapping("/my-drafts")
     public ResponseEntity<Page<ApprovalSummaryDTO>> getMyDrafts(
             @ParameterObject

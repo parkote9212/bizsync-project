@@ -3,6 +3,7 @@ package com.bizsync.backend.domain.entity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 
 @Entity
@@ -23,15 +24,28 @@ public class ApprovalDocument {
     @JoinColumn(name = "drafter_id", nullable = false)
     private User drafter;
 
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "project_id")
+    private Project project;
+
     @Column(nullable = false)
     private String title;
 
     @Column(columnDefinition = "TEXT")
     private String content;
 
+    //결재 유형(휴가/비용/업무)
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private ApprovalStatus status; // 문서 전체 상태 (진행중/완료/반려)
+    @Column(nullable = false, length = 20)
+    private ApprovalType type;
+
+    // 문서 전체 상태 (진행중/완료/반려)
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private ApprovalStatus status;
+
+    @Column(precision = 19, scale = 2)
+    private BigDecimal amount;
 
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -44,13 +58,23 @@ public class ApprovalDocument {
         if (this.status == null) this.status = ApprovalStatus.PENDING;
     }
 
+    //승인
     public void approve() {
         this.status = ApprovalStatus.APPROVED;
         this.completedAt = LocalDateTime.now();
     }
 
+    //반려
     public void reject() {
         this.status = ApprovalStatus.REJECTED;
         this.completedAt = LocalDateTime.now();
     }
+
+    /**
+     * 비용 결재인지 확인
+     */
+    public boolean isExpenseApproval() {
+        return this.type == ApprovalType.EXPENSE;
+    }
+
 }
