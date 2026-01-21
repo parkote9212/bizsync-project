@@ -1,5 +1,6 @@
 package com.bizsync.backend.common.util;
 
+import com.bizsync.backend.common.exception.UnauthenticatedException;
 import lombok.AccessLevel;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -41,11 +42,11 @@ public class SecurityUtil {
      * 현재 인증된 사용자의 ID를 반환 (인증되지 않은 경우 예외 발생)
      *
      * @return 인증된 사용자 ID
-     * @throws IllegalStateException 인증되지 않은 경우
+     * @throws UnauthenticatedException 인증되지 않은 경우 (401 매핑)
      */
     public static Long getCurrentUserIdOrThrow() {
         return getCurrentUserId()
-                .orElseThrow(() -> new IllegalStateException("인증된 사용자가 없습니다."));
+                .orElseThrow(() -> new UnauthenticatedException("인증된 사용자가 없습니다."));
     }
 
     /**

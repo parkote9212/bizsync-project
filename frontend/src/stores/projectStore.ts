@@ -16,8 +16,8 @@ interface ProjectStore {
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   clearError: () => void;
-  // TODO: 백엔드 API 호출 함수 (필요시 추가)
-  // fetchProjects: () => Promise<void>;
+  /** 사용자 전환 시 이전 사용자 데이터 초기화 (로그아웃/로그인 시 호출) */
+  reset: () => void;
 }
 
 // 초기 상태
@@ -70,6 +70,9 @@ export const useProjectStore = create<ProjectStore>()(
 
       // 에러 초기화
       clearError: () => set({ error: null }),
+
+      // 사용자 전환 시 초기화 (이전 사용자의 프로젝트 데이터 제거)
+      reset: () => set(initialState),
     }),
     {
       name: "project-storage",

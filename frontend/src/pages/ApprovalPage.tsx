@@ -29,8 +29,10 @@ import {
   Alert,
   CircularProgress,
   Grid,
+  IconButton,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
+import DeleteIcon from "@mui/icons-material/Delete";
 import client from "../api/client";
 import {
   ApprovalStatus,
@@ -60,6 +62,7 @@ const ApprovalPage = () => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
   const [detailData, setDetailData] = useState<ApprovalDetail | null>(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   
   // 승인/반려 다이얼로그 상태 (상세보기와 별도)
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
@@ -73,7 +76,7 @@ const ApprovalPage = () => {
     type: ApprovalType.WORK,
     amount: "",
     projectId: "",
-    approverIds: [],
+    approverIdInputs: [""],
   });
 
   useEffect(() => {
@@ -112,13 +115,33 @@ const ApprovalPage = () => {
     }
   };
 
+  const handleAddApprover = () => {
+    setFormData({ ...formData, approverIdInputs: [...formData.approverIdInputs, ""] });
+  };
+
+  const handleRemoveApprover = (index: number) => {
+    if (formData.approverIdInputs.length <= 1) return;
+    setFormData({
+      ...formData,
+      approverIdInputs: formData.approverIdInputs.filter((_, i) => i !== index),
+    });
+  };
+
   const handleCreateApproval = async (): Promise<void> => {
+    const approverIds = formData.approverIdInputs
+      .map((s) => parseInt(s.trim(), 10))
+      .filter((n) => !isNaN(n) && n > 0);
+    if (approverIds.length === 0) {
+      alert("결재자를 1명 이상 선택해주세요.");
+      return;
+    }
+
     try {
       const payload: ApprovalCreateRequest = {
         title: formData.title,
         content: formData.content,
         type: formData.type,
-        approverIds: formData.approverIds,
+        approverIds,
       };
 
       if (formData.projectId) {
@@ -142,7 +165,7 @@ const ApprovalPage = () => {
         type: ApprovalType.WORK,
         amount: "",
         projectId: "",
-        approverIds: [],
+        approverIdInputs: [""],
       });
       if (tabValue === 0) {
         fetchMyDrafts();
@@ -158,20 +181,22 @@ const ApprovalPage = () => {
 
   const handleViewDetail = async (documentId: number) => {
     setSelectedDocumentId(documentId);
-    // TODO: 백엔드 API 연결 필요 - GET /api/approvals/{documentId}
-    // 현재는 임시 데이터로 표시
-    setDetailData({
-      documentId,
-      title: "결재 상세 조회 API 연결 필요",
-      content: "백엔드 API (GET /api/approvals/{documentId}) 연결이 필요합니다.",
-      type: ApprovalType.WORK,
-      status: ApprovalStatus.PENDING,
-      drafterName: "-",
-      department: "-",
-      createdAt: new Date().toISOString(),
-      approvalLines: [],
-    });
+    setDetailData(null);
     setDetailDialogOpen(true);
+    setDetailLoading(true);
+    try {
+      const { data } = await client.get<ApprovalDetail>(`/approvals/${documentId}`);
+      setDetailData(data);
+    } catch (error: unknown) {
+      const msg = error && typeof error === "object" && "response" in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      alert(msg || "결재 상세 조회에 실패했습니다.");
+      setDetailDialogOpen(false);
+      setSelectedDocumentId(null);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const handleOpenRejectDialog = (documentId: number) => {
@@ -285,6 +310,19 @@ const ApprovalPage = () => {
     }
   };
 
+  const getTypeLabel = (type: string): string => {
+    switch (type) {
+      case ApprovalType.LEAVE:
+        return "휴가";
+      case ApprovalType.EXPENSE:
+        return "비용";
+      case ApprovalType.WORK:
+        return "업무";
+      default:
+        return type;
+    }
+  };
+
   return (
     <Container maxWidth="lg">
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
@@ -387,7 +425,7 @@ const ApprovalPage = () => {
         <DialogTitle>새 결재 기안</DialogTitle>
         <DialogContent>
           <Alert severity="info" sx={{ mb: 2 }}>
-            결재자 선택은 백엔드 API(/api/users) 연결이 필요합니다. 현재는 직접 입력해주세요.
+            각 결재자의 사용자 ID를 입력하세요. 결재선은 위에서부터 1차, 2차 순서로 진행됩니다.
           </Alert>
           <Grid container spacing={2} sx={{ mt: 1 }}>
             <Grid size={{ xs: 12 }}>
@@ -451,21 +489,45 @@ const ApprovalPage = () => {
               />
             </Grid>
             <Grid size={{ xs: 12 }}>
-              <Alert severity="warning">
-                결재자 ID 입력 (쉼표로 구분):{" "}
-                <TextField
-                  size="small"
-                  placeholder="예: 1,2,3"
-                  value={formData.approverIds.join(",")}
-                  onChange={(e) => {
-                    const ids = e.target.value
-                      .split(",")
-                      .map((id) => parseInt(id.trim()))
-                      .filter((id) => !isNaN(id));
-                    setFormData({ ...formData, approverIds: ids });
-                  }}
-                />
-              </Alert>
+              <Typography variant="subtitle2" gutterBottom>
+                결재선 (순서대로 1차, 2차, …)
+              </Typography>
+              {formData.approverIdInputs.map((input, index) => (
+                <Box key={index} display="flex" alignItems="center" gap={1} sx={{ mb: 1 }}>
+                  <Typography variant="body2" sx={{ minWidth: 72 }}>
+                    {index + 1}차 결재자
+                  </Typography>
+                  <TextField
+                    size="small"
+                    placeholder="사용자 ID"
+                    value={input}
+                    onChange={(e) => {
+                      const next = [...formData.approverIdInputs];
+                      next[index] = e.target.value;
+                      setFormData({ ...formData, approverIdInputs: next });
+                    }}
+                    sx={{ flex: 1, maxWidth: 160 }}
+                  />
+                  {formData.approverIdInputs.length > 1 && (
+                    <IconButton
+                      size="small"
+                      color="error"
+                      onClick={() => handleRemoveApprover(index)}
+                      aria-label="결재자 삭제"
+                    >
+                      <DeleteIcon fontSize="small" />
+                    </IconButton>
+                  )}
+                </Box>
+              ))}
+              <Button
+                size="small"
+                startIcon={<AddIcon />}
+                onClick={handleAddApprover}
+                sx={{ mt: 0.5 }}
+              >
+                결재자 추가
+              </Button>
             </Grid>
           </Grid>
         </DialogContent>
@@ -483,12 +545,12 @@ const ApprovalPage = () => {
           {detailData?.title || "결재 상세"}
         </DialogTitle>
         <DialogContent>
-          {detailData && (
-            <>
-              <Alert severity="warning" sx={{ mb: 2 }}>
-                결재 상세 조회 API (GET /api/approvals/{selectedDocumentId}) 연결이 필요합니다.
-              </Alert>
-              <Grid container spacing={2}>
+          {detailLoading ? (
+            <Box display="flex" justifyContent="center" py={4}>
+              <CircularProgress />
+            </Box>
+          ) : detailData ? (
+            <Grid container spacing={2}>
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="body2" color="text.secondary">
                     기안자: {detailData.drafterName} | 부서: {detailData.department} | 기안일:{" "}
@@ -497,7 +559,7 @@ const ApprovalPage = () => {
                 </Grid>
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="body2" color="text.secondary">
-                    유형: {detailData.type} | 상태:{" "}
+                    유형: {getTypeLabel(detailData.type)} | 상태:{" "}
                     <Chip
                       label={getStatusLabel(detailData.status)}
                       color={getStatusColor(detailData.status)}
@@ -541,13 +603,23 @@ const ApprovalPage = () => {
                   </Paper>
                 </Grid>
               </Grid>
-            </>
-          )}
+          ) : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetailDialogOpen(false)}>닫기</Button>
           {detailData?.status === ApprovalStatus.PENDING && tabValue === 1 && (
             <>
+            <Button
+                color="primary"
+                variant="contained"
+                onClick={() => {
+                  if (selectedDocumentId) {
+                    handleApprove(selectedDocumentId);
+                  }
+                }}
+              >
+                승인
+              </Button>
               <Button
                 color="error"
                 variant="outlined"
@@ -559,17 +631,7 @@ const ApprovalPage = () => {
               >
                 반려
               </Button>
-              <Button
-                color="primary"
-                variant="contained"
-                onClick={() => {
-                  if (selectedDocumentId) {
-                    handleApprove(selectedDocumentId);
-                  }
-                }}
-              >
-                승인
-              </Button>
+              
             </>
           )}
         </DialogActions>

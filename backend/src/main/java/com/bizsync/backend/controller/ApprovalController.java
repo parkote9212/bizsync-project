@@ -4,6 +4,7 @@ import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
+import com.bizsync.backend.dto.response.ApprovalDetailDTO;
 import com.bizsync.backend.service.ApprovalService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -57,6 +58,15 @@ public class ApprovalController {
         approvalService.processApproval(approverId, documentId, dto);
 
         return ResponseEntity.ok("결재가 정상적으로 처리되었습니다.");
+    }
+
+    /**
+     * 결재 상세 조회 (기안자 또는 결재선에 포함된 사용자만)
+     */
+    @GetMapping("/{documentId}")
+    public ResponseEntity<ApprovalDetailDTO> getApprovalDetail(@PathVariable Long documentId) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        return ResponseEntity.ok(approvalService.getApprovalDetail(userId, documentId));
     }
 
     @GetMapping("/my-drafts")

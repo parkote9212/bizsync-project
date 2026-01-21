@@ -46,4 +46,7 @@ public interface ApprovalLineRepository extends JpaRepository<ApprovalLine, Long
     List<ApprovalLine> findByDocumentOrderBySequence(
             @Param("document") ApprovalDocument document
     );
+
+    // 상세 조회 권한: 기안자 또는 결재선에 포함된 경우에만 조회 허용
+    boolean existsByDocument_DocumentIdAndApprover_UserId(Long documentId, Long userId);
 }

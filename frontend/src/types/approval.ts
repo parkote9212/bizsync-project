@@ -55,7 +55,8 @@ export interface ApprovalFormData {
   type: ApprovalType;
   amount: string;
   projectId: string;
-  approverIds: number[];
+  /** 결재선 입력값 (각 칸: 사용자 ID 문자열, ''이면 미입력) */
+  approverIdInputs: string[];
 }
 
 // 결재 처리 요청 데이터

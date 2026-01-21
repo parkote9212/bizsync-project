@@ -23,13 +23,21 @@ public class GlobalExceptionHandler {
                 .body(new ErrorResponse("BAD_REQUEST", e.getMessage()));
     }
 
-    // 인증 예외 처리 (SecurityUtil에서 발생)
-    @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException e) {
-        log.warn("Unauthorized access attempt: {}", e.getMessage());
+    // 인증 실패 (SecurityUtil.getCurrentUserIdOrThrow 등)
+    @ExceptionHandler(UnauthenticatedException.class)
+    public ResponseEntity<ErrorResponse> handleUnauthenticated(UnauthenticatedException e) {
+        log.warn("Unauthorized: {}", e.getMessage());
         return ResponseEntity
                 .status(HttpStatus.UNAUTHORIZED)
                 .body(new ErrorResponse("UNAUTHORIZED", e.getMessage()));
+    }
+
+    // 비즈니스 규칙 위반 (이미 처리된 결재, 이전 결재자 미승인, 예산 초과 등) → 400
+    @ExceptionHandler(IllegalStateException.class)
+    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException e) {
+        return ResponseEntity
+                .status(HttpStatus.BAD_REQUEST)
+                .body(new ErrorResponse("BAD_REQUEST", e.getMessage()));
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

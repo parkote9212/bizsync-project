@@ -8,6 +8,7 @@ import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
+import com.bizsync.backend.dto.response.ApprovalDetailDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -159,6 +160,25 @@ public class ApprovalService {
             // 알림 발송
             notificationService.sendApprovalRejectedNotification(document, dto.comment());
         }
+    }
+
+    /**
+     * 결재 상세 조회 (기안자 또는 결재선에 포함된 사용자만 가능)
+     */
+    @Transactional(readOnly = true)
+    public ApprovalDetailDTO getApprovalDetail(Long userId, Long documentId) {
+        ApprovalDocument document = approvalDocumentRepository.findById(documentId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 결재 문서입니다."));
+
+        // 권한: 기안자이거나, 결재선에 포함된 경우
+        boolean isDrafter = document.getDrafter().getUserId().equals(userId);
+        boolean isApprover = approvalLineRepository.existsByDocument_DocumentIdAndApprover_UserId(documentId, userId);
+        if (!isDrafter && !isApprover) {
+            throw new IllegalArgumentException("해당 결재 문서를 조회할 권한이 없습니다.");
+        }
+
+        List<ApprovalLine> lines = approvalLineRepository.findByDocumentOrderBySequence(document);
+        return ApprovalDetailDTO.from(document, lines);
     }
 
     /**

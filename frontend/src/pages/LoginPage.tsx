@@ -15,10 +15,14 @@ import {
 import client from "../api/client";
 import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../stores/userStore";
+import { useNotificationStore } from "../stores/notificationStore";
+import { useProjectStore } from "../stores/projectStore";
 
 const LoginPage = () => {
   const navigate = useNavigate();
   const setUser = useUserStore((state) => state.setUser);
+  const clearNotifications = useNotificationStore((state) => state.clearAll);
+  const resetProjects = useProjectStore((state) => state.reset);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -56,6 +60,10 @@ const LoginPage = () => {
       const { accessToken, refreshToken, userId, name: userName, email: userEmail, role } = response.data;
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
+
+      // 이전 사용자 데이터 제거 (사용자 전환 시 보안)
+      clearNotifications();
+      resetProjects();
 
       // 사용자 정보를 Zustand 스토어에 저장 (persist 미들웨어로 localStorage 자동 동기화)
       setUser({

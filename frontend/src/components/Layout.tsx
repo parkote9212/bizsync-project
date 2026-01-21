@@ -31,6 +31,7 @@ import { useNotificationSocket } from "../hooks/useNotificationSocket";
 import { useNotificationStore } from "../stores/notificationStore";
 import type { Notification } from "../stores/notificationStore";
 import { useUserStore } from "../stores/userStore";
+import { useProjectStore } from "../stores/projectStore";
 
 const DRAWER_WIDTH = 240;
 
@@ -70,11 +71,17 @@ const Layout = () => {
   ];
 
   const clearUser = useUserStore((state) => state.clearUser);
-  
+  const clearNotifications = useNotificationStore((state) => state.clearAll);
+  const resetProjects = useProjectStore((state) => state.reset);
+
   const handleLogout = () => {
+    // 1. 사용자별 데이터 스토어 초기화 (이전 사용자 데이터 노출 방지)
+    clearNotifications();
+    resetProjects();
+    // 2. 토큰·사용자 정보 제거
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
-    clearUser(); // Zustand 스토어도 초기화
+    clearUser();
     navigate("/login");
     setProfileAnchor(null);
   };

@@ -121,12 +121,14 @@ const ProjectListPage = () => {
 
         {/* 프로젝트가 없을 때 안내 문구 */}
         {projects.length === 0 && (
-          <Grid size={{ xs: 1 }}>
-            <Box textAlign={"center"} py={5} color={"text.secondary"}>
-              <Typography variant="h6">
+          <Grid size={{ xs: 12 }}>
+            <Box textAlign="center" py={5} px={2} color="text.secondary">
+              <Typography variant="h6" sx={{ whiteSpace: "normal" }}>
                 참여 중인 프로젝트가 없습니다.
               </Typography>
-              <Typography>새로운 프로젝트를 생성해보세요 !</Typography>
+              <Typography sx={{ whiteSpace: "normal", mt: 0.5 }}>
+                새로운 프로젝트를 생성해보세요!
+              </Typography>
             </Box>
           </Grid>
         )}
