@@ -6,6 +6,7 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import DescriptionIcon from "@mui/icons-material/Description";
 import DoneAllIcon from "@mui/icons-material/DoneAll";
 import FolderIcon from "@mui/icons-material/Folder";
+import LockIcon from "@mui/icons-material/Lock";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import PeopleIcon from "@mui/icons-material/People";
 import {
@@ -37,6 +38,7 @@ import { useProjectStore } from "../stores/projectStore";
 import { useThemeStore } from "../stores/themeStore";
 import { useUserStore } from "../stores/userStore";
 import type { NavigationMenuItem } from "../types/common";
+import PasswordChangeDialog from "./PasswordChangeDialog";
 
 const DRAWER_WIDTH = 240;
 
@@ -45,6 +47,7 @@ const Layout = () => {
   const location = useLocation();
   const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
+  const [passwordDialogOpen, setPasswordDialogOpen] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
@@ -363,13 +366,20 @@ const Layout = () => {
                   직급: {user.position}
                 </Typography>
               )}
-              {user.role && (
-                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                  권한: {user.role}
-                </Typography>
-              )}
             </Box>
             <Divider />
+            <MenuItem
+              onClick={() => {
+                setProfileAnchor(null);
+                setPasswordDialogOpen(true);
+              }}
+              sx={{
+                "&:hover": { bgcolor: "action.hover" },
+              }}
+            >
+              <LockIcon sx={{ mr: 1, fontSize: "1rem" }} />
+              비밀번호 변경
+            </MenuItem>
             <MenuItem
               onClick={handleLogout}
               sx={{
@@ -380,6 +390,12 @@ const Layout = () => {
               로그아웃
             </MenuItem>
           </Menu>
+
+          {/* 비밀번호 변경 Dialog */}
+          <PasswordChangeDialog
+            open={passwordDialogOpen}
+            onClose={() => setPasswordDialogOpen(false)}
+          />
         </Toolbar>
       </AppBar>
 

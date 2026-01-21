@@ -1,14 +1,17 @@
-import React, { useState } from "react";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  TextField,
+  Autocomplete,
+  Box,
   Button,
+  CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Stack,
+  TextField,
   Typography,
 } from "@mui/material";
+import React, { useState } from "react";
 import client from "../api/client";
 
 interface ProjectInviteDialogProps {
@@ -17,27 +20,56 @@ interface ProjectInviteDialogProps {
   projectId: string | undefined;
 }
 
+interface UserSearchResult {
+  userId: number;
+  name: string;
+  email: string;
+  department: string;
+  position: string;
+}
+
 const ProjectInviteDialog: React.FC<ProjectInviteDialogProps> = ({
   open,
   onClose,
   projectId,
 }) => {
-  const [email, setEmail] = useState("");
+  const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
+  const [searchOptions, setSearchOptions] = useState<UserSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  const handleSearchUsers = async (keyword: string) => {
+    if (!keyword || keyword.length < 2) {
+      setSearchOptions([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const response = await client.get(`/users/search?keyword=${keyword}`);
+      setSearchOptions(response.data.data || []);
+    } catch (error) {
+      console.error("사용자 검색 실패:", error);
+      setSearchOptions([]);
+    } finally {
+      setSearchLoading(false);
+    }
+  };
+
   const handleInvite = async () => {
-    if (!email.trim() || !projectId) return;
+    if (!selectedUser || !projectId) return;
 
     setLoading(true);
     try {
-      // API 호출: POST /api/projects/{projectId}/invite
-      await client.post(`/projects/${projectId}/invite`, { email });
+      await client.post(`/projects/${projectId}/invite`, {
+        email: selectedUser.email,
+      });
       alert("팀원을 초대했습니다!");
-      setEmail("");
+      setSelectedUser(null);
+      setSearchOptions([]);
       onClose();
     } catch (error: unknown) {
       console.error("초대 실패", error);
-      // 백엔드 에러 메시지(예: "이미 멤버입니다")를 보여주면 더 좋음
       const message =
         (error instanceof Object &&
           "response" in error &&
@@ -51,22 +83,58 @@ const ProjectInviteDialog: React.FC<ProjectInviteDialogProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       <DialogTitle>팀원 초대하기</DialogTitle>
       <DialogContent>
         <Typography variant="body2" color="text.secondary" mb={2}>
-          초대할 팀원의 이메일 주소를 입력해주세요.
+          초대할 팀원의 이름 또는 이메일을 검색해주세요.
         </Typography>
-        <Stack spacing={2}>
-          <TextField
-            label="이메일 주소"
-            type="email"
-            fullWidth
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="example@bizsync.com"
-            autoFocus
-            onKeyDown={(e) => e.key === "Enter" && handleInvite()}
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <Autocomplete
+            options={searchOptions}
+            value={selectedUser}
+            onChange={(event, newValue) => setSelectedUser(newValue)}
+            onInputChange={(event, newInputValue) => {
+              handleSearchUsers(newInputValue);
+            }}
+            getOptionLabel={(option) => `${option.name} (${option.email})`}
+            loading={searchLoading}
+            renderInput={(params) => (
+              <TextField
+                {...params}
+                label="이름 또는 이메일 검색"
+                placeholder="최소 2글자 입력"
+                InputProps={{
+                  ...params.InputProps,
+                  endAdornment: (
+                    <>
+                      {searchLoading ? (
+                        <CircularProgress color="inherit" size={20} />
+                      ) : null}
+                      {params.InputProps.endAdornment}
+                    </>
+                  ),
+                }}
+              />
+            )}
+            renderOption={(props, option) => (
+              <li {...props}>
+                <Box>
+                  <Typography variant="body1" fontWeight="medium">
+                    {option.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    {option.email}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {option.position && option.department
+                      ? `${option.position} · ${option.department}`
+                      : option.position || option.department || ""}
+                  </Typography>
+                </Box>
+              </li>
+            )}
+            noOptionsText="검색 결과가 없습니다"
           />
         </Stack>
       </DialogContent>
@@ -74,7 +142,11 @@ const ProjectInviteDialog: React.FC<ProjectInviteDialogProps> = ({
         <Button onClick={onClose} color="inherit">
           취소
         </Button>
-        <Button onClick={handleInvite} variant="contained" disabled={loading}>
+        <Button
+          onClick={handleInvite}
+          variant="contained"
+          disabled={loading || !selectedUser}
+        >
           {loading ? "초대 중..." : "초대 보내기"}
         </Button>
       </DialogActions>

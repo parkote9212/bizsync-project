@@ -15,6 +15,7 @@ export interface KanbanColumn {
   name: string;
   sequence: number;
   tasks: Task[];
+  columnType?: "TODO" | "IN_PROGRESS" | "DONE"; // 컬럼 타입
 }
 
 export interface BoardData {
@@ -22,6 +23,7 @@ export interface BoardData {
   name: string;
   columns: KanbanColumn[];
   status?: string; // 프로젝트 상태
+  myRole?: string; // 현재 사용자의 프로젝트 내 역할 (PL, MEMBER)
 }
 
 export interface Project {

@@ -1,6 +1,7 @@
 package com.bizsync.backend.domain.repository;
 
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,9 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
 
     // 프로젝트아이디에 특정 유저가 멤머로 있늕지 확인
     boolean existsByProject_ProjectIdAndUser_UserId(Long projectId, Long currentUserId);
+
+    // 프로젝트 ID와 사용자 ID로 프로젝트 멤버 조회
+    Optional<ProjectMember> findByProject_ProjectIdAndUser_UserId(Long projectId, Long userId);
 
     // 내가 속한 프로젝트 목록 조회
     @Query("SELECT pm FROM ProjectMember pm JOIN FETCH pm.project WHERE pm.user.userId = :userId")

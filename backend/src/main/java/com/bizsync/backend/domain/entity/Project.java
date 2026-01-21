@@ -106,4 +106,25 @@ public class Project {
     public boolean isCompleted() {
         return this.status == ProjectStatus.COMPLETED;
     }
+
+    /**
+     * 프로젝트 정보 수정
+     */
+    public void update(String name, String description, LocalDate startDate, LocalDate endDate, BigDecimal totalBudget) {
+        if (name != null && !name.isBlank()) {
+            this.name = name;
+        }
+        if (description != null) {
+            this.description = description;
+        }
+        if (startDate != null) {
+            this.startDate = startDate;
+        }
+        if (endDate != null) {
+            this.endDate = endDate;
+        }
+        if (totalBudget != null) {
+            this.totalBudget = totalBudget;
+        }
+    }
 }

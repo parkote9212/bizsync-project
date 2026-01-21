@@ -3,6 +3,7 @@ import { useParams } from "react-router-dom";
 // 컴포넌트 Import
 import ColumnCreateDialog from "../components/ColumnCreateDialog";
 import ProjectInviteDialog from "../components/ProjectInviteDialog";
+import ProjectSettingsDialog from "../components/ProjectSettingsDialog";
 import TaskCreateDialog from "../components/TaskCreateDialog";
 import TaskDetailDialog from "../components/TaskDetailDialog";
 // Hooks Import
@@ -20,6 +21,7 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  IconButton,
   Paper,
   Snackbar,
   Stack,
@@ -28,9 +30,11 @@ import {
 // Icons Import
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import ReplayIcon from "@mui/icons-material/Replay";
+import SettingsIcon from "@mui/icons-material/Settings";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 // API Import
 import client from "../api/client";
@@ -80,6 +84,9 @@ const KanbanBoardPage = () => {
 
   // 4. ★ 팀원 초대 모달용 State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
+
+  // 프로젝트 설정 Dialog State
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   // 5. 엑셀 업로드/다운로드용 State
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -158,6 +165,26 @@ const KanbanBoardPage = () => {
   const handleCardClick = (taskId: number) => {
     setSelectedTaskId(taskId);
     setIsDetailOpen(true);
+  };
+
+  // [컬럼 삭제]
+  const handleDeleteColumn = async (columnId: number, columnName: string) => {
+    if (!confirm(`"${columnName}" 컬럼을 삭제하시겠습니까?\n컬럼 내 모든 업무도 함께 삭제됩니다.`)) {
+      return;
+    }
+
+    try {
+      await client.delete(`/columns/${columnId}`);
+      setSnackbarMessage("컬럼이 삭제되었습니다");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      await refreshBoard();
+    } catch (error: any) {
+      console.error("컬럼 삭제 실패:", error);
+      setSnackbarMessage(error.response?.data?.message || "컬럼 삭제에 실패했습니다");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    }
   };
 
   // [엑셀 업로드] 파일 선택 다이얼로그 열기
@@ -318,37 +345,41 @@ const KanbanBoardPage = () => {
             {downloading ? "다운로드 중..." : "엑셀 다운로드"}
           </Button>
 
-          {/* 프로젝트 완료/재진행 버튼 */}
-          {boardData?.status === "COMPLETED" ? (
-            <Button
-              variant="outlined"
-              color="success"
-              size="small"
-              startIcon={completingProject ? <CircularProgress size={16} /> : <ReplayIcon />}
-              onClick={handleReopenProject}
-              disabled={completingProject}
-              sx={{
-                fontWeight: "bold",
-                fontSize: { xs: "0.75rem", sm: "0.875rem" },
-              }}
-            >
-              {completingProject ? "처리 중..." : "재진행"}
-            </Button>
-          ) : (
-            <Button
-              variant="outlined"
-              color="success"
-              size="small"
-              startIcon={completingProject ? <CircularProgress size={16} /> : <CheckCircleIcon />}
-              onClick={handleCompleteProject}
-              disabled={completingProject || boardData?.status === "COMPLETED"}
-              sx={{
-                fontWeight: "bold",
-                fontSize: { xs: "0.75rem", sm: "0.875rem" },
-              }}
-            >
-              {completingProject ? "처리 중..." : "프로젝트 완료"}
-            </Button>
+          {/* 프로젝트 완료/재진행 버튼 (PL만) */}
+          {boardData?.myRole === "PL" && (
+            <>
+              {boardData?.status === "COMPLETED" ? (
+                <Button
+                  variant="outlined"
+                  color="success"
+                  size="small"
+                  startIcon={completingProject ? <CircularProgress size={16} /> : <ReplayIcon />}
+                  onClick={handleReopenProject}
+                  disabled={completingProject}
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  }}
+                >
+                  {completingProject ? "처리 중..." : "재진행"}
+                </Button>
+              ) : (
+                <Button
+                  variant="outlined"
+                  color="success"
+                  size="small"
+                  startIcon={completingProject ? <CircularProgress size={16} /> : <CheckCircleIcon />}
+                  onClick={handleCompleteProject}
+                  disabled={completingProject || boardData?.status === "COMPLETED"}
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  }}
+                >
+                  {completingProject ? "처리 중..." : "프로젝트 완료"}
+                </Button>
+              )}
+            </>
           )}
 
           {/* 팀원 초대 버튼 */}
@@ -364,6 +395,20 @@ const KanbanBoardPage = () => {
             }}
           >
             팀원 초대
+          </Button>
+
+          <Button
+            variant="outlined"
+            color="inherit"
+            size="small"
+            startIcon={<SettingsIcon />}
+            onClick={() => setIsSettingsOpen(true)}
+            sx={{
+              fontWeight: "bold",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+            }}
+          >
+            설정
           </Button>
         </Stack>
       </Stack>
@@ -394,19 +439,54 @@ const KanbanBoardPage = () => {
                 flexDirection: "column",
               }}
             >
-              <Typography
-                variant="subtitle1"
-                fontWeight="bold"
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
                 mb={2}
                 sx={{ px: 1 }}
               >
-                {column.name}{" "}
-                <Chip
-                  label={column.tasks.length}
+                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+                  <Typography variant="subtitle1" fontWeight="bold">
+                    {column.name}
+                  </Typography>
+                  <Chip
+                    label={column.tasks.length}
+                    size="small"
+                    sx={{ height: 20 }}
+                  />
+                  {column.columnType && (
+                    <Chip
+                      label={
+                        column.columnType === "TODO"
+                          ? "할 일"
+                          : column.columnType === "IN_PROGRESS"
+                            ? "진행 중"
+                            : "완료"
+                      }
+                      size="small"
+                      color={
+                        column.columnType === "TODO"
+                          ? "default"
+                          : column.columnType === "IN_PROGRESS"
+                            ? "primary"
+                            : "success"
+                      }
+                      sx={{ height: 20, fontSize: "0.7rem" }}
+                    />
+                  )}
+                </Box>
+                <IconButton
                   size="small"
-                  sx={{ ml: 1, height: 20 }}
-                />
-              </Typography>
+                  onClick={() => handleDeleteColumn(column.columnId, column.name)}
+                  sx={{
+                    color: "error.main",
+                    "&:hover": { bgcolor: "error.light" },
+                  }}
+                >
+                  <DeleteIcon fontSize="small" />
+                </IconButton>
+              </Stack>
               <Droppable droppableId={column.columnId.toString()}>
                 {(provided) => (
                   <Box
@@ -565,6 +645,14 @@ const KanbanBoardPage = () => {
             open={isInviteOpen}
             onClose={() => setIsInviteOpen(false)}
             projectId={projectId}
+          />
+
+          {/* 프로젝트 설정 모달 */}
+          <ProjectSettingsDialog
+            open={isSettingsOpen}
+            onClose={() => setIsSettingsOpen(false)}
+            projectId={projectId}
+            onUpdate={refreshBoard}
           />
         </Stack>
       </DragDropContext>

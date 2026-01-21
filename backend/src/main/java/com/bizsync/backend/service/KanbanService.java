@@ -3,6 +3,7 @@ package com.bizsync.backend.service;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.bizsync.backend.common.annotation.RequireProjectLeader;
 import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.domain.entity.ColumnType;
 import com.bizsync.backend.domain.entity.KanbanColumn;
@@ -32,14 +33,10 @@ public class KanbanService {
     private final com.bizsync.backend.domain.repository.ProjectMemberRepository projectMemberRepository;
 
     // 칼럼 생성 (PL만 가능)
+    @RequireProjectLeader
     public Long createColumn(Long projectId, ColumnCreateRequestDTO dto) {
-        Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
-
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new IllegalArgumentException("프로젝트가 없습니다."));
-
-        // PL 권한 확인
-        validateProjectLeader(projectId, currentUserId);
 
         // 자동 순서 계산 : 기존 Max값 + 1
         int nextSequence = kanbanColumnRepository.findMaxSequence(projectId) + 1;
@@ -63,15 +60,16 @@ public class KanbanService {
     // 칼럼 삭제 (PL만 가능)
     @Transactional
     public void deleteColumn(Long columnId) {
-        Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
-
         KanbanColumn column = kanbanColumnRepository.findById(columnId)
                 .orElseThrow(() -> new IllegalArgumentException("컬럼을 찾을 수 없습니다."));
 
         Long projectId = column.getProject().getProjectId();
 
-        // PL 권한 확인
-        validateProjectLeader(projectId, currentUserId);
+        // PL 권한 확인 (수동 호출)
+        Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
+        if (!isProjectLeader(projectId, currentUserId)) {
+            throw new IllegalArgumentException("프로젝트 리더(PL)만 수행할 수 있는 작업입니다.");
+        }
 
         // 컬럼에 속한 업무들도 함께 삭제됨 (cascade 설정에 따라 다름)
         kanbanColumnRepository.deleteById(columnId);
@@ -206,15 +204,12 @@ public class KanbanService {
     /**
      * 프로젝트 리더(PL) 권한 확인 헬퍼 메서드
      */
-    private void validateProjectLeader(Long projectId, Long userId) {
-        com.bizsync.backend.domain.entity.ProjectMember member = projectMemberRepository.findAllByUser_UserId(userId)
-                .stream()
-                .filter(pm -> pm.getProject().getProjectId().equals(projectId))
-                .findFirst()
-                .orElseThrow(() -> new IllegalArgumentException("해당 프로젝트에 접근 권한이 없습니다."));
-
-        if (member.getRole() != com.bizsync.backend.domain.entity.ProjectMember.Role.PL) {
-            throw new IllegalArgumentException("프로젝트 리더(PL)만 수행할 수 있는 작업입니다.");
-        }
+    /**
+     * 프로젝트 리더 권한 확인 헬퍼 메서드
+     */
+    private boolean isProjectLeader(Long projectId, Long userId) {
+        return projectMemberRepository.findByProject_ProjectIdAndUser_UserId(projectId, userId)
+                .map(member -> member.getRole() == com.bizsync.backend.domain.entity.ProjectMember.Role.PL)
+                .orElse(false);
     }
 }

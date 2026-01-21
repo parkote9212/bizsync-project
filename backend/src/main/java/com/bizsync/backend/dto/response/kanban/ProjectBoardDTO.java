@@ -18,5 +18,6 @@ public class ProjectBoardDTO {
     private BigDecimal totalBudget;
     private BigDecimal usedBudget;
     private String status; // 프로젝트 상태
+    private String myRole; // 현재 사용자의 프로젝트 내 역할 (PL, MEMBER)
     private List<KanbanColumnDTO> columns; // 1 : N
 }

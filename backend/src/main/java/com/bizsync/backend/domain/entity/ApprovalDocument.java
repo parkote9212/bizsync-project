@@ -1,10 +1,25 @@
 package com.bizsync.backend.domain.entity;
 
-import jakarta.persistence.*;
-import lombok.*;
-
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.Table;
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 @Entity
 @Table(name = "approval_document")
@@ -34,7 +49,7 @@ public class ApprovalDocument {
     @Column(columnDefinition = "TEXT")
     private String content;
 
-    //결재 유형(휴가/비용/업무)
+    // 결재 유형(휴가/비용/업무)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private ApprovalType type;
@@ -55,18 +70,27 @@ public class ApprovalDocument {
     @PrePersist
     public void prePersist() {
         this.createdAt = LocalDateTime.now();
-        if (this.status == null) this.status = ApprovalStatus.PENDING;
+        if (this.status == null)
+            this.status = ApprovalStatus.PENDING;
     }
 
-    //승인
+    // 승인
     public void approve() {
         this.status = ApprovalStatus.APPROVED;
         this.completedAt = LocalDateTime.now();
     }
 
-    //반려
+    // 반려
     public void reject() {
         this.status = ApprovalStatus.REJECTED;
+        this.completedAt = LocalDateTime.now();
+    }
+
+    /**
+     * 취소
+     */
+    public void cancel() {
+        this.status = ApprovalStatus.CANCELLED;
         this.completedAt = LocalDateTime.now();
     }
 

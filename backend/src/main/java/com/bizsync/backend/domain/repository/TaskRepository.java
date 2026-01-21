@@ -43,4 +43,9 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      */
     @Query("SELECT t FROM Task t JOIN FETCH t.column c JOIN FETCH c.project WHERE t.worker.userId = :userId")
     List<Task> findByWorker_UserId(@Param("userId") Long userId);
+
+    /**
+     * 프로젝트의 모든 업무 삭제
+     */
+    void deleteByColumn_Project_ProjectId(Long projectId);
 }

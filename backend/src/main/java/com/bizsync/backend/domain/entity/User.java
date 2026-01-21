@@ -53,5 +53,11 @@ public class User {
         this.department = department;
     }
 
+    /**
+     * 비밀번호 변경
+     */
+    public void changePassword(String newEncodedPassword) {
+        this.password = newEncodedPassword;
+    }
 
 }

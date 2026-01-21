@@ -6,6 +6,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -16,4 +17,7 @@ public interface KanbanColumnRepository extends JpaRepository<KanbanColumn, Long
     Integer findMaxSequence(@Param("projectId") Long projectId);
 
     Optional<KanbanColumn> findByProject_ProjectIdAndName(Long projectId, String columnName);
+
+    // 프로젝트의 모든 컬럼 조회
+    List<KanbanColumn> findByProject_ProjectId(Long projectId);
 }

@@ -1,6 +1,7 @@
 package com.bizsync.backend.controller;
 
 import com.bizsync.backend.dto.request.LoginRequestDTO;
+import com.bizsync.backend.dto.request.PasswordChangeRequestDTO;
 import com.bizsync.backend.dto.request.RefreshTokenRequest;
 import com.bizsync.backend.dto.request.SignumRequestDTO;
 import com.bizsync.backend.dto.response.JwtTokenResponse;
@@ -52,5 +53,14 @@ public class AuthController {
     public ResponseEntity<JwtTokenResponse> refresh(@Valid @RequestBody RefreshTokenRequest request) {
         JwtTokenResponse tokenResponse = authService.refresh(request.refreshToken());
         return ResponseEntity.ok(tokenResponse);
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    @PostMapping("/change-password")
+    public ResponseEntity<Map<String, String>> changePassword(@Valid @RequestBody PasswordChangeRequestDTO dto) {
+        authService.changePassword(dto);
+        return ResponseEntity.ok(Map.of("message", "비밀번호가 변경되었습니다."));
     }
 }

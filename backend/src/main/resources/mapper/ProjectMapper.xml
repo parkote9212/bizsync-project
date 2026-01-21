@@ -18,6 +18,7 @@
             <id property="columnId" column="column_id"/>
             <result property="name" column="column_name"/>
             <result property="sequence" column="column_seq"/>
+            <result property="columnType" column="column_type"/>
 
             <collection property="tasks"
                         ofType="TaskDTO"
@@ -43,6 +44,7 @@
                c.column_id,
                c.name     AS column_name,
                c.sequence AS column_seq,
+               c.column_type,
 
                t.task_id,
                t.title    AS task_title,

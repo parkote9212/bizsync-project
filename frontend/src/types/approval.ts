@@ -4,6 +4,7 @@ export const ApprovalStatus = {
   PENDING: "PENDING",
   APPROVED: "APPROVED",
   REJECTED: "REJECTED",
+  CANCELLED: "CANCELLED",
 } as const;
 
 export type ApprovalStatus = typeof ApprovalStatus[keyof typeof ApprovalStatus];
@@ -48,6 +49,15 @@ export interface ApprovalDetail {
   approvalLines: ApprovalLine[];
 }
 
+// 사용자 검색 결과
+export interface UserSearchResult {
+  userId: number;
+  name: string;
+  email: string;
+  department: string;
+  position: string;
+}
+
 // 결재 작성 폼 데이터
 export interface ApprovalFormData {
   title: string;
@@ -55,8 +65,8 @@ export interface ApprovalFormData {
   type: ApprovalType;
   amount: string;
   projectId: string;
-  /** 결재선 입력값 (각 칸: 사용자 ID 문자열, ''이면 미입력) */
-  approverIdInputs: string[];
+  /** 결재선 (사용자 객체 배열) */
+  approvers: UserSearchResult[];
 }
 
 // 결재 처리 요청 데이터

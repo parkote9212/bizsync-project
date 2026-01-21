@@ -1,8 +1,8 @@
 package com.bizsync.backend.domain.repository;
 
-import com.bizsync.backend.domain.entity.ApprovalDocument;
-import com.bizsync.backend.domain.entity.ApprovalLine;
-import com.bizsync.backend.domain.entity.ApprovalStatus;
+import java.util.List;
+import java.util.Optional;
+
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -10,8 +10,9 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-import java.util.Optional;
+import com.bizsync.backend.domain.entity.ApprovalDocument;
+import com.bizsync.backend.domain.entity.ApprovalLine;
+import com.bizsync.backend.domain.entity.ApprovalStatus;
 
 @Repository
 public interface ApprovalLineRepository extends JpaRepository<ApprovalLine, Long> {
@@ -27,8 +28,11 @@ public interface ApprovalLineRepository extends JpaRepository<ApprovalLine, Long
     boolean existsByDocument_DocumentIdAndSequenceLessThanAndStatusNot(
             Long documentId, Integer sequence, ApprovalStatus status);
 
-    // 결재 대김함 : 결재자가 나이고 내 상태가 PENDING인 것 조회
+    // 결재 대기함 : 결재자가 나이고 내 상태가 PENDING인 것 조회
     Page<ApprovalLine> findByApprover_UserIdAndStatus(Long userId, ApprovalStatus status, Pageable pageable);
+
+    // 결재 완료함 : 결재자가 나이고 내 상태가 APPROVED 또는 REJECTED인 것 조회
+    Page<ApprovalLine> findByApprover_UserIdAndStatusIn(Long userId, List<ApprovalStatus> statuses, Pageable pageable);
 
     // 특정 문서에서 특정 승인자의 결재선 찾기
     @Query("SELECT al FROM ApprovalLine al " +

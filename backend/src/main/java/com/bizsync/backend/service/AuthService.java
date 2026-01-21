@@ -5,9 +5,11 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.bizsync.backend.common.util.JwtProvider;
+import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.domain.entity.User;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.request.LoginRequestDTO;
+import com.bizsync.backend.dto.request.PasswordChangeRequestDTO;
 import com.bizsync.backend.dto.request.SignumRequestDTO;
 import com.bizsync.backend.dto.response.JwtTokenResponse;
 
@@ -124,5 +126,32 @@ public class AuthService {
                 user.getPosition() != null ? user.getPosition().getKorean() : null,
                 user.getDepartment()
         );
+    }
+
+    /**
+     * 비밀번호 변경
+     */
+    public void changePassword(PasswordChangeRequestDTO dto) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+
+        // 사용자 조회
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 사용자입니다."));
+
+        // 현재 비밀번호 검증
+        if (!passwordEncoder.matches(dto.currentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 일치하지 않습니다.");
+        }
+
+        // 새 비밀번호가 현재 비밀번호와 같은지 확인
+        if (dto.currentPassword().equals(dto.newPassword())) {
+            throw new IllegalArgumentException("새 비밀번호는 현재 비밀번호와 달라야 합니다.");
+        }
+
+        // 비밀번호 변경
+        String encodedNewPassword = passwordEncoder.encode(dto.newPassword());
+        user.changePassword(encodedNewPassword);
+
+        log.info("비밀번호 변경 성공: userId={}", userId);
     }
 }

@@ -1,50 +1,49 @@
-import { useState, useEffect } from "react";
 import {
+  Alert,
+  Autocomplete,
   Box,
-  Container,
-  Typography,
   Button,
+  Chip,
+  CircularProgress,
+  Container,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  Grid,
+  InputLabel,
+  MenuItem,
   Paper,
+  Select,
+  Step,
+  StepLabel,
+  Stepper,
+  Tab,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
-  Tab,
   Tabs,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  Stepper,
-  Step,
-  StepLabel,
-  Alert,
-  CircularProgress,
-  Grid,
-  IconButton,
+  Typography,
 } from "@mui/material";
-import AddIcon from "@mui/icons-material/Add";
-import DeleteIcon from "@mui/icons-material/Delete";
+import { useEffect, useState } from "react";
 import client from "../api/client";
-import {
-  ApprovalStatus,
-  ApprovalType,
-} from "../types/approval";
 import type {
-  ApprovalSummary,
+  ApprovalCreateRequest,
   ApprovalDetail,
   ApprovalFormData,
   ApprovalProcessRequest,
-  ApprovalCreateRequest,
+  ApprovalSummary,
   PageResponse,
+  UserSearchResult,
+} from "../types/approval";
+import {
+  ApprovalStatus,
+  ApprovalType,
 } from "../types/approval";
 
 // date-fns 사용 대신 Date 객체 사용
@@ -57,6 +56,7 @@ const ApprovalPage = () => {
   const [tabValue, setTabValue] = useState(0);
   const [myDrafts, setMyDrafts] = useState<ApprovalSummary[]>([]);
   const [myPending, setMyPending] = useState<ApprovalSummary[]>([]);
+  const [myCompleted, setMyCompleted] = useState<ApprovalSummary[]>([]);
   const [loading, setLoading] = useState(false);
   const [createDialogOpen, setCreateDialogOpen] = useState(false);
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
@@ -76,14 +76,20 @@ const ApprovalPage = () => {
     type: ApprovalType.WORK,
     amount: "",
     projectId: "",
-    approverIdInputs: [""],
+    approvers: [],
   });
+
+  // 사용자 검색
+  const [searchOptions, setSearchOptions] = useState<UserSearchResult[]>([]);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   useEffect(() => {
     if (tabValue === 0) {
       fetchMyDrafts();
-    } else {
+    } else if (tabValue === 1) {
       fetchMyPending();
+    } else {
+      fetchMyCompleted();
     }
   }, [tabValue]);
 
@@ -115,22 +121,41 @@ const ApprovalPage = () => {
     }
   };
 
-  const handleAddApprover = () => {
-    setFormData({ ...formData, approverIdInputs: [...formData.approverIdInputs, ""] });
+  const fetchMyCompleted = async () => {
+    try {
+      setLoading(true);
+      const response = await client.get<PageResponse<ApprovalSummary>>("/approvals/my-completed", {
+        params: { page: 0, size: 20 },
+      });
+      setMyCompleted(response.data.content || []);
+    } catch (error) {
+      console.error("결재 완료함 조회 실패", error);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleRemoveApprover = (index: number) => {
-    if (formData.approverIdInputs.length <= 1) return;
-    setFormData({
-      ...formData,
-      approverIdInputs: formData.approverIdInputs.filter((_, i) => i !== index),
-    });
+  const handleSearchUsers = async (keyword: string) => {
+    if (!keyword || keyword.length < 2) {
+      setSearchOptions([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    try {
+      const response = await client.get(`/users/search?keyword=${keyword}`);
+      setSearchOptions(response.data.data || []);
+    } catch (error) {
+      console.error("사용자 검색 실패:", error);
+      setSearchOptions([]);
+    } finally {
+      setSearchLoading(false);
+    }
   };
+
 
   const handleCreateApproval = async (): Promise<void> => {
-    const approverIds = formData.approverIdInputs
-      .map((s) => parseInt(s.trim(), 10))
-      .filter((n) => !isNaN(n) && n > 0);
+    const approverIds = formData.approvers.map((user) => user.userId);
     if (approverIds.length === 0) {
       alert("결재자를 1명 이상 선택해주세요.");
       return;
@@ -165,8 +190,9 @@ const ApprovalPage = () => {
         type: ApprovalType.WORK,
         amount: "",
         projectId: "",
-        approverIdInputs: [""],
+        approvers: [],
       });
+      setSearchOptions([]);
       if (tabValue === 0) {
         fetchMyDrafts();
       }
@@ -226,7 +252,8 @@ const ApprovalPage = () => {
 
       // 데이터 새로고침
       fetchMyPending();
-      if (tabValue === 1) {
+      fetchMyCompleted();
+      if (tabValue === 0) {
         fetchMyDrafts();
       }
     } catch (error: unknown) {
@@ -234,6 +261,33 @@ const ApprovalPage = () => {
         ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
         : undefined;
       alert(errorMessage || "결재 승인 실패");
+      console.error(error);
+    }
+  };
+
+  const handleCancelApproval = async (documentId: number): Promise<void> => {
+    if (!window.confirm("결재를 취소하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      await client.post(`/approvals/${documentId}/cancel`);
+      alert("결재가 취소되었습니다.");
+
+      // 상세보기가 열려있으면 닫기
+      if (detailDialogOpen && selectedDocumentId === documentId) {
+        setDetailDialogOpen(false);
+        setSelectedDocumentId(null);
+        setDetailData(null);
+      }
+
+      // 데이터 새로고침
+      fetchMyDrafts();
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === "object" && "response" in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      alert(errorMessage || "결재 취소 실패");
       console.error(error);
     }
   };
@@ -266,7 +320,8 @@ const ApprovalPage = () => {
 
       // 데이터 새로고침
       fetchMyPending();
-      if (tabValue === 1) {
+      fetchMyCompleted();
+      if (tabValue === 0) {
         fetchMyDrafts();
       }
     } catch (error: unknown) {
@@ -290,6 +345,8 @@ const ApprovalPage = () => {
         return "error";
       case ApprovalStatus.PENDING:
         return "warning";
+      case ApprovalStatus.CANCELLED:
+        return "default";
       default:
         return "default";
     }
@@ -305,6 +362,8 @@ const ApprovalPage = () => {
         return "진행중";
       case ApprovalStatus.TEMP:
         return "임시저장";
+      case ApprovalStatus.CANCELLED:
+        return "취소";
       default:
         return status;
     }
@@ -334,7 +393,6 @@ const ApprovalPage = () => {
         <Button
           variant="contained"
           size="small"
-          startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
           sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
         >
@@ -346,6 +404,7 @@ const ApprovalPage = () => {
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
           <Tab label="내 기안함" />
           <Tab label="내 결재 대기함" />
+          <Tab label="내 결재 완료함" />
         </Tabs>
 
         {loading ? (
@@ -365,7 +424,7 @@ const ApprovalPage = () => {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {(tabValue === 0 ? myDrafts : myPending).map((item) => (
+                {(tabValue === 0 ? myDrafts : tabValue === 1 ? myPending : myCompleted).map((item) => (
                   <TableRow key={item.documentId} hover>
                     <TableCell>{item.title}</TableCell>
                     <TableCell>{item.drafterName}</TableCell>
@@ -414,7 +473,7 @@ const ApprovalPage = () => {
                     </TableCell>
                   </TableRow>
                 ))}
-                {(tabValue === 0 ? myDrafts : myPending).length === 0 && (
+                {(tabValue === 0 ? myDrafts : tabValue === 1 ? myPending : myCompleted).length === 0 && (
                   <TableRow>
                     <TableCell colSpan={5} align="center">
                       데이터가 없습니다.
@@ -499,42 +558,60 @@ const ApprovalPage = () => {
               <Typography variant="subtitle2" gutterBottom>
                 결재선 (순서대로 1차, 2차, …)
               </Typography>
-              {formData.approverIdInputs.map((input, index) => (
-                <Box key={index} display="flex" alignItems="center" gap={1} sx={{ mb: 1 }}>
-                  <Typography variant="body2" sx={{ minWidth: 72 }}>
-                    {index + 1}차 결재자
-                  </Typography>
+              <Autocomplete
+                multiple
+                options={searchOptions}
+                value={formData.approvers}
+                onChange={(_event, newValue) => {
+                  setFormData({ ...formData, approvers: newValue });
+                }}
+                onInputChange={(_event, newInputValue) => {
+                  handleSearchUsers(newInputValue);
+                }}
+                getOptionLabel={(option) => `${option.name} (${option.email})`}
+                loading={searchLoading}
+                renderInput={(params) => (
                   <TextField
-                    size="small"
-                    placeholder="사용자 ID"
-                    value={input}
-                    onChange={(e) => {
-                      const next = [...formData.approverIdInputs];
-                      next[index] = e.target.value;
-                      setFormData({ ...formData, approverIdInputs: next });
+                    {...params}
+                    label="결재자 검색 (이름 또는 이메일)"
+                    placeholder="최소 2글자 입력"
+                    InputProps={{
+                      ...params.InputProps,
+                      endAdornment: (
+                        <>
+                          {searchLoading ? (
+                            <CircularProgress color="inherit" size={20} />
+                          ) : null}
+                          {params.InputProps.endAdornment}
+                        </>
+                      ),
                     }}
-                    sx={{ flex: 1, maxWidth: 160 }}
                   />
-                  {formData.approverIdInputs.length > 1 && (
-                    <IconButton
-                      size="small"
-                      color="error"
-                      onClick={() => handleRemoveApprover(index)}
-                      aria-label="결재자 삭제"
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  )}
-                </Box>
-              ))}
-              <Button
-                size="small"
-                startIcon={<AddIcon />}
-                onClick={handleAddApprover}
-                sx={{ mt: 0.5 }}
-              >
-                결재자 추가
-              </Button>
+                )}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    <Box>
+                      <Typography variant="body2" fontWeight="medium">
+                        {option.name}
+                      </Typography>
+                      <Typography variant="caption" color="text.secondary">
+                        {option.email}
+                      </Typography>
+                      {(option.position || option.department) && (
+                        <Typography variant="caption" color="text.secondary" display="block">
+                          {option.position && option.department
+                            ? `${option.position} · ${option.department}`
+                            : option.position || option.department}
+                        </Typography>
+                      )}
+                    </Box>
+                  </li>
+                )}
+                noOptionsText="검색 결과가 없습니다"
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ mt: 1, display: "block" }}>
+                * 선택한 순서대로 결재가 진행됩니다.
+              </Typography>
             </Grid>
           </Grid>
         </DialogContent>
@@ -558,65 +635,82 @@ const ApprovalPage = () => {
             </Box>
           ) : detailData ? (
             <Grid container spacing={2}>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="body2" color="text.secondary">
+                  기안자: {detailData.drafterName} | 부서: {detailData.department} | 기안일:{" "}
+                  {formatDate(detailData.createdAt)}
+                </Typography>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="body2" color="text.secondary">
+                  유형: {getTypeLabel(detailData.type)} | 상태:{" "}
+                  <Chip
+                    label={getStatusLabel(detailData.status)}
+                    color={getStatusColor(detailData.status)}
+                    size="small"
+                  />
+                </Typography>
+              </Grid>
+              {detailData.amount && (
                 <Grid size={{ xs: 12 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    기안자: {detailData.drafterName} | 부서: {detailData.department} | 기안일:{" "}
-                    {formatDate(detailData.createdAt)}
-                  </Typography>
+                  <Typography variant="h6">금액: {formatCurrency(detailData.amount.toString())}원</Typography>
                 </Grid>
-                <Grid size={{ xs: 12 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    유형: {getTypeLabel(detailData.type)} | 상태:{" "}
-                    <Chip
-                      label={getStatusLabel(detailData.status)}
-                      color={getStatusColor(detailData.status)}
-                      size="small"
-                    />
-                  </Typography>
-                </Grid>
-                {detailData.amount && (
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="h6">금액: {formatCurrency(detailData.amount.toString())}원</Typography>
-                  </Grid>
-                )}
-                {detailData.approvalLines.length > 0 && (
-                  <Grid size={{ xs: 12 }}>
-                    <Typography variant="h6" gutterBottom>
-                      결재선
-                    </Typography>
-                    <Stepper orientation="vertical">
-                      {detailData.approvalLines.map((line) => (
-                        <Step key={line.sequence} completed={line.status === "APPROVED"}>
-                          <StepLabel>
-                            {line.sequence}차 승인자: {line.approverName} (
-                            {getStatusLabel(line.status)})
-                          </StepLabel>
-                          {line.comment && (
-                            <Typography variant="body2" color="text.secondary">
-                              의견: {line.comment}
-                            </Typography>
-                          )}
-                        </Step>
-                      ))}
-                    </Stepper>
-                  </Grid>
-                )}
+              )}
+              {detailData.approvalLines.length > 0 && (
                 <Grid size={{ xs: 12 }}>
                   <Typography variant="h6" gutterBottom>
-                    내용
+                    결재선
                   </Typography>
-                  <Paper sx={{ p: 2, bgcolor: "#f5f5f5" }}>
-                    <Typography>{detailData.content}</Typography>
-                  </Paper>
+                  <Stepper orientation="vertical">
+                    {detailData.approvalLines.map((line) => (
+                      <Step key={line.sequence} completed={line.status === "APPROVED"}>
+                        <StepLabel>
+                          {line.sequence}차 승인자: {line.approverName} (
+                          {getStatusLabel(line.status)})
+                        </StepLabel>
+                        {line.comment && (
+                          <Typography variant="body2" color="text.secondary">
+                            의견: {line.comment}
+                          </Typography>
+                        )}
+                      </Step>
+                    ))}
+                  </Stepper>
                 </Grid>
+              )}
+              <Grid size={{ xs: 12 }}>
+                <Typography variant="h6" gutterBottom>
+                  내용
+                </Typography>
+                <Paper sx={{ p: 2, bgcolor: "#f5f5f5" }}>
+                  <Typography>{detailData.content}</Typography>
+                </Paper>
               </Grid>
+            </Grid>
           ) : null}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetailDialogOpen(false)}>닫기</Button>
+
+          {/* 기안자: PENDING 상태일 때 취소 버튼 */}
+          {detailData?.status === ApprovalStatus.PENDING && tabValue === 0 && (
+            <Button
+              color="error"
+              variant="outlined"
+              onClick={() => {
+                if (selectedDocumentId) {
+                  handleCancelApproval(selectedDocumentId);
+                }
+              }}
+            >
+              결재 취소
+            </Button>
+          )}
+
+          {/* 결재자: PENDING 상태일 때 승인/반려 버튼 */}
           {detailData?.status === ApprovalStatus.PENDING && tabValue === 1 && (
             <>
-            <Button
+              <Button
                 color="primary"
                 variant="contained"
                 onClick={() => {

@@ -1,19 +1,18 @@
-import React, { useState, useEffect } from "react";
+import PersonIcon from "@mui/icons-material/Person";
+import SearchIcon from "@mui/icons-material/Search";
 import {
   Box,
-  Container,
-  Typography,
-  Paper,
-  Alert,
-  CircularProgress,
   Card,
   CardContent,
+  CircularProgress,
+  Container,
   Grid,
-  TextField,
   InputAdornment,
+  Paper,
+  TextField,
+  Typography
 } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import PersonIcon from "@mui/icons-material/Person";
+import { useEffect, useState } from "react";
 import client from "../api/client";
 import type { User } from "../types/common";
 
@@ -119,9 +118,6 @@ const OrganizationPage = () => {
                         사번: {user.empNo}
                       </Typography>
                     )}
-                    <Typography variant="body2" color="text.secondary" mt={0.5}>
-                      권한: {user.role}
-                    </Typography>
                   </CardContent>
                 </Card>
               </Grid>

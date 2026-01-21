@@ -1,13 +1,7 @@
 package com.bizsync.backend.controller;
 
-import com.bizsync.backend.common.util.SecurityUtil;
-import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
-import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
-import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
-import com.bizsync.backend.dto.response.ApprovalDetailDTO;
-import com.bizsync.backend.service.ApprovalService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,9 +9,22 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.Map;
+import com.bizsync.backend.common.util.SecurityUtil;
+import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
+import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
+import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
+import com.bizsync.backend.dto.response.ApprovalDetailDTO;
+import com.bizsync.backend.service.ApprovalService;
+
+import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/approvals")
@@ -35,7 +42,7 @@ public class ApprovalController {
     ) {
         // 비용 결재 검증
         dto.validateExpenseApproval();
-        
+
         // 로그인한 사용자(기안자) ID 가져오기
         Long drafterId = SecurityUtil.getCurrentUserIdOrThrow();
 
@@ -46,6 +53,16 @@ public class ApprovalController {
                         "message", "결재 상신이 완료되었습니다.",
                         "documentId", documentId
                 ));
+    }
+
+    /**
+     * 결재 취소 (기안자가 PENDING 상태만 가능)
+     */
+    @PostMapping("/{documentId}/cancel")
+    public ResponseEntity<Map<String, String>> cancelApproval(@PathVariable Long documentId) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        approvalService.cancelApproval(userId, documentId);
+        return ResponseEntity.ok(Map.of("message", "결재가 취소되었습니다."));
     }
 
     @PostMapping("/{documentId}/process")
@@ -86,5 +103,17 @@ public class ApprovalController {
     ) {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         return ResponseEntity.ok(approvalService.getMyPendingApprovals(userId, pageable));
+    }
+
+    /**
+     * 내 결재 완료함 (내가 결재한 문서 중 APPROVED 또는 REJECTED 상태)
+     */
+    @GetMapping("/my-completed")
+    public ResponseEntity<Page<ApprovalSummaryDTO>> getMyCompleted(
+            @ParameterObject
+            @PageableDefault(size = 10, sort = "id", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        return ResponseEntity.ok(approvalService.getMyCompletedApprovals(userId, pageable));
     }
 }
