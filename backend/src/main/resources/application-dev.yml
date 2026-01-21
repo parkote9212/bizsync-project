@@ -6,7 +6,7 @@ spring:
     driver-class-name: ${SPRING_DATASOURCE_DRIVER:org.mariadb.jdbc.Driver}
     url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://localhost:3306/bizsync?serverTimezone=Asia/Seoul&characterEncoding=UTF-8}
     username: ${SPRING_DATASOURCE_USERNAME:root}
-    password: ${SPRING_DATASOURCE_PASSWORD:7305}
+    password: ${SPRING_DATASOURCE_PASSWORD:1234}
 
   jpa:
     hibernate:

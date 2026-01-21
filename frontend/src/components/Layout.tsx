@@ -1,37 +1,40 @@
-import React, { useState, useCallback } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
+import AccountCircleIcon from "@mui/icons-material/AccountCircle";
+import Brightness4Icon from "@mui/icons-material/Brightness4";
+import Brightness7Icon from "@mui/icons-material/Brightness7";
+import DashboardIcon from "@mui/icons-material/Dashboard";
+import DescriptionIcon from "@mui/icons-material/Description";
+import FolderIcon from "@mui/icons-material/Folder";
+import NotificationsIcon from "@mui/icons-material/Notifications";
+import PeopleIcon from "@mui/icons-material/People";
 import {
-  Box,
-  Drawer,
   AppBar,
-  Toolbar,
+  Avatar,
+  Badge,
+  Box,
+  Button,
+  Divider,
+  Drawer,
+  IconButton,
   List,
-  Typography,
   ListItem,
   ListItemButton,
   ListItemIcon,
   ListItemText,
-  IconButton,
-  Badge,
   Menu,
   MenuItem,
-  Avatar,
-  Divider,
-  Button,
   Snackbar,
+  Toolbar,
+  Typography,
 } from "@mui/material";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import FolderIcon from "@mui/icons-material/Folder";
-import DescriptionIcon from "@mui/icons-material/Description";
-import PeopleIcon from "@mui/icons-material/People";
-import NotificationsIcon from "@mui/icons-material/Notifications";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
-import type { NavigationMenuItem } from "../types/common";
+import React, { useCallback, useState } from "react";
+import { Outlet, useLocation, useNavigate } from "react-router-dom";
 import { useNotificationSocket } from "../hooks/useNotificationSocket";
-import { useNotificationStore } from "../stores/notificationStore";
 import type { Notification } from "../stores/notificationStore";
-import { useUserStore } from "../stores/userStore";
+import { useNotificationStore } from "../stores/notificationStore";
 import { useProjectStore } from "../stores/projectStore";
+import { useThemeStore } from "../stores/themeStore";
+import { useUserStore } from "../stores/userStore";
+import type { NavigationMenuItem } from "../types/common";
 
 const DRAWER_WIDTH = 240;
 
@@ -42,7 +45,7 @@ const Layout = () => {
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  
+
   // Zustand 스토어에서 사용자 정보 가져오기 (persist 미들웨어로 localStorage와 자동 동기화)
   const user = useUserStore((state) => state.user);
   const userId = user.userId;
@@ -74,6 +77,11 @@ const Layout = () => {
   const clearNotifications = useNotificationStore((state) => state.clearAll);
   const resetProjects = useProjectStore((state) => state.reset);
 
+  // 다크모드 스토어
+  const themeMode = useThemeStore((state) => state.mode);
+  const toggleTheme = useThemeStore((state) => state.toggleMode);
+  const isDarkMode = themeMode === "dark";
+
   const handleLogout = () => {
     // 1. 사용자별 데이터 스토어 초기화 (이전 사용자 데이터 노출 방지)
     clearNotifications();
@@ -104,11 +112,10 @@ const Layout = () => {
       {/* AppBar (상단 헤더) */}
       <AppBar
         position="fixed"
+        color="default"
         sx={{
           width: `calc(100% - ${DRAWER_WIDTH}px)`,
           ml: `${DRAWER_WIDTH}px`,
-          backgroundColor: "#fff",
-          color: "#000",
           boxShadow: 1,
         }}
       >
@@ -134,7 +141,7 @@ const Layout = () => {
           <IconButton
             color="inherit"
             onClick={handleNotificationClick}
-            sx={{ mr: 2 }}
+            sx={{ mr: 1 }}
           >
             <Badge
               badgeContent={unreadCount}
@@ -143,6 +150,16 @@ const Layout = () => {
             >
               <NotificationsIcon />
             </Badge>
+          </IconButton>
+
+          {/* 다크모드 토글 버튼 */}
+          <IconButton
+            color="inherit"
+            onClick={toggleTheme}
+            sx={{ mr: 2 }}
+            title={isDarkMode ? "라이트 모드로 전환" : "다크 모드로 전환"}
+          >
+            {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
 
           {/* 알림 메뉴 */}
@@ -197,8 +214,8 @@ const Layout = () => {
                       bgcolor: notification.read ? "transparent" : "action.hover",
                     }}
                   >
-                    <Typography 
-                      variant="body2" 
+                    <Typography
+                      variant="body2"
                       fontWeight={notification.read ? "normal" : "bold"}
                     >
                       {notification.type === "APPROVAL" && "🔔 "}
@@ -311,7 +328,6 @@ const Layout = () => {
           "& .MuiDrawer-paper": {
             width: DRAWER_WIDTH,
             boxSizing: "border-box",
-            borderRight: "1px solid #e0e0e0",
           },
         }}
       >
@@ -338,8 +354,8 @@ const Layout = () => {
                 >
                   <ListItemIcon
                     sx={{
-                      color: location.pathname === item.path || location.pathname.startsWith(item.path + "/") 
-                        ? "primary.main" 
+                      color: location.pathname === item.path || location.pathname.startsWith(item.path + "/")
+                        ? "primary.main"
                         : "inherit",
                     }}
                   >
@@ -358,7 +374,7 @@ const Layout = () => {
         component="main"
         sx={{
           flexGrow: 1,
-          bgcolor: "#f5f5f5",
+          bgcolor: "background.default",
           minHeight: "100vh",
           p: 3,
         }}
