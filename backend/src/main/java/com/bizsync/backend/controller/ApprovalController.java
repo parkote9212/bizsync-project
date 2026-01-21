@@ -54,7 +54,7 @@ public class ApprovalController {
     ) {
         Long approverId = SecurityUtil.getCurrentUserIdOrThrow();
 
-        approvalService.processApproval(documentId, approverId, dto);
+        approvalService.processApproval(approverId, documentId, dto);
 
         return ResponseEntity.ok("결재가 정상적으로 처리되었습니다.");
     }

@@ -7,6 +7,10 @@ import {
   Typography,
   Paper,
   Alert,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import client from "../api/client";
 import { useNavigate } from "react-router-dom";
@@ -16,6 +20,16 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  
+  // 회원가입 관련 상태
+  const [signupOpen, setSignupOpen] = useState(false);
+  const [signupEmail, setSignupEmail] = useState("");
+  const [signupPassword, setSignupPassword] = useState("");
+  const [signupName, setSignupName] = useState("");
+  const [signupEmpNo, setSignupEmpNo] = useState("");
+  const [signupDepartment, setSignupDepartment] = useState("");
+  const [signupError, setSignupError] = useState("");
+  const [signupSuccess, setSignupSuccess] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,13 +48,61 @@ const LoginPage = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
-      // 메인 페이지(프로젝트 목록)로 이동
+      // 대시보드로 이동
       alert("로그인 성공!");
-      navigate("/projects");
+      navigate("/dashboard");
     } catch (err: unknown) {
       console.error(err);
       setError("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
     }
+  };
+
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSignupError("");
+    setSignupSuccess(false);
+
+    try {
+      // 백엔드 회원가입 API 호출
+      // DTO: { email, password, name, empNo, department } -> SignumRequestDTO와 매칭
+      await client.post("/auth/signup", {
+        email: signupEmail,
+        password: signupPassword,
+        name: signupName,
+        empNo: signupEmpNo || undefined,
+        department: signupDepartment || undefined,
+      });
+
+      setSignupSuccess(true);
+      // 회원가입 성공 시 폼 초기화 및 다이얼로그 닫기
+      setTimeout(() => {
+        setSignupOpen(false);
+        setSignupEmail("");
+        setSignupPassword("");
+        setSignupName("");
+        setSignupEmpNo("");
+        setSignupDepartment("");
+        setSignupSuccess(false);
+        alert("회원가입 성공! 로그인해주세요.");
+      }, 1500);
+    } catch (err: any) {
+      console.error(err);
+      const errorMessage = err.response?.data?.message || 
+                          err.response?.data?.error || 
+                          "회원가입에 실패했습니다. 다시 시도해주세요.";
+      setSignupError(errorMessage);
+    }
+  };
+
+  const handleSignupDialogClose = () => {
+    setSignupOpen(false);
+    setSignupEmail("");
+    setSignupPassword("");
+    setSignupName("");
+    setSignupEmpNo("");
+    setSignupDepartment("");
+    setSignupError("");
+    setSignupSuccess(false);
   };
 
   return (
@@ -125,9 +187,100 @@ const LoginPage = () => {
             >
               로그인
             </Button>
+            <Button
+              fullWidth
+              variant="outlined"
+              size="large"
+              onClick={() => setSignupOpen(true)}
+              sx={{
+                mb: 2,
+                py: 1.5,
+                fontSize: "1rem",
+              }}
+            >
+              회원가입
+            </Button>
           </Box>
         </Paper>
       </Container>
+
+      {/* 회원가입 다이얼로그 */}
+      <Dialog open={signupOpen} onClose={handleSignupDialogClose} maxWidth="sm" fullWidth>
+        <DialogTitle>회원가입</DialogTitle>
+        <DialogContent>
+          {signupSuccess && (
+            <Alert severity="success" sx={{ mb: 2 }}>
+              회원가입 성공!
+            </Alert>
+          )}
+          {signupError && (
+            <Alert severity="error" sx={{ mb: 2 }}>
+              {signupError}
+            </Alert>
+          )}
+          <Box component="form" onSubmit={handleSignup} sx={{ mt: 1 }}>
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="signup-email"
+              label="이메일 주소"
+              name="email"
+              type="email"
+              autoComplete="email"
+              autoFocus
+              value={signupEmail}
+              onChange={(e) => setSignupEmail(e.target.value)}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              name="password"
+              label="비밀번호"
+              type="password"
+              id="signup-password"
+              autoComplete="new-password"
+              value={signupPassword}
+              onChange={(e) => setSignupPassword(e.target.value)}
+            />
+            <TextField
+              margin="normal"
+              required
+              fullWidth
+              id="signup-name"
+              label="이름"
+              name="name"
+              value={signupName}
+              onChange={(e) => setSignupName(e.target.value)}
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              id="signup-empno"
+              label="사번 (선택)"
+              name="empNo"
+              value={signupEmpNo}
+              onChange={(e) => setSignupEmpNo(e.target.value)}
+            />
+            <TextField
+              margin="normal"
+              fullWidth
+              id="signup-department"
+              label="부서 (선택)"
+              name="department"
+              value={signupDepartment}
+              onChange={(e) => setSignupDepartment(e.target.value)}
+            />
+            <DialogActions sx={{ px: 0, pt: 2 }}>
+              <Button onClick={handleSignupDialogClose}>취소</Button>
+              <Button type="submit" variant="contained">
+                가입하기
+              </Button>
+            </DialogActions>
+          </Box>
+        </DialogContent>
+      </Dialog>
     </Box>
   );
 };

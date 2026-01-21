@@ -79,3 +79,45 @@ const parseJwt = (token: string): any => {
     throw new Error('Invalid token');
   }
 };
+
+/**
+ * 현재 로그인한 사용자 ID 가져오기
+ */
+export const getCurrentUserId = (): number | null => {
+  const token = getAccessToken();
+  if (!token) {
+    return null;
+  }
+
+  try {
+    const payload = parseJwt(token);
+    // JWT 토큰의 userId 또는 sub 필드에서 사용자 ID 추출
+    return payload.userId || payload.sub || null;
+  } catch (error) {
+    console.error('Failed to get user ID from token:', error);
+    return null;
+  }
+};
+
+/**
+ * 현재 로그인한 사용자 정보 가져오기 (JWT 토큰에서)
+ */
+export const getCurrentUserInfo = (): { userId: number | null; role: string | null } => {
+  const token = getAccessToken();
+  if (!token) {
+    return { userId: null, role: null };
+  }
+
+  try {
+    const payload = parseJwt(token);
+    const userId = payload.userId || payload.sub || null;
+    const role = payload.role || null;
+    return {
+      userId: userId ? Number(userId) : null,
+      role,
+    };
+  } catch (error) {
+    console.error('Failed to get user info from token:', error);
+    return { userId: null, role: null };
+  }
+};

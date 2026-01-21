@@ -2,11 +2,14 @@ spring:
   application:
     name: BizSync
 
+  profiles:
+    active : dev
+
   datasource:
     driver-class-name: org.mariadb.jdbc.Driver
     url: jdbc:mariadb://localhost:3306/bizsync?serverTimezone=Asia/Seoul&characterEncoding=UTF-8
     username: root
-    password: 1234
+    password: 7305
 
 
   jpa:

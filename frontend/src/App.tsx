@@ -1,36 +1,43 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import ProtectedRoute from "./components/ProtectedRoute";
+import Layout from "./components/Layout";
+import DashboardPage from "./pages/DashboardPage";
 import KanbanBoardPage from "./pages/KanbanBoardPage";
 import LoginPage from "./pages/LoginPage";
 import ProjectListPage from "./pages/ProjectListPage";
+import ApprovalPage from "./pages/ApprovalPage";
+import OrganizationPage from "./pages/OrganizationPage";
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* 기본 경로 접속 시 로그인 페이지로 리다이렉트 */}
-        <Route path="/" element={<Navigate to="/login" replace />} />
+        {/* 기본 경로 접속 시 대시보드로 리다이렉트 (로그인 후) */}
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
 
         <Route path="/login" element={<LoginPage />} />
 
-        {/* 인증이 필요한 라우트 */}
+        {/* 인증이 필요한 라우트 - Layout 적용 */}
         <Route
-          path="/projects"
           element={
             <ProtectedRoute>
-              <ProjectListPage />
+              <Layout />
             </ProtectedRoute>
           }
-        />
+        >
+          {/* 기본 대시보드 */}
+          <Route path="/dashboard" element={<DashboardPage />} />
+          
+          {/* 프로젝트 관리 */}
+          <Route path="/projects" element={<ProjectListPage />} />
+          <Route path="/projects/:projectId" element={<KanbanBoardPage />} />
 
-        <Route
-          path="/projects/:projectId"
-          element={
-            <ProtectedRoute>
-              <KanbanBoardPage />
-            </ProtectedRoute>
-          }
-        />
+          {/* 전자결재 */}
+          <Route path="/approvals" element={<ApprovalPage />} />
+
+          {/* 조직도 */}
+          <Route path="/organization" element={<OrganizationPage />} />
+        </Route>
       </Routes>
     </BrowserRouter>
   );
