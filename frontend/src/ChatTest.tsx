@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
 import { Client } from "@stomp/stompjs";
-import SockJS from "sockjs-client";
 
 // 1. 주고받을 메시지 타입 정의 (DTO와 일치시킴)
 interface ChatMessage {
@@ -22,10 +21,12 @@ const ChatTest: React.FC = () => {
   const myNameRef = useRef("테스터" + Math.floor(Math.random() * 100));
 
   useEffect(() => {
-    // 3. 클라이언트 생성 및 설정
+    // 3. 클라이언트 생성 및 설정 (순수 WebSocket, brokerURL)
     const client = new Client({
-      // SockJS를 사용하므로 brokerURL 대신 webSocketFactory 사용
-      webSocketFactory: () => new SockJS("http://localhost:8080/ws"),
+      brokerURL: "ws://localhost:8080/ws",
+      reconnectDelay: 5000,
+      heartbeatIncoming: 4000,
+      heartbeatOutgoing: 4000,
 
       // 연결 성공 시 실행될 콜백
       onConnect: () => {

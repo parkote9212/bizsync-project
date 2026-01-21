@@ -12,10 +12,9 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // 채팅용(
+        // 순수 WebSocket (ws://) — 알림, 채팅, 칸반. brokerURL로 직접 연결.
         registry.addEndpoint("/ws")
                 .setAllowedOriginPatterns("*");
-        // 칸반 보드용(WebSocket)
         registry.addEndpoint("/ws-kanban")
                 .setAllowedOriginPatterns("*");
     }

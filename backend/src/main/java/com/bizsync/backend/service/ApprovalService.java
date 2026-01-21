@@ -84,11 +84,12 @@ public class ApprovalService {
 
             approvalLineRepository.save(line);
 
+            // 기안 상신 시 결재자에게 알림 (1차, 2차, … N차 결재자)
             notificationService.sendApprovalRequestNotification(
                     savedDoc,
                     approver.getUserId(),
                     approver.getName(),
-                    sequence
+                    line.getSequence()
             );
         }
 

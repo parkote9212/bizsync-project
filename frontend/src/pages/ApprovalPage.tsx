@@ -60,7 +60,10 @@ const ApprovalPage = () => {
   const [detailDialogOpen, setDetailDialogOpen] = useState(false);
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
   const [detailData, setDetailData] = useState<ApprovalDetail | null>(null);
+  
+  // 승인/반려 다이얼로그 상태 (상세보기와 별도)
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
+  const [processDocumentId, setProcessDocumentId] = useState<number | null>(null);
   const [rejectReason, setRejectReason] = useState("");
 
   // 결재 작성 폼
@@ -171,30 +174,81 @@ const ApprovalPage = () => {
     setDetailDialogOpen(true);
   };
 
-  const handleProcessApproval = async (status: ApprovalStatus): Promise<void> => {
-    if (!selectedDocumentId) return;
+  const handleOpenRejectDialog = (documentId: number) => {
+    setProcessDocumentId(documentId);
+    setProcessDialogOpen(true);
+    setRejectReason("");
+  };
 
-    if (status === ApprovalStatus.REJECTED && !rejectReason.trim()) {
+  const handleApprove = async (documentId: number): Promise<void> => {
+    if (!window.confirm("결재를 승인하시겠습니까?")) {
+      return;
+    }
+
+    try {
+      const payload: ApprovalProcessRequest = {
+        status: ApprovalStatus.APPROVED,
+      };
+      await client.post(`/approvals/${documentId}/process`, payload);
+      alert("결재가 정상적으로 승인되었습니다.");
+      
+      // 상세보기가 열려있으면 닫기
+      if (detailDialogOpen && selectedDocumentId === documentId) {
+        setDetailDialogOpen(false);
+        setSelectedDocumentId(null);
+        setDetailData(null);
+      }
+      
+      // 데이터 새로고침
+      fetchMyPending();
+      if (tabValue === 1) {
+        fetchMyDrafts();
+      }
+    } catch (error: unknown) {
+      const errorMessage = error && typeof error === "object" && "response" in error
+        ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
+        : undefined;
+      alert(errorMessage || "결재 승인 실패");
+      console.error(error);
+    }
+  };
+
+  const handleProcessRejection = async (): Promise<void> => {
+    if (!processDocumentId) return;
+
+    if (!rejectReason.trim()) {
       alert("반려 사유를 입력해주세요.");
       return;
     }
 
     try {
       const payload: ApprovalProcessRequest = {
-        status,
-        comment: status === ApprovalStatus.REJECTED ? rejectReason : undefined,
+        status: ApprovalStatus.REJECTED,
+        comment: rejectReason,
       };
-      await client.post(`/approvals/${selectedDocumentId}/process`, payload);
-      alert("결재가 정상적으로 처리되었습니다.");
+      await client.post(`/approvals/${processDocumentId}/process`, payload);
+      alert("결재가 정상적으로 반려되었습니다.");
       setProcessDialogOpen(false);
-      setDetailDialogOpen(false);
+      setProcessDocumentId(null);
       setRejectReason("");
+      
+      // 상세보기가 열려있으면 닫기
+      if (detailDialogOpen && selectedDocumentId === processDocumentId) {
+        setDetailDialogOpen(false);
+        setSelectedDocumentId(null);
+        setDetailData(null);
+      }
+      
+      // 데이터 새로고침
       fetchMyPending();
+      if (tabValue === 1) {
+        fetchMyDrafts();
+      }
     } catch (error: unknown) {
       const errorMessage = error && typeof error === "object" && "response" in error
         ? (error as { response?: { data?: { message?: string } } }).response?.data?.message
         : undefined;
-      alert(errorMessage || "결재 처리 실패");
+      alert(errorMessage || "결재 반려 실패");
       console.error(error);
     }
   };
@@ -284,25 +338,34 @@ const ApprovalPage = () => {
                       {formatDate(item.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <Button
-                        size="small"
-                        onClick={() => handleViewDetail(item.documentId)}
-                      >
-                        상세보기
-                      </Button>
-                      {tabValue === 1 && item.docStatus === ApprovalStatus.PENDING && (
+                      <Box display="flex" gap={1}>
                         <Button
                           size="small"
-                          color="primary"
-                          onClick={() => {
-                            setSelectedDocumentId(item.documentId);
-                            handleViewDetail(item.documentId);
-                            setProcessDialogOpen(true);
-                          }}
+                          onClick={() => handleViewDetail(item.documentId)}
                         >
-                          결재하기
+                          상세보기
                         </Button>
-                      )}
+                        {tabValue === 1 && item.docStatus === ApprovalStatus.PENDING && (
+                          <>
+                            <Button
+                              size="small"
+                              color="primary"
+                              variant="contained"
+                              onClick={() => handleApprove(item.documentId)}
+                            >
+                              승인
+                            </Button>
+                            <Button
+                              size="small"
+                              color="error"
+                              variant="outlined"
+                              onClick={() => handleOpenRejectDialog(item.documentId)}
+                            >
+                              반려
+                            </Button>
+                          </>
+                        )}
+                      </Box>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -483,18 +546,14 @@ const ApprovalPage = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setDetailDialogOpen(false)}>닫기</Button>
-          {processDialogOpen && detailData?.status === ApprovalStatus.PENDING && (
+          {detailData?.status === ApprovalStatus.PENDING && tabValue === 1 && (
             <>
               <Button
                 color="error"
                 variant="outlined"
                 onClick={() => {
-                  if (window.confirm("반려하시겠습니까?")) {
-                    const reason = prompt("반려 사유를 입력해주세요:");
-                    if (reason) {
-                      setRejectReason(reason);
-                      handleProcessApproval(ApprovalStatus.REJECTED);
-                    }
+                  if (selectedDocumentId) {
+                    handleOpenRejectDialog(selectedDocumentId);
                   }
                 }}
               >
@@ -503,12 +562,53 @@ const ApprovalPage = () => {
               <Button
                 color="primary"
                 variant="contained"
-                onClick={() => handleProcessApproval(ApprovalStatus.APPROVED)}
+                onClick={() => {
+                  if (selectedDocumentId) {
+                    handleApprove(selectedDocumentId);
+                  }
+                }}
               >
                 승인
               </Button>
             </>
           )}
+        </DialogActions>
+      </Dialog>
+
+      {/* 반려 처리 다이얼로그 (사유 입력) */}
+      <Dialog open={processDialogOpen} onClose={() => setProcessDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>결재 반려</DialogTitle>
+        <DialogContent>
+          <Typography variant="body1" sx={{ mb: 2 }}>
+            반려 사유를 입력해주세요.
+          </Typography>
+          <TextField
+            fullWidth
+            label="반려 사유"
+            required
+            multiline
+            rows={4}
+            value={rejectReason}
+            onChange={(e) => setRejectReason(e.target.value)}
+            placeholder="반려 사유를 입력해주세요."
+            sx={{ mt: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => {
+            setProcessDialogOpen(false);
+            setProcessDocumentId(null);
+            setRejectReason("");
+          }}>
+            취소
+          </Button>
+          <Button
+            color="error"
+            variant="contained"
+            onClick={handleProcessRejection}
+          >
+            반려
+          </Button>
         </DialogActions>
       </Dialog>
     </Container>

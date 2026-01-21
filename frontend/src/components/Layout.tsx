@@ -18,6 +18,7 @@ import {
   Avatar,
   Divider,
   Button,
+  Snackbar,
 } from "@mui/material";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import FolderIcon from "@mui/icons-material/Folder";
@@ -27,6 +28,7 @@ import NotificationsIcon from "@mui/icons-material/Notifications";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import type { NavigationMenuItem } from "../types/common";
 import { useNotificationSocket } from "../hooks/useNotificationSocket";
+import { useNotificationStore } from "../stores/notificationStore";
 import type { Notification } from "../stores/notificationStore";
 import { useUserStore } from "../stores/userStore";
 
@@ -37,18 +39,25 @@ const Layout = () => {
   const location = useLocation();
   const [notificationAnchor, setNotificationAnchor] = useState<null | HTMLElement>(null);
   const [profileAnchor, setProfileAnchor] = useState<null | HTMLElement>(null);
-  const [hasNewNotifications, setHasNewNotifications] = useState(false);
-  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
   
   // Zustand 스토어에서 사용자 정보 가져오기 (persist 미들웨어로 localStorage와 자동 동기화)
   const user = useUserStore((state) => state.user);
   const userId = user.userId;
 
-  // 알림 수신 핸들러
+  // Zustand notificationStore 사용
+  const addNotification = useNotificationStore((state) => state.addNotification);
+  const notifications = useNotificationStore((state) => state.notifications);
+  const unreadCount = useNotificationStore((state) => state.unreadCount);
+  const markAsRead = useNotificationStore((state) => state.markAsRead);
+
+  // 알림 수신 핸들러 - notificationStore 저장 + 실시간 Snackbar 표시
   const handleNotification = useCallback((notification: Notification) => {
-    setNotifications((prev) => [notification, ...prev]);
-    setHasNewNotifications(true);
-  }, []);
+    addNotification(notification);
+    setSnackbarMessage(notification.message);
+    setSnackbarOpen(true);
+  }, [addNotification]);
 
   // WebSocket 연결
   useNotificationSocket(userId, handleNotification);
@@ -72,7 +81,6 @@ const Layout = () => {
 
   const handleNotificationClick = (event: React.MouseEvent<HTMLElement>) => {
     setNotificationAnchor(event.currentTarget);
-    setHasNewNotifications(false); // 알림 확인 시 빨간 점 제거
   };
 
   const handleProfileClick = (event: React.MouseEvent<HTMLElement>) => {
@@ -122,9 +130,9 @@ const Layout = () => {
             sx={{ mr: 2 }}
           >
             <Badge
+              badgeContent={unreadCount}
               color="error"
-              variant="dot"
-              invisible={!hasNewNotifications}
+              invisible={unreadCount === 0}
             >
               <NotificationsIcon />
             </Badge>
@@ -161,13 +169,17 @@ const Layout = () => {
                   </Typography>
                 </MenuItem>
               ) : (
-                notifications.map((notification, index) => (
+                notifications.map((notification) => (
                   <MenuItem
-                    key={index}
+                    key={notification.id || notification.timestamp}
                     onClick={() => {
+                      // 알림 읽음 처리
+                      if (notification.id) {
+                        markAsRead(notification.id);
+                      }
                       handleMenuClose();
                       // 알림 타입에 따라 이동
-                      if (notification.type === "APPROVAL") {
+                      if (notification.type === "APPROVAL" && notification.targetId) {
                         navigate(`/approvals`);
                       }
                     }}
@@ -175,9 +187,13 @@ const Layout = () => {
                       flexDirection: "column",
                       alignItems: "flex-start",
                       whiteSpace: "normal",
+                      bgcolor: notification.read ? "transparent" : "action.hover",
                     }}
                   >
-                    <Typography variant="body2" fontWeight="medium">
+                    <Typography 
+                      variant="body2" 
+                      fontWeight={notification.read ? "normal" : "bold"}
+                    >
                       {notification.type === "APPROVAL" && "🔔 "}
                       {notification.message}
                     </Typography>
@@ -343,6 +359,16 @@ const Layout = () => {
         <Toolbar />
         <Outlet />
       </Box>
+
+      {/* 실시간 알림 Snackbar (기안→결재자, 최종승인/반려→기안자) */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{ mt: 7 }}
+      />
     </Box>
   );
 };
