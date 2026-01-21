@@ -14,9 +14,11 @@ import {
 } from "@mui/material";
 import client from "../api/client";
 import { useNavigate } from "react-router-dom";
+import { useUserStore } from "../stores/userStore";
 
 const LoginPage = () => {
   const navigate = useNavigate();
+  const setUser = useUserStore((state) => state.setUser);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -38,15 +40,30 @@ const LoginPage = () => {
     try {
       // 백엔드 로그인 API 호출
       // DTO: { email, password } -> LoginRequestDTO와 매칭
-      const response = await client.post("/auth/login", {
+      const response = await client.post<{
+        accessToken: string;
+        refreshToken: string;
+        userId: number;
+        name: string;
+        email: string;
+        role: string;
+      }>("/auth/login", {
         email,
         password,
       });
 
       // 성공 시: 토큰 저장
-      const { accessToken, refreshToken } = response.data;
+      const { accessToken, refreshToken, userId, name: userName, email: userEmail, role } = response.data;
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
+
+      // 사용자 정보를 Zustand 스토어에 저장 (persist 미들웨어로 localStorage 자동 동기화)
+      setUser({
+        userId: userId || null,
+        name: userName || null,
+        email: userEmail || null,
+        role: role || null,
+      });
 
       // 대시보드로 이동
       alert("로그인 성공!");

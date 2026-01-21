@@ -68,12 +68,14 @@ public class AuthService {
 
         log.info("사용자 로그인 성공: userId={}, email={}", user.getUserId(), user.getEmail());
 
-        // 토큰 응답 생성
+        // 토큰 응답 생성 (사용자 정보 포함)
         return JwtTokenResponse.of(
                 accessToken,
                 refreshToken,
                 jwtProvider.getExpirationDate(accessToken),
                 user.getUserId(),
+                user.getName(),
+                user.getEmail(),
                 user.getRole().name()
         );
     }
@@ -106,11 +108,14 @@ public class AuthService {
 
         log.info("토큰 갱신 성공: userId={}", userId);
 
+        // 토큰 응답 생성 (사용자 정보 포함)
         return JwtTokenResponse.of(
                 newAccessToken,
                 newRefreshToken,
                 jwtProvider.getExpirationDate(newAccessToken),
                 user.getUserId(),
+                user.getName(),
+                user.getEmail(),
                 user.getRole().name()
         );
     }

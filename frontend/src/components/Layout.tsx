@@ -26,8 +26,9 @@ import PeopleIcon from "@mui/icons-material/People";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import type { NavigationMenuItem } from "../types/common";
-import { useNotificationSocket, type Notification } from "../hooks/useNotificationSocket";
-import { getCurrentUserId, getCurrentUserInfo } from "../utils/auth";
+import { useNotificationSocket } from "../hooks/useNotificationSocket";
+import type { Notification } from "../stores/notificationStore";
+import { useUserStore } from "../stores/userStore";
 
 const DRAWER_WIDTH = 240;
 
@@ -39,12 +40,9 @@ const Layout = () => {
   const [hasNewNotifications, setHasNewNotifications] = useState(false);
   const [notifications, setNotifications] = useState<Notification[]>([]);
   
-  // 현재 사용자 ID
-  const userId = getCurrentUserId();
-  const userInfo = getCurrentUserInfo();
-  
-  // TODO: 백엔드 API 필요 - 사용자 이름 조회
-  // JWT 토큰에 이름 정보가 없고, 사용자 정보 조회 API가 없어서 현재는 ID만 표시
+  // Zustand 스토어에서 사용자 정보 가져오기 (persist 미들웨어로 localStorage와 자동 동기화)
+  const user = useUserStore((state) => state.user);
+  const userId = user.userId;
 
   // 알림 수신 핸들러
   const handleNotification = useCallback((notification: Notification) => {
@@ -62,9 +60,12 @@ const Layout = () => {
     { text: "조직도", icon: <PeopleIcon />, path: "/organization" },
   ];
 
+  const clearUser = useUserStore((state) => state.clearUser);
+  
   const handleLogout = () => {
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
+    clearUser(); // Zustand 스토어도 초기화
     navigate("/login");
     setProfileAnchor(null);
   };
@@ -211,10 +212,7 @@ const Layout = () => {
               </Avatar>
               <Box>
                 <Typography variant="body2" fontWeight="medium" color="text.primary">
-                  {userInfo.userId ? `ID: ${userInfo.userId}` : "사용자"}
-                </Typography>
-                <Typography variant="caption" color="error" sx={{ fontSize: "0.65rem", display: "block" }}>
-                  백엔드 기능 필요: 사용자 이름 표시를 위한 API 필요
+                  {user.name || (user.userId ? `ID: ${user.userId}` : "사용자")}
                 </Typography>
               </Box>
             </Box>
@@ -254,16 +252,16 @@ const Layout = () => {
                 사용자 정보
               </Typography>
               <Typography variant="body2" fontWeight="medium">
-                ID: {userInfo.userId || "-"}
+                {user.name ? `이름: ${user.name}` : `ID: ${user.userId || "-"}`}
               </Typography>
-              <Typography variant="caption" color="error" sx={{ mt: 0.5, display: "block" }}>
-                백엔드 기능 필요: 사용자 이름 표시를 위한 API 필요
-                <br />
-                (GET /api/users/me 또는 GET /api/auth/me)
-              </Typography>
-              {userInfo.role && (
+              {user.email && (
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
-                  권한: {userInfo.role}
+                  이메일: {user.email}
+                </Typography>
+              )}
+              {user.role && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  권한: {user.role}
                 </Typography>
               )}
             </Box>

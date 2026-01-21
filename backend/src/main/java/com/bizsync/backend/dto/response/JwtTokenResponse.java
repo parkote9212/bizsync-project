@@ -22,12 +22,14 @@ public class JwtTokenResponse {
     private String tokenType;  // "Bearer"
     private Long expiresIn;    // Access Token 만료까지 남은 시간 (초)
     private Long userId;
+    private String name;
+    private String email;
     private String role;
 
     /**
      * Bearer 토큰 형식으로 생성
      */
-    public static JwtTokenResponse of(String accessToken, String refreshToken, Date expirationDate, Long userId, String role) {
+    public static JwtTokenResponse of(String accessToken, String refreshToken, Date expirationDate, Long userId, String name, String email, String role) {
         long expiresIn = (expirationDate.getTime() - System.currentTimeMillis()) / 1000;
 
         return JwtTokenResponse.builder()
@@ -36,6 +38,8 @@ public class JwtTokenResponse {
                 .tokenType("Bearer")
                 .expiresIn(expiresIn)
                 .userId(userId)
+                .name(name)
+                .email(email)
                 .role(role)
                 .build();
     }

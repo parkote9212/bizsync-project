@@ -1,14 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Client } from "@stomp/stompjs";
 import SockJS from "sockjs-client";
-
-// 알림 타입 정의
-export interface Notification {
-  type: string;
-  message: string;
-  targetId: number;
-  createdAt?: string;
-}
+import type { Notification } from "../stores/notificationStore";
 
 /**
  * [알림 WebSocket Hook]
