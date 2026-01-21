@@ -17,5 +17,6 @@ public class ProjectBoardDTO {
     private String name;
     private BigDecimal totalBudget;
     private BigDecimal usedBudget;
+    private String status; // 프로젝트 상태
     private List<KanbanColumnDTO> columns; // 1 : N
 }

@@ -10,6 +10,7 @@
         <result property="name" column="project_name"/>
         <result property="totalBudget" column="total_budget"/>
         <result property="usedBudget" column="used_budget"/>
+        <result property="status" column="status"/>
 
         <collection property="columns"
                     ofType="KanbanColumnDTO"
@@ -37,6 +38,7 @@
                p.name     AS project_name,
                p.total_budget,
                p.used_budget,
+               p.status,
 
                c.column_id,
                c.name     AS column_name,

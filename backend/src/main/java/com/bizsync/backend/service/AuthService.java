@@ -1,16 +1,18 @@
 package com.bizsync.backend.service;
 
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.bizsync.backend.common.util.JwtProvider;
 import com.bizsync.backend.domain.entity.User;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.request.LoginRequestDTO;
 import com.bizsync.backend.dto.request.SignumRequestDTO;
 import com.bizsync.backend.dto.response.JwtTokenResponse;
+
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service
@@ -76,7 +78,9 @@ public class AuthService {
                 user.getUserId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.getPosition() != null ? user.getPosition().getKorean() : null,
+                user.getDepartment()
         );
     }
 
@@ -116,7 +120,9 @@ public class AuthService {
                 user.getUserId(),
                 user.getName(),
                 user.getEmail(),
-                user.getRole().name()
+                user.getRole().name(),
+                user.getPosition() != null ? user.getPosition().getKorean() : null,
+                user.getDepartment()
         );
     }
 }

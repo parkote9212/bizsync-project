@@ -21,6 +21,7 @@ export interface BoardData {
   projectId: number;
   name: string;
   columns: KanbanColumn[];
+  status?: string; // 프로젝트 상태
 }
 
 export interface Project {

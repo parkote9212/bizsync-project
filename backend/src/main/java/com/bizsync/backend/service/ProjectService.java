@@ -81,7 +81,8 @@ public class ProjectService {
                         pm.getProject().getName(),
                         pm.getProject().getDescription(),
                         pm.getProject().getStartDate(),
-                        pm.getProject().getEndDate()
+                        pm.getProject().getEndDate(),
+                        pm.getProject().getStatus().name() // status 추가
                 ))
                 .toList();
     }
@@ -112,5 +113,42 @@ public class ProjectService {
         projectMemberRepository.save(newMember);
     }
 
+    /**
+     * 프로젝트 완료 처리
+     */
+    @Transactional
+    public void completeProject(Long projectId, Long userId) {
+        // 1. 프로젝트 조회
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
+
+        // 2. 권한 확인 (프로젝트 멤버인지)
+        boolean isMember = projectMemberRepository.existsByProject_ProjectIdAndUser_UserId(projectId, userId);
+        if (!isMember) {
+            throw new IllegalArgumentException("해당 프로젝트에 접근 권한이 없습니다.");
+        }
+
+        // 3. 프로젝트 완료 처리
+        project.complete();
+    }
+
+    /**
+     * 프로젝트 재진행 처리
+     */
+    @Transactional
+    public void reopenProject(Long projectId, Long userId) {
+        // 1. 프로젝트 조회
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new IllegalArgumentException("프로젝트를 찾을 수 없습니다."));
+
+        // 2. 권한 확인 (프로젝트 멤버인지)
+        boolean isMember = projectMemberRepository.existsByProject_ProjectIdAndUser_UserId(projectId, userId);
+        if (!isMember) {
+            throw new IllegalArgumentException("해당 프로젝트에 접근 권한이 없습니다.");
+        }
+
+        // 3. 프로젝트 재진행 처리
+        project.reopen();
+    }
 
 }

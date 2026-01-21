@@ -1,33 +1,41 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 // 컴포넌트 Import
-import TaskDetailDialog from "../components/TaskDetailDialog";
-import TaskCreateDialog from "../components/TaskCreateDialog";
 import ProjectInviteDialog from "../components/ProjectInviteDialog";
+import TaskCreateDialog from "../components/TaskCreateDialog";
+import TaskDetailDialog from "../components/TaskDetailDialog";
 // Hooks Import
-import { useKanbanBoard } from "../hooks/useKanbanBoard";
 import { useBoardSocket } from "../hooks/useBoardSocket";
+import { useKanbanBoard } from "../hooks/useKanbanBoard";
 // Types Import
 import type { TaskCreateData } from "../types/kanban";
 // Library Import
-import { DragDropContext, Droppable, Draggable } from "@hello-pangea/dnd";
+import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
+  Alert,
   Box,
-  Typography,
-  Paper,
+  Button,
   Card,
   CardContent,
   Chip,
-  Stack,
-  Button,
-  TextField,
-  IconButton,
   CircularProgress,
+  IconButton,
+  Paper,
+  Snackbar,
+  Stack,
+  TextField,
+  Typography,
 } from "@mui/material";
 // Icons Import
 import AddIcon from "@mui/icons-material/Add";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CloseIcon from "@mui/icons-material/Close";
-import PersonAddIcon from "@mui/icons-material/PersonAdd"; // ★ 추가됨
+import DownloadIcon from "@mui/icons-material/Download";
+import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import ReplayIcon from "@mui/icons-material/Replay";
+import UploadFileIcon from "@mui/icons-material/UploadFile";
+// API Import
+import client from "../api/client";
 
 const KanbanBoardPage = () => {
   const { projectId } = useParams();
@@ -40,6 +48,24 @@ const KanbanBoardPage = () => {
     createColumn,
     refreshBoard,
   } = useKanbanBoard(projectId);
+
+  // 마감일까지 남은 일수 계산
+  const getDaysUntilDeadline = (deadline?: string): number | null => {
+    if (!deadline) return null;
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const deadlineDate = new Date(deadline);
+    deadlineDate.setHours(0, 0, 0, 0);
+    const diffTime = deadlineDate.getTime() - today.getTime();
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays;
+  };
+
+  // 마감일 임박 여부 확인 (3일 이내)
+  const isDeadlineNear = (deadline?: string): boolean => {
+    const daysLeft = getDaysUntilDeadline(deadline);
+    return daysLeft !== null && daysLeft >= 0 && daysLeft <= 3;
+  };
 
   // --- State ---
 
@@ -58,8 +84,59 @@ const KanbanBoardPage = () => {
   // 4. ★ 팀원 초대 모달용 State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
 
+  // 5. 엑셀 업로드/다운로드용 State
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
+  const [downloading, setDownloading] = useState(false);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
+
+  // 6. 프로젝트 완료/재진행용 State
+  const [completingProject, setCompletingProject] = useState(false);
+
   // --- WebSocket 연결 ---
   useBoardSocket(projectId, refreshBoard);
+
+  // 프로젝트 완료 처리
+  const handleCompleteProject = async () => {
+    if (!projectId) return;
+    try {
+      setCompletingProject(true);
+      await client.patch(`/projects/${projectId}/complete`);
+      setSnackbarMessage("프로젝트가 완료되었습니다.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      refreshBoard(); // 보드 새로고침
+    } catch (error) {
+      console.error("프로젝트 완료 실패:", error);
+      setSnackbarMessage("프로젝트 완료에 실패했습니다.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setCompletingProject(false);
+    }
+  };
+
+  // 프로젝트 재진행 처리
+  const handleReopenProject = async () => {
+    if (!projectId) return;
+    try {
+      setCompletingProject(true);
+      await client.patch(`/projects/${projectId}/reopen`);
+      setSnackbarMessage("프로젝트를 재진행합니다.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      refreshBoard(); // 보드 새로고침
+    } catch (error) {
+      console.error("프로젝트 재진행 실패:", error);
+      setSnackbarMessage("프로젝트 재진행에 실패했습니다.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setCompletingProject(false);
+    }
+  };
 
   // --- Handlers ---
 
@@ -85,6 +162,85 @@ const KanbanBoardPage = () => {
   const handleCardClick = (taskId: number) => {
     setSelectedTaskId(taskId);
     setIsDetailOpen(true);
+  };
+
+  // [엑셀 업로드] 파일 선택 다이얼로그 열기
+  const handleUploadClick = () => {
+    fileInputRef.current?.click();
+  };
+
+  // [엑셀 업로드] 파일 선택 후 업로드 처리
+  const handleFileChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !projectId) return;
+
+    setUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append("file", file);
+
+      const response = await client.post(`/projects/${projectId}/excel`, formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
+      });
+
+      // 성공 메시지 표시
+      const count = response.data?.count || 0;
+      setSnackbarMessage(`${count}개의 업무가 등록되었습니다`);
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+
+      // 보드 새로고침
+      await refreshBoard();
+    } catch (error: any) {
+      console.error("엑셀 업로드 실패:", error);
+      setSnackbarMessage(error.response?.data?.message || "엑셀 업로드에 실패했습니다");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setUploading(false);
+      // input 초기화 (같은 파일 재선택 가능하도록)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
+      }
+    }
+  };
+
+  // [엑셀 다운로드] 파일 다운로드 처리
+  const handleDownload = async () => {
+    if (!projectId) return;
+
+    setDownloading(true);
+    try {
+      const response = await client.get(`/projects/${projectId}/excel`, {
+        responseType: "blob",
+      });
+
+      // Blob을 파일로 다운로드
+      const blob = new Blob([response.data], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `${boardData?.name || "kanban"}_tasks.xlsx`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+
+      setSnackbarMessage("엑셀 파일이 다운로드되었습니다");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+    } catch (error: any) {
+      console.error("엑셀 다운로드 실패:", error);
+      setSnackbarMessage(error.response?.data?.message || "엑셀 다운로드에 실패했습니다");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setDownloading(false);
+    }
   };
 
   // --- Render ---
@@ -114,27 +270,116 @@ const KanbanBoardPage = () => {
         overflowX: "auto",
       }}
     >
-      {/* ★ 헤더 영역 수정: 제목과 초대 버튼을 양옆으로 배치 */}
+      {/* ★ 헤더 영역 수정: 제목과 버튼들을 양옆으로 배치 */}
       <Stack
-        direction="row"
+        direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: "flex-start", sm: "center" }}
+        spacing={{ xs: 2, sm: 0 }}
         mb={3}
       >
-        <Typography variant="h5" fontWeight="bold" sx={{ color: "#172b4d" }}>
+        <Typography
+          variant="h5"
+          fontWeight="bold"
+          sx={{
+            color: "#172b4d",
+            fontSize: { xs: "1.25rem", sm: "1.5rem" },
+          }}
+        >
           {boardData.name}
         </Typography>
 
-        <Button
-          variant="contained"
-          color="primary" // 혹은 'inherit', 'secondary' 등 취향대로
-          startIcon={<PersonAddIcon />}
-          onClick={() => setIsInviteOpen(true)}
-          sx={{ fontWeight: "bold" }}
-        >
-          팀원 초대
-        </Button>
+        <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
+          {/* 엑셀 업로드 버튼 */}
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            startIcon={uploading ? <CircularProgress size={16} /> : <UploadFileIcon />}
+            onClick={handleUploadClick}
+            disabled={uploading}
+            sx={{
+              fontWeight: "bold",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+            }}
+          >
+            {uploading ? "업로드 중..." : "엑셀 업로드"}
+          </Button>
+
+          {/* 엑셀 다운로드 버튼 */}
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            startIcon={downloading ? <CircularProgress size={16} /> : <DownloadIcon />}
+            onClick={handleDownload}
+            disabled={downloading}
+            sx={{
+              fontWeight: "bold",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+            }}
+          >
+            {downloading ? "다운로드 중..." : "엑셀 다운로드"}
+          </Button>
+
+          {/* 프로젝트 완료/재진행 버튼 */}
+          {boardData?.status === "COMPLETED" ? (
+            <Button
+              variant="outlined"
+              color="success"
+              size="small"
+              startIcon={completingProject ? <CircularProgress size={16} /> : <ReplayIcon />}
+              onClick={handleReopenProject}
+              disabled={completingProject}
+              sx={{
+                fontWeight: "bold",
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              }}
+            >
+              {completingProject ? "처리 중..." : "재진행"}
+            </Button>
+          ) : (
+            <Button
+              variant="outlined"
+              color="success"
+              size="small"
+              startIcon={completingProject ? <CircularProgress size={16} /> : <CheckCircleIcon />}
+              onClick={handleCompleteProject}
+              disabled={completingProject || boardData?.status === "COMPLETED"}
+              sx={{
+                fontWeight: "bold",
+                fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              }}
+            >
+              {completingProject ? "처리 중..." : "프로젝트 완료"}
+            </Button>
+          )}
+
+          {/* 팀원 초대 버튼 */}
+          <Button
+            variant="contained"
+            color="primary"
+            size="small"
+            startIcon={<PersonAddIcon />}
+            onClick={() => setIsInviteOpen(true)}
+            sx={{
+              fontWeight: "bold",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+            }}
+          >
+            팀원 초대
+          </Button>
+        </Stack>
       </Stack>
+
+      {/* 숨겨진 파일 input */}
+      <input
+        ref={fileInputRef}
+        type="file"
+        accept=".xlsx,.xls"
+        style={{ display: "none" }}
+        onChange={handleFileChange}
+      />
 
       <DragDropContext onDragEnd={handleDragEnd}>
         <Stack direction="row" spacing={2} alignItems="flex-start">
@@ -178,47 +423,83 @@ const KanbanBoardPage = () => {
                       px: 0.5,
                     }}
                   >
-                    {column.tasks.map((task, index) => (
-                      <Draggable
-                        key={task.taskId}
-                        draggableId={task.taskId.toString()}
-                        index={index}
+                    {column.tasks.length === 0 ? (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "center",
+                          alignItems: "center",
+                          minHeight: 100,
+                          color: "text.secondary",
+                        }}
                       >
-                        {(provided, snapshot) => (
-                          <Card
-                            ref={provided.innerRef}
-                            {...provided.draggableProps}
-                            {...provided.dragHandleProps}
-                            onClick={() => handleCardClick(task.taskId)}
-                            sx={{
-                              mb: 1,
-                              cursor: "grab",
-                              transform: snapshot.isDragging
-                                ? "rotate(2deg)"
-                                : "none",
-                              boxShadow: snapshot.isDragging ? 4 : 1,
-                              "&:hover": { bgcolor: "#f8f9fa" },
-                            }}
-                          >
-                            <CardContent sx={{ p: "12px !important" }}>
-                              <Typography variant="body2" fontWeight="500">
-                                {task.title}
-                              </Typography>
-                              {task.workerName && (
-                                <Typography
-                                  variant="caption"
-                                  color="text.secondary"
-                                  display="block"
-                                  mt={0.5}
-                                >
-                                  {task.workerName}
+                        <Typography variant="caption">
+                          업무가 없습니다
+                        </Typography>
+                      </Box>
+                    ) : (
+                      column.tasks.map((task, index) => (
+                        <Draggable
+                          key={task.taskId}
+                          draggableId={task.taskId.toString()}
+                          index={index}
+                        >
+                          {(provided, snapshot) => (
+                            <Card
+                              ref={provided.innerRef}
+                              {...provided.draggableProps}
+                              {...provided.dragHandleProps}
+                              onClick={() => handleCardClick(task.taskId)}
+                              sx={{
+                                mb: 1,
+                                cursor: "grab",
+                                transform: snapshot.isDragging
+                                  ? "rotate(2deg)"
+                                  : "none",
+                                boxShadow: snapshot.isDragging ? 4 : 1,
+                                "&:hover": { bgcolor: "#f8f9fa" },
+                              }}
+                            >
+                              <CardContent sx={{ p: "12px !important" }}>
+                                <Typography variant="body2" fontWeight="500">
+                                  {task.title}
                                 </Typography>
-                              )}
-                            </CardContent>
-                          </Card>
-                        )}
-                      </Draggable>
-                    ))}
+                                {task.workerName && (
+                                  <Typography
+                                    variant="caption"
+                                    color="text.secondary"
+                                    display="block"
+                                    mt={0.5}
+                                  >
+                                    {task.workerName}
+                                  </Typography>
+                                )}
+                                {task.deadline && (
+                                  <Typography
+                                    variant="caption"
+                                    display="block"
+                                    mt={0.5}
+                                    sx={{
+                                      color: isDeadlineNear(task.deadline) ? "error.main" : "text.secondary",
+                                      fontWeight: isDeadlineNear(task.deadline) ? "bold" : "normal",
+                                    }}
+                                  >
+                                    {(() => {
+                                      const daysLeft = getDaysUntilDeadline(task.deadline);
+                                      if (daysLeft === null) return "";
+                                      if (daysLeft < 0) return `기한 초과 (${Math.abs(daysLeft)}일)`;
+                                      if (daysLeft === 0) return "⚠️ 오늘 마감";
+                                      if (daysLeft <= 3) return `⚠️ D-${daysLeft}`;
+                                      return `마감: ${task.deadline}`;
+                                    })()}
+                                  </Typography>
+                                )}
+                              </CardContent>
+                            </Card>
+                          )}
+                        </Draggable>
+                      ))
+                    )}
                     {provided.placeholder}
                   </Box>
                 )}
@@ -314,6 +595,22 @@ const KanbanBoardPage = () => {
           />
         </Stack>
       </DragDropContext>
+
+      {/* Snackbar for notifications */}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => setSnackbarOpen(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+      >
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
+          severity={snackbarSeverity}
+          sx={{ width: "100%" }}
+        >
+          {snackbarMessage}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 };

@@ -1,19 +1,21 @@
-import { useEffect, useState, useCallback } from "react";
-import {
-  Container,
-  Card,
-  CardContent,
-  Typography,
-  Button,
-  Box,
-  CardActions,
-} from "@mui/material";
-import Grid from "@mui/material/Grid";
 import AddIcon from "@mui/icons-material/Add";
 import FolderIcon from "@mui/icons-material/Folder";
-import client from "../api/client";
+import {
+  Box,
+  Button,
+  Card,
+  CardActions,
+  CardContent,
+  Chip,
+  Container,
+  Typography,
+} from "@mui/material";
+import Grid from "@mui/material/Grid";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import client from "../api/client";
 import ProjectCreateDialog from "../components/ProjectCreateDialog";
+import type { ProjectStatus } from "../types/common";
 
 // DTO 타입 정의
 interface Project {
@@ -22,7 +24,26 @@ interface Project {
   description: string;
   startDate: string;
   endDate: string;
+  status: ProjectStatus;
 }
+
+// 프로젝트 상태별 표시 설정
+const getStatusConfig = (status: ProjectStatus) => {
+  switch (status) {
+    case "IN_PROGRESS":
+      return { label: "진행중", color: "primary" as const };
+    case "COMPLETED":
+      return { label: "완료", color: "success" as const };
+    case "PLANNING":
+      return { label: "기획중", color: "default" as const };
+    case "ON_HOLD":
+      return { label: "보류", color: "warning" as const };
+    case "CANCELLED":
+      return { label: "취소", color: "error" as const };
+    default:
+      return { label: status, color: "default" as const };
+  }
+};
 
 const ProjectListPage = () => {
   const navigate = useNavigate();
@@ -62,13 +83,10 @@ const ProjectListPage = () => {
       {/* 헤더 섹션 */}
       <Box
         display={"flex"}
-        justifyContent={"space-between"}
+        justifyContent={"flex-end"}
         alignItems={"center"}
         mb={4}
       >
-        <Typography variant="h4" component={"h1"} fontWeight={"bold"}>
-          내 프로젝트
-        </Typography>
         <Button
           variant="contained"
           startIcon={<AddIcon />}
@@ -94,11 +112,20 @@ const ProjectListPage = () => {
               }}
             >
               <CardContent sx={{ flexGrow: 1 }}>
-                <Box display={"flex"} alignItems={"center"} mb={2}>
-                  <FolderIcon color="primary" sx={{ mr: 1 }} />
-                  <Typography variant="h6" component={"h2"} fontWeight={"bold"}>
-                    {project.name}
-                  </Typography>
+                <Box display={"flex"} alignItems={"center"} justifyContent={"space-between"} mb={2}>
+                  <Box display={"flex"} alignItems={"center"}>
+                    <FolderIcon color="primary" sx={{ mr: 1 }} />
+                    <Typography variant="h6" component={"h2"} fontWeight={"bold"}>
+                      {project.name}
+                    </Typography>
+                  </Box>
+                  {project.status && (
+                    <Chip
+                      label={getStatusConfig(project.status).label}
+                      color={getStatusConfig(project.status).color}
+                      size="small"
+                    />
+                  )}
                 </Box>
                 <Typography color="text.secondary" gutterBottom>
                   {project.description || "설명이 없습니다."}

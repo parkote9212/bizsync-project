@@ -63,7 +63,7 @@ const ApprovalPage = () => {
   const [selectedDocumentId, setSelectedDocumentId] = useState<number | null>(null);
   const [detailData, setDetailData] = useState<ApprovalDetail | null>(null);
   const [detailLoading, setDetailLoading] = useState(false);
-  
+
   // 승인/반려 다이얼로그 상태 (상세보기와 별도)
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
   const [processDocumentId, setProcessDocumentId] = useState<number | null>(null);
@@ -216,14 +216,14 @@ const ApprovalPage = () => {
       };
       await client.post(`/approvals/${documentId}/process`, payload);
       alert("결재가 정상적으로 승인되었습니다.");
-      
+
       // 상세보기가 열려있으면 닫기
       if (detailDialogOpen && selectedDocumentId === documentId) {
         setDetailDialogOpen(false);
         setSelectedDocumentId(null);
         setDetailData(null);
       }
-      
+
       // 데이터 새로고침
       fetchMyPending();
       if (tabValue === 1) {
@@ -256,14 +256,14 @@ const ApprovalPage = () => {
       setProcessDialogOpen(false);
       setProcessDocumentId(null);
       setRejectReason("");
-      
+
       // 상세보기가 열려있으면 닫기
       if (detailDialogOpen && selectedDocumentId === processDocumentId) {
         setDetailDialogOpen(false);
         setSelectedDocumentId(null);
         setDetailData(null);
       }
-      
+
       // 데이터 새로고침
       fetchMyPending();
       if (tabValue === 1) {
@@ -325,14 +325,18 @@ const ApprovalPage = () => {
 
   return (
     <Container maxWidth="lg">
-      <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4" component="h1" fontWeight="bold">
-          전자결재
-        </Typography>
+      <Box
+        display="flex"
+        justifyContent="flex-end"
+        alignItems="center"
+        mb={3}
+      >
         <Button
           variant="contained"
+          size="small"
           startIcon={<AddIcon />}
           onClick={() => setCreateDialogOpen(true)}
+          sx={{ fontSize: { xs: "0.75rem", sm: "0.875rem" } }}
         >
           새 결재 기안
         </Button>
@@ -349,8 +353,8 @@ const ApprovalPage = () => {
             <CircularProgress />
           </Box>
         ) : (
-          <TableContainer>
-            <Table>
+          <TableContainer sx={{ overflowX: "auto" }}>
+            <Table sx={{ minWidth: 650 }}>
               <TableHead>
                 <TableRow>
                   <TableCell>제목</TableCell>
@@ -376,10 +380,11 @@ const ApprovalPage = () => {
                       {formatDate(item.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <Box display="flex" gap={1}>
+                      <Box display="flex" gap={1} sx={{ flexWrap: "wrap" }}>
                         <Button
                           size="small"
                           onClick={() => handleViewDetail(item.documentId)}
+                          sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
                         >
                           상세보기
                         </Button>
@@ -390,6 +395,7 @@ const ApprovalPage = () => {
                               color="primary"
                               variant="contained"
                               onClick={() => handleApprove(item.documentId)}
+                              sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
                             >
                               승인
                             </Button>
@@ -398,6 +404,7 @@ const ApprovalPage = () => {
                               color="error"
                               variant="outlined"
                               onClick={() => handleOpenRejectDialog(item.documentId)}
+                              sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
                             >
                               반려
                             </Button>
@@ -631,7 +638,7 @@ const ApprovalPage = () => {
               >
                 반려
               </Button>
-              
+
             </>
           )}
         </DialogActions>

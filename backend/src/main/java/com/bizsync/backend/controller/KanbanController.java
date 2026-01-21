@@ -5,14 +5,21 @@ import com.bizsync.backend.dto.request.TaskCreateRequestDTO;
 import com.bizsync.backend.dto.request.TaskMoveRequestDTO;
 import com.bizsync.backend.dto.request.TaskUpdateRequestDTO;
 import com.bizsync.backend.dto.response.TaskDetailResponseDTO;
+import com.bizsync.backend.service.ExcelService;
 import com.bizsync.backend.service.KanbanService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
+import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 @RestController
@@ -22,6 +29,7 @@ public class KanbanController {
 
     private final KanbanService kanbanService;
     private final SimpMessagingTemplate messagingTemplate;
+    private final ExcelService excelService;
 
     // 1. 컬럼 생성
     @PostMapping("/projects/{projectId}/columns")
@@ -79,5 +87,50 @@ public class KanbanController {
         messagingTemplate.convertAndSend("/topic/projects/" + projectId, "BOARD_UPDATE");
 
         return ResponseEntity.ok("이동 완료");
+    }
+
+    /**
+     * 엑셀 대량 업무 등록
+     * POST /api/projects/{projectId}/excel
+     */
+    @PostMapping("/projects/{projectId}/excel")
+    public ResponseEntity<Map<String, Object>> uploadTasksExcel(
+            @PathVariable Long projectId,
+            @RequestParam("file") MultipartFile file
+    ) {
+        try {
+            int count = excelService.uploadTasksFromExcel(projectId, file);
+            return ResponseEntity.ok(Map.of(
+                    "status", "SUCCESS",
+                    "data", Map.of("count", count),
+                    "message", count + "개의 업무가 등록되었습니다."
+            ));
+        } catch (IOException e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "status", "ERROR",
+                    "message", "엑셀 파일 처리 중 오류가 발생했습니다: " + e.getMessage()
+            ));
+        }
+    }
+
+    /**
+     * 엑셀 다운로드
+     * GET /api/projects/{projectId}/excel
+     */
+    @GetMapping("/projects/{projectId}/excel")
+    public ResponseEntity<byte[]> downloadTasksExcel(@PathVariable Long projectId) {
+        try {
+            byte[] excelData = excelService.downloadTasksAsExcel(projectId);
+
+            String filename = "tasks_" + projectId + ".xlsx";
+            String encodedFilename = URLEncoder.encode(filename, StandardCharsets.UTF_8).replaceAll("\\+", "%20");
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + encodedFilename + "\"")
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .body(excelData);
+        } catch (IOException e) {
+            return ResponseEntity.internalServerError().build();
+        }
     }
 }

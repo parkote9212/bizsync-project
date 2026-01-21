@@ -7,6 +7,7 @@ public record ProjectListResponseDTO(
         String name,
         String description,
         LocalDate startDate,
-        LocalDate endDate
+        LocalDate endDate,
+        String status
 ) {
 }

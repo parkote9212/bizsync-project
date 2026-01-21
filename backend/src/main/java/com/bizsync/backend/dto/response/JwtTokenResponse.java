@@ -1,11 +1,11 @@
 package com.bizsync.backend.dto.response;
 
+import java.util.Date;
+
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-
-import java.util.Date;
 
 /**
  * JWT 토큰 응답 DTO
@@ -25,11 +25,13 @@ public class JwtTokenResponse {
     private String name;
     private String email;
     private String role;
+    private String position;   // 직급
+    private String department; // 부서
 
     /**
      * Bearer 토큰 형식으로 생성
      */
-    public static JwtTokenResponse of(String accessToken, String refreshToken, Date expirationDate, Long userId, String name, String email, String role) {
+    public static JwtTokenResponse of(String accessToken, String refreshToken, Date expirationDate, Long userId, String name, String email, String role, String position, String department) {
         long expiresIn = (expirationDate.getTime() - System.currentTimeMillis()) / 1000;
 
         return JwtTokenResponse.builder()
@@ -41,6 +43,8 @@ public class JwtTokenResponse {
                 .name(name)
                 .email(email)
                 .role(role)
+                .position(position)
+                .department(department)
                 .build();
     }
 }

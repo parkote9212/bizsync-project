@@ -7,6 +7,8 @@ export interface UserInfo {
   name: string | null;
   email: string | null;
   role: string | null;
+  position: string | null;
+  department: string | null;
 }
 
 // User Store 인터페이스
@@ -22,6 +24,8 @@ const initialUser: UserInfo = {
   name: null,
   email: null,
   role: null,
+  position: null,
+  department: null,
 };
 
 // User Store 생성 (persist 미들웨어로 localStorage 동기화)

@@ -23,18 +23,20 @@ const OrganizationPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
 
   useEffect(() => {
-    // TODO: 백엔드 API 연결 필요 - GET /api/users 또는 /api/organization/users
     const fetchUsers = async () => {
       try {
         setLoading(true);
-        // 실제 API 호출로 변경 필요
-        // const response = await client.get("/users");
-        // setUsers(response.data);
-        
-        // 임시 데이터 (실제로는 API에서 가져와야 함)
-        setUsers([]);
+        const response = await client.get("/users");
+
+        if (response.data?.status === "SUCCESS" && response.data?.data) {
+          setUsers(response.data.data);
+        } else {
+          console.warn("예상치 못한 응답 형식:", response.data);
+          setUsers([]);
+        }
       } catch (error) {
         console.error("사용자 목록 조회 실패", error);
+        setUsers([]);
       } finally {
         setLoading(false);
       }
@@ -55,17 +57,7 @@ const OrganizationPage = () => {
 
   return (
     <Container maxWidth="lg">
-      <Typography variant="h4" component="h1" fontWeight="bold" mb={3}>
-        조직도
-      </Typography>
 
-      <Alert severity="warning" sx={{ mb: 3 }}>
-        조직도 기능은 백엔드 API 연결이 필요합니다.
-        <br />
-        - 사용자 목록 조회: GET /api/users 또는 GET /api/organization/users
-        <br />
-        - 부서별 조직 구조 조회 API가 필요합니다.
-      </Alert>
 
       <Paper elevation={2} sx={{ p: 3 }}>
         <TextField
@@ -115,6 +107,11 @@ const OrganizationPage = () => {
                     {user.department && (
                       <Typography variant="body2" color="text.secondary" mt={0.5}>
                         부서: {user.department}
+                      </Typography>
+                    )}
+                    {user.position && (
+                      <Typography variant="body2" color="text.secondary" mt={0.5}>
+                        직급: {user.position}
                       </Typography>
                     )}
                     {user.empNo && (

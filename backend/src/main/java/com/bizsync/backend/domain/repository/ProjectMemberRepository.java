@@ -1,6 +1,7 @@
 package com.bizsync.backend.domain.repository;
 
 import com.bizsync.backend.domain.entity.ProjectMember;
+import com.bizsync.backend.domain.entity.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -17,4 +18,10 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
     // 내가 속한 프로젝트 목록 조회
     @Query("SELECT pm FROM ProjectMember pm JOIN FETCH pm.project WHERE pm.user.userId = :userId")
     List<ProjectMember> findAllByUser_UserId(@Param("userId") Long userId);
+
+    // 내 프로젝트 수 (전체)
+    long countByUser_UserId(Long userId);
+
+    // 내 프로젝트 수 (특정 상태)
+    long countByUser_UserIdAndProject_Status(Long userId, ProjectStatus status);
 }

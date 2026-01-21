@@ -71,5 +71,24 @@ public class ProjectController {
         return ResponseEntity.ok("멤버 초대가 완료되었습니다.");
     }
 
+    /**
+     * 프로젝트 완료 처리
+     */
+    @PatchMapping("/{projectId}/complete")
+    public ResponseEntity<Map<String, String>> completeProject(@PathVariable Long projectId) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        projectService.completeProject(projectId, userId);
+        return ResponseEntity.ok(Map.of("message", "프로젝트가 완료되었습니다."));
+    }
+
+    /**
+     * 프로젝트 재진행 처리
+     */
+    @PatchMapping("/{projectId}/reopen")
+    public ResponseEntity<Map<String, String>> reopenProject(@PathVariable Long projectId) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        projectService.reopenProject(projectId, userId);
+        return ResponseEntity.ok(Map.of("message", "프로젝트를 재진행합니다."));
+    }
 
 }

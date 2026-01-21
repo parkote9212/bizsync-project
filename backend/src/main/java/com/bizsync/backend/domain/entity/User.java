@@ -35,8 +35,14 @@ public class User {
     @Column(name = "role", nullable = false, length = 20)
     private Role role;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "position", length = 30)
+    private Position position;
+
+
     @Column(length = 50)
     private String department;
+
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

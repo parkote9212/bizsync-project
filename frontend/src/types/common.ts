@@ -6,6 +6,7 @@ export interface User {
   empNo?: string;
   department?: string;
   role: string;
+  position?: string;
 }
 
 // 대시보드 요약 데이터
@@ -36,3 +37,17 @@ export interface NavigationMenuItem {
   icon: React.ReactNode;
   path: string;
 }
+
+// 프로젝트 상태
+export type ProjectStatus =
+  | "PLANNING"      // 기획중
+  | "IN_PROGRESS"   // 진행중
+  | "COMPLETED"     // 완료
+  | "ON_HOLD"       // 보류
+  | "CANCELLED";    // 취소
+
+// 업무 상태
+export type TaskStatus =
+  | "TODO"          // 할일
+  | "IN_PROGRESS"   // 진행중
+  | "COMPLETED";    // 완료

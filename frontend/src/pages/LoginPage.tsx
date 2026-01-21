@@ -26,7 +26,7 @@ const LoginPage = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
-  
+
   // 회원가입 관련 상태
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupEmail, setSignupEmail] = useState("");
@@ -51,13 +51,24 @@ const LoginPage = () => {
         name: string;
         email: string;
         role: string;
+        position?: string;
+        department?: string;
       }>("/auth/login", {
         email,
         password,
       });
 
       // 성공 시: 토큰 저장
-      const { accessToken, refreshToken, userId, name: userName, email: userEmail, role } = response.data;
+      const {
+        accessToken,
+        refreshToken,
+        userId,
+        name: userName,
+        email: userEmail,
+        role,
+        position,
+        department
+      } = response.data;
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
@@ -71,6 +82,8 @@ const LoginPage = () => {
         name: userName || null,
         email: userEmail || null,
         role: role || null,
+        position: position || null,
+        department: department || null,
       });
 
       // 대시보드로 이동
@@ -112,8 +125,8 @@ const LoginPage = () => {
       }, 1500);
     } catch (err: any) {
       console.error(err);
-      const errorMessage = err.response?.data?.message || 
-                          err.response?.data?.error || 
+      const errorMessage = err.response?.data?.message ||
+                          err.response?.data?.error ||
                           "회원가입에 실패했습니다. 다시 시도해주세요.";
       setSignupError(errorMessage);
     }

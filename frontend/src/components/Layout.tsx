@@ -2,7 +2,9 @@ import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import Brightness4Icon from "@mui/icons-material/Brightness4";
 import Brightness7Icon from "@mui/icons-material/Brightness7";
 import DashboardIcon from "@mui/icons-material/Dashboard";
+import DeleteIcon from "@mui/icons-material/Delete";
 import DescriptionIcon from "@mui/icons-material/Description";
+import DoneAllIcon from "@mui/icons-material/DoneAll";
 import FolderIcon from "@mui/icons-material/Folder";
 import NotificationsIcon from "@mui/icons-material/Notifications";
 import PeopleIcon from "@mui/icons-material/People";
@@ -55,6 +57,8 @@ const Layout = () => {
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
   const markAsRead = useNotificationStore((state) => state.markAsRead);
+  const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
+  const removeNotification = useNotificationStore((state) => state.removeNotification);
 
   // 알림 수신 핸들러 - notificationStore 저장 + 실시간 Snackbar 표시
   const handleNotification = useCallback((notification: Notification) => {
@@ -72,6 +76,23 @@ const Layout = () => {
     { text: "전자결재", icon: <DescriptionIcon />, path: "/approvals" },
     { text: "조직도", icon: <PeopleIcon />, path: "/organization" },
   ];
+
+  // 현재 페이지 제목 가져오기
+  const getPageTitle = () => {
+    const currentPath = location.pathname;
+
+    // 프로젝트 상세 페이지 (칸반 보드)
+    if (currentPath.startsWith("/projects/") && currentPath.match(/\/projects\/\d+$/)) {
+      return "칸반 보드";
+    }
+
+    // 일반 페이지 매칭
+    const menuItem = menuItems.find(item => item.path === currentPath);
+    if (menuItem) return menuItem.text;
+
+    // 기본값
+    return "BizSync";
+  };
 
   const clearUser = useUserStore((state) => state.clearUser);
   const clearNotifications = useNotificationStore((state) => state.clearAll);
@@ -120,22 +141,19 @@ const Layout = () => {
         }}
       >
         <Toolbar>
-          {/* 로고 */}
+          {/* 현재 페이지 제목 */}
           <Typography
-            variant="h6"
+            variant="h5"
             noWrap
             component="div"
             sx={{
-              flexGrow: 0,
+              flexGrow: 1,
               fontWeight: "bold",
-              color: "primary.main",
-              mr: 3,
+              color: "text.primary",
             }}
           >
-            BizSync
+            {getPageTitle()}
           </Typography>
-
-          <Box sx={{ flexGrow: 1 }} />
 
           {/* 알림 아이콘 */}
           <IconButton
@@ -182,9 +200,25 @@ const Layout = () => {
             }}
           >
             <Box sx={{ p: 1 }}>
-              <Typography variant="h6" sx={{ px: 2, py: 1, fontWeight: "bold" }}>
-                알림
-              </Typography>
+              {/* 알림 헤더 */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 2, py: 1 }}>
+                <Typography variant="h6" fontWeight="bold">
+                  알림
+                </Typography>
+                {notifications.length > 0 && unreadCount > 0 && (
+                  <Button
+                    size="small"
+                    startIcon={<DoneAllIcon />}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      markAllAsRead();
+                    }}
+                    sx={{ textTransform: "none" }}
+                  >
+                    모두 읽음
+                  </Button>
+                )}
+              </Box>
               <Divider />
               {notifications.length === 0 ? (
                 <MenuItem onClick={handleMenuClose}>
@@ -203,8 +237,10 @@ const Layout = () => {
                       }
                       handleMenuClose();
                       // 알림 타입에 따라 이동
-                      if (notification.type === "APPROVAL" && notification.targetId) {
+                      if (notification.type === "APPROVAL") {
                         navigate(`/approvals`);
+                      } else if (notification.type === "BOARD" && notification.targetId) {
+                        navigate(`/projects/${notification.targetId}`);
                       }
                     }}
                     sx={{
@@ -212,20 +248,38 @@ const Layout = () => {
                       alignItems: "flex-start",
                       whiteSpace: "normal",
                       bgcolor: notification.read ? "transparent" : "action.hover",
+                      pr: 1,
                     }}
                   >
-                    <Typography
-                      variant="body2"
-                      fontWeight={notification.read ? "normal" : "bold"}
-                    >
-                      {notification.type === "APPROVAL" && "🔔 "}
-                      {notification.message}
-                    </Typography>
-                    {notification.createdAt && (
-                      <Typography variant="caption" color="text.secondary">
-                        {new Date(notification.createdAt).toLocaleString("ko-KR")}
-                      </Typography>
-                    )}
+                    <Box sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}>
+                      <Box sx={{ flexGrow: 1, pr: 1 }}>
+                        <Typography
+                          variant="body2"
+                          fontWeight={notification.read ? "normal" : "bold"}
+                        >
+                          {notification.type === "APPROVAL" && "🔔 "}
+                          {notification.type === "BOARD" && "📋 "}
+                          {notification.message}
+                        </Typography>
+                        {notification.createdAt && (
+                          <Typography variant="caption" color="text.secondary">
+                            {new Date(notification.createdAt).toLocaleString("ko-KR")}
+                          </Typography>
+                        )}
+                      </Box>
+                      <IconButton
+                        size="small"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (notification.id) {
+                            removeNotification(notification.id);
+                          }
+                        }}
+                        sx={{ ml: 1, alignSelf: "flex-start" }}
+                      >
+                        <DeleteIcon fontSize="small" />
+                      </IconButton>
+                    </Box>
                   </MenuItem>
                 ))
               )}
@@ -299,6 +353,16 @@ const Layout = () => {
                   이메일: {user.email}
                 </Typography>
               )}
+              {user.department && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  부서: {user.department}
+                </Typography>
+              )}
+              {user.position && (
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
+                  직급: {user.position}
+                </Typography>
+              )}
               {user.role && (
                 <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: "block" }}>
                   권한: {user.role}
@@ -331,7 +395,29 @@ const Layout = () => {
           },
         }}
       >
-        <Toolbar />
+        {/* 로고 영역 */}
+        <Box
+          sx={{
+            height: 64,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            borderBottom: 1,
+            borderColor: "divider",
+          }}
+        >
+          <Typography
+            variant="h5"
+            sx={{
+              fontWeight: "bold",
+              color: "primary.main",
+              letterSpacing: 1,
+            }}
+          >
+            BizSync
+          </Typography>
+        </Box>
+
         <Box sx={{ overflow: "auto" }}>
           <List>
             {menuItems.map((item) => (
