@@ -1,7 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
+import type { DropResult } from "@hello-pangea/dnd";
+import { useCallback, useEffect, useState } from "react";
 import client from "../api/client";
 import type { BoardData, TaskCreateData } from "../types/kanban";
-import type { DropResult } from "@hello-pangea/dnd";
 
 /**
  * [Service Layer] 칸반 보드의 비즈니스 로직을 담당하는 커스텀 훅
@@ -107,13 +107,13 @@ export const useKanbanBoard = (projectId: string | undefined) => {
   /**
    * [CREATE] 컬럼 생성 (INSERT)
    */
-  const createColumn = async (title: string) => {
-    if (!title.trim() || !projectId) return;
+  const createColumn = async (data: { name: string; description?: string; columnType?: string }) => {
+    if (!data.name.trim() || !projectId) return;
     try {
       await client.post(`/projects/${projectId}/columns`, {
-        name: title,
-        // 현재 보드의 마지막 순서 다음으로 설정
-        sequence: boardData ? boardData.columns.length + 1 : 1,
+        name: data.name,
+        description: data.description,
+        columnType: data.columnType,
       });
       await fetchBoard();
     } catch (error) {

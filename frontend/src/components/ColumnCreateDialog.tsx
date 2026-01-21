@@ -1,0 +1,115 @@
+import {
+  Button,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  InputLabel,
+  MenuItem,
+  Select,
+  Stack,
+  TextField,
+} from "@mui/material";
+import React, { useState } from "react";
+
+interface ColumnCreateDialogProps {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (data: { name: string; description?: string; columnType?: string }) => void;
+}
+
+const ColumnCreateDialog: React.FC<ColumnCreateDialogProps> = ({
+  open,
+  onClose,
+  onSubmit,
+}) => {
+  const [form, setForm] = useState({
+    name: "",
+    description: "",
+    columnType: "",
+  });
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any) => {
+    const { name, value } = e.target;
+    setForm((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  const handleSubmit = () => {
+    if (!form.name.trim()) {
+      alert("컬럼명은 필수입니다.");
+      return;
+    }
+
+    // 빈 값은 전송하지 않음
+    const data: any = { name: form.name };
+    if (form.description) data.description = form.description;
+    if (form.columnType) data.columnType = form.columnType;
+
+    onSubmit(data);
+    setForm({ name: "", description: "", columnType: "" });
+    onClose();
+  };
+
+  const handleClose = () => {
+    setForm({ name: "", description: "", columnType: "" });
+    onClose();
+  };
+
+  return (
+    <Dialog open={open} onClose={handleClose} fullWidth maxWidth="sm">
+      <DialogTitle fontWeight="bold">새 컬럼 생성</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ mt: 1 }}>
+          <TextField
+            label="컬럼명"
+            name="name"
+            value={form.name}
+            onChange={handleChange}
+            fullWidth
+            required
+            autoFocus
+            placeholder="예: 할 일, 진행 중, 완료"
+          />
+          <TextField
+            label="설명"
+            name="description"
+            value={form.description}
+            onChange={handleChange}
+            fullWidth
+            multiline
+            rows={3}
+            placeholder="이 컬럼에 대한 설명을 입력하세요 (선택)"
+          />
+          <FormControl fullWidth>
+            <InputLabel>상태</InputLabel>
+            <Select
+              name="columnType"
+              value={form.columnType}
+              onChange={handleChange}
+              label="상태"
+            >
+              <MenuItem value="">자동 판별</MenuItem>
+              <MenuItem value="TODO">할 일 (TODO)</MenuItem>
+              <MenuItem value="IN_PROGRESS">진행 중 (IN_PROGRESS)</MenuItem>
+              <MenuItem value="DONE">완료 (DONE)</MenuItem>
+            </Select>
+          </FormControl>
+        </Stack>
+      </DialogContent>
+      <DialogActions sx={{ p: 2 }}>
+        <Button onClick={handleClose} color="inherit">
+          취소
+        </Button>
+        <Button onClick={handleSubmit} variant="contained" color="primary">
+          생성하기
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};
+
+export default ColumnCreateDialog;

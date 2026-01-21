@@ -31,7 +31,7 @@ public class KanbanController {
     private final SimpMessagingTemplate messagingTemplate;
     private final ExcelService excelService;
 
-    // 1. 컬럼 생성
+    // 1. 컬럼 생성 (PL만)
     @PostMapping("/projects/{projectId}/columns")
     public ResponseEntity<Map<String, Object>> createColumn(
             @PathVariable Long projectId,
@@ -40,6 +40,13 @@ public class KanbanController {
         Long columnId = kanbanService.createColumn(projectId, dto);
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(Map.of("message", "컬럼 생성 성공", "columnId", columnId));
+    }
+
+    // 컬럼 삭제 (PL만)
+    @DeleteMapping("/columns/{columnId}")
+    public ResponseEntity<String> deleteColumn(@PathVariable Long columnId) {
+        kanbanService.deleteColumn(columnId);
+        return ResponseEntity.ok("컬럼이 삭제되었습니다.");
     }
 
     // 2. 업무 생성

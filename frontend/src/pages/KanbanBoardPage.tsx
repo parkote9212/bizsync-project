@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 // 컴포넌트 Import
+import ColumnCreateDialog from "../components/ColumnCreateDialog";
 import ProjectInviteDialog from "../components/ProjectInviteDialog";
 import TaskCreateDialog from "../components/TaskCreateDialog";
 import TaskDetailDialog from "../components/TaskDetailDialog";
@@ -19,17 +20,14 @@ import {
   CardContent,
   Chip,
   CircularProgress,
-  IconButton,
   Paper,
   Snackbar,
   Stack,
-  TextField,
-  Typography,
+  Typography
 } from "@mui/material";
 // Icons Import
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import CloseIcon from "@mui/icons-material/Close";
 import DownloadIcon from "@mui/icons-material/Download";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import ReplayIcon from "@mui/icons-material/Replay";
@@ -70,8 +68,7 @@ const KanbanBoardPage = () => {
   // --- State ---
 
   // 1. 컬럼 추가용 State
-  const [isAddingColumn, setIsAddingColumn] = useState(false);
-  const [newColumnTitle, setNewColumnTitle] = useState("");
+  const [isColumnCreateOpen, setIsColumnCreateOpen] = useState(false);
 
   // 2. 업무 생성 모달용 State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -153,10 +150,9 @@ const KanbanBoardPage = () => {
     setIsCreateOpen(false); // 모달 닫기
   };
 
-  const onColumnCreateSubmit = async () => {
-    await createColumn(newColumnTitle);
-    setNewColumnTitle("");
-    setIsAddingColumn(false);
+  const onColumnCreateSubmit = async (data: { name: string; description?: string; columnType?: string }) => {
+    await createColumn(data);
+    setIsColumnCreateOpen(false);
   };
 
   const handleCardClick = (taskId: number) => {
@@ -525,52 +521,29 @@ const KanbanBoardPage = () => {
 
           {/* 리스트(컬럼) 추가 버튼 */}
           <Box sx={{ minWidth: 300, width: 300 }}>
-            {isAddingColumn ? (
-              <Paper
-                sx={{ p: 1.5, backgroundColor: "#ebecf0", borderRadius: 2 }}
-              >
-                <TextField
-                  autoFocus
-                  fullWidth
-                  size="small"
-                  placeholder="리스트 이름"
-                  value={newColumnTitle}
-                  onChange={(e) => setNewColumnTitle(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && onColumnCreateSubmit()}
-                  sx={{ bgcolor: "white", mb: 1 }}
-                />
-                <Stack direction="row" spacing={1}>
-                  <Button variant="contained" onClick={onColumnCreateSubmit}>
-                    리스트 추가
-                  </Button>
-                  <IconButton
-                    onClick={() => {
-                      setIsAddingColumn(false);
-                      setNewColumnTitle("");
-                    }}
-                  >
-                    <CloseIcon />
-                  </IconButton>
-                </Stack>
-              </Paper>
-            ) : (
-              <Button
-                variant="contained"
-                startIcon={<AddIcon />}
-                fullWidth
-                sx={{
-                  justifyContent: "flex-start",
-                  backgroundColor: "rgba(255,255,255,0.24)",
-                  color: "black",
-                  "&:hover": { backgroundColor: "rgba(255,255,255,0.32)" },
-                  py: 1.5,
-                }}
-                onClick={() => setIsAddingColumn(true)}
-              >
-                리스트 추가
-              </Button>
-            )}
+            <Button
+              variant="contained"
+              startIcon={<AddIcon />}
+              fullWidth
+              sx={{
+                justifyContent: "flex-start",
+                backgroundColor: "rgba(255,255,255,0.24)",
+                color: "black",
+                "&:hover": { backgroundColor: "rgba(255,255,255,0.32)" },
+                py: 1.5,
+              }}
+              onClick={() => setIsColumnCreateOpen(true)}
+            >
+              리스트 추가
+            </Button>
           </Box>
+
+          {/* 컬럼 생성 모달 */}
+          <ColumnCreateDialog
+            open={isColumnCreateOpen}
+            onClose={() => setIsColumnCreateOpen(false)}
+            onSubmit={onColumnCreateSubmit}
+          />
 
           {/* 업무 생성 모달 */}
           <TaskCreateDialog

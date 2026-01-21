@@ -1,13 +1,14 @@
 package com.bizsync.backend.domain.repository;
 
-import com.bizsync.backend.domain.entity.ProjectMember;
-import com.bizsync.backend.domain.entity.ProjectStatus;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.bizsync.backend.domain.entity.ProjectMember;
+import com.bizsync.backend.domain.entity.ProjectStatus;
 
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Long> {
@@ -24,4 +25,8 @@ public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Lo
 
     // 내 프로젝트 수 (특정 상태)
     long countByUser_UserIdAndProject_Status(Long userId, ProjectStatus status);
+
+    // 특정 프로젝트의 모든 멤버 조회
+    @Query("SELECT pm FROM ProjectMember pm JOIN FETCH pm.user WHERE pm.project.projectId = :projectId")
+    List<ProjectMember> findAllByProject_ProjectId(@Param("projectId") Long projectId);
 }

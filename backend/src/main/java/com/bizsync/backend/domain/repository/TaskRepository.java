@@ -8,6 +8,7 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.bizsync.backend.domain.entity.ColumnType;
 import com.bizsync.backend.domain.entity.Task;
 
 @Repository
@@ -30,4 +31,16 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
 
     // 내 업무 수 (전체)
     long countByWorker_UserId(Long userId);
+
+    /**
+     * 특정 사용자의 완료되지 않은 업무 수 (컬럼 타입이 DONE이 아닌 것)
+     */
+    @Query("SELECT COUNT(t) FROM Task t WHERE t.worker.userId = :userId AND t.column.columnType != :columnType")
+    long countByWorkerIdAndColumnTypeNot(@Param("userId") Long userId, @Param("columnType") ColumnType columnType);
+
+    /**
+     * 특정 사용자의 모든 업무 조회 (프로젝트, 컬럼 정보 포함)
+     */
+    @Query("SELECT t FROM Task t JOIN FETCH t.column c JOIN FETCH c.project WHERE t.worker.userId = :userId")
+    List<Task> findByWorker_UserId(@Param("userId") Long userId);
 }

@@ -1,19 +1,27 @@
 package com.bizsync.backend.controller;
 
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PatchMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.dto.request.MemberInviteRequestDTO;
 import com.bizsync.backend.dto.request.ProjectCreateRequestDTO;
 import com.bizsync.backend.dto.response.ProjectListResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
 import com.bizsync.backend.service.ProjectService;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.List;
-import java.util.Map;
 
 @RestController
 @RequestMapping("/api/projects")
@@ -89,6 +97,15 @@ public class ProjectController {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         projectService.reopenProject(projectId, userId);
         return ResponseEntity.ok(Map.of("message", "프로젝트를 재진행합니다."));
+    }
+
+    /**
+     * 프로젝트 멤버 목록 조회
+     */
+    @GetMapping("/{projectId}/members")
+    public ResponseEntity<List<com.bizsync.backend.dto.response.ProjectMemberResponseDTO>> getProjectMembers(
+            @PathVariable Long projectId) {
+        return ResponseEntity.ok(projectService.getProjectMembers(projectId));
     }
 
 }

@@ -5,16 +5,31 @@ import {
   Box,
   Card,
   CardContent,
+  Chip,
   Container,
   Grid,
   Paper,
   Skeleton,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography
 } from "@mui/material";
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import client from "../api/client";
-import type { Notice, Task } from "../types/common";
+
+interface MyTask {
+  taskId: number;
+  title: string;
+  projectName: string;
+  columnName: string;
+  dueDate: string | null;
+  daysLeft: number | null;
+}
 
 const DashboardPage = () => {
   const navigate = useNavigate();
@@ -23,6 +38,7 @@ const DashboardPage = () => {
   const [projectCount, setProjectCount] = useState(0);
   const [taskCount, setTaskCount] = useState(0);
   const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
+  const [myTasks, setMyTasks] = useState<MyTask[]>([]);
 
   // 대시보드 통계 데이터 로드
   useEffect(() => {
@@ -31,19 +47,38 @@ const DashboardPage = () => {
         setLoading(true);
 
         // 대시보드 통계 API 호출
-        const response = await client.get("/dashboard/stats");
+        const statsResponse = await client.get("/dashboard/stats");
 
-        if (response.data?.status === "SUCCESS" && response.data?.data) {
-          const stats = response.data.data;
+        if (statsResponse.data?.status === "SUCCESS" && statsResponse.data?.data) {
+          const stats = statsResponse.data.data;
           setProjectCount(stats.projectCount || 0);
           setTaskCount(stats.taskCount || 0);
           setPendingApprovalCount(stats.pendingApprovalCount || 0);
         } else {
           // 예상치 못한 응답 형식
-          console.warn("예상치 못한 응답 형식:", response.data);
+          console.warn("예상치 못한 응답 형식:", statsResponse.data);
           setProjectCount(0);
           setTaskCount(0);
           setPendingApprovalCount(0);
+        }
+
+        // 내 업무 목록 조회 API 호출
+        try {
+          const tasksResponse = await client.get("/dashboard/my-tasks");
+          if (tasksResponse.data?.status === "SUCCESS" && tasksResponse.data?.data) {
+            // 마감일 임박 순으로 정렬
+            const tasks = tasksResponse.data.data;
+            const sortedTasks = tasks.sort((a: MyTask, b: MyTask) => {
+              // daysLeft가 null인 경우는 마지막으로
+              if (a.daysLeft === null) return 1;
+              if (b.daysLeft === null) return -1;
+              return a.daysLeft - b.daysLeft;
+            });
+            setMyTasks(sortedTasks);
+          }
+        } catch (taskError) {
+          console.warn("내 업무 목록 로드 실패:", taskError);
+          setMyTasks([]);
         }
       } catch (error) {
         console.error("대시보드 데이터 로드 실패:", error);
@@ -51,6 +86,7 @@ const DashboardPage = () => {
         setProjectCount(0);
         setTaskCount(0);
         setPendingApprovalCount(0);
+        setMyTasks([]);
       } finally {
         setLoading(false);
       }
@@ -74,20 +110,23 @@ const DashboardPage = () => {
     navigate("/approvals");
   };
 
-  // TODO: 백엔드 API 연결 필요 - 내 업무 리스트, 공지사항
-  const myTasks: Task[] = [
-    { id: 1, title: "API 설계 문서 작성", dueDate: "2024-01-20", daysLeft: 3 },
-    { id: 2, title: "데이터베이스 마이그레이션", dueDate: "2024-01-22", daysLeft: 5 },
-    { id: 3, title: "프론트엔드 테스트 코드 작성", dueDate: "2024-01-25", daysLeft: 8 },
-    { id: 4, title: "배포 스크립트 수정", dueDate: "2024-01-28", daysLeft: 11 },
-    { id: 5, title: "문서화 업데이트", dueDate: "2024-01-30", daysLeft: 13 },
-  ];
+  // 마감일 색상 결정
+  const getDueDateColor = (daysLeft: number | null) => {
+    if (daysLeft === null) return "default";
+    if (daysLeft < 0) return "error"; // 마감일 지남
+    if (daysLeft <= 3) return "error"; // 3일 이내
+    if (daysLeft <= 7) return "warning"; // 7일 이내
+    return "success";
+  };
 
-  const notices: Notice[] = [
-    { id: 1, title: "2024년 1분기 회사 전체 회의 안내", date: "2024-01-15" },
-    { id: 2, title: "복지제도 변경 사항 안내", date: "2024-01-10" },
-    { id: 3, title: "신규 프로젝트 투입 안내", date: "2024-01-08" },
-  ];
+  // 마감일 텍스트
+  const getDueDateText = (daysLeft: number | null, dueDate: string | null) => {
+    if (!dueDate) return "마감일 없음";
+    if (daysLeft === null) return dueDate;
+    if (daysLeft < 0) return `${Math.abs(daysLeft)}일 지남`;
+    if (daysLeft === 0) return "오늘 마감";
+    return `${daysLeft}일 남음`;
+  };
 
   // Skeleton 렌더링 함수
   const renderSkeletonCard = () => (
@@ -192,54 +231,76 @@ const DashboardPage = () => {
         </Grid>
       </Grid>
 
-      {/* 하단 영역 - 최근 활동 (선택사항) */}
-      <Grid container spacing={3}>
-        {/* 내 업무 리스트 */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Typography variant="h6" fontWeight="bold" mb={2}>
-              내 업무 리스트
+      {/* 내 업무 리스트 */}
+      <Paper elevation={2} sx={{ mt: 4, p: 3 }}>
+        <Typography variant="h6" fontWeight="bold" mb={2}>
+          내 업무 리스트
+        </Typography>
+        {loading ? (
+          <Box>
+            <Skeleton variant="rectangular" height={60} sx={{ mb: 1 }} />
+            <Skeleton variant="rectangular" height={60} sx={{ mb: 1 }} />
+            <Skeleton variant="rectangular" height={60} />
+          </Box>
+        ) : myTasks.length === 0 ? (
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+              minHeight: 200,
+              bgcolor: "background.default",
+              borderRadius: 1,
+            }}
+          >
+            <Typography variant="body2" color="text.secondary">
+              진행 중인 업무가 없습니다
             </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: 200,
-                bgcolor: "background.default",
-                borderRadius: 1,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                백엔드 API 구현이 필요합니다
-              </Typography>
-            </Box>
-          </Paper>
-        </Grid>
+          </Box>
+        ) : (
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: "bold" }}>업무명</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>프로젝트</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>상태</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>마감일</TableCell>
+                  <TableCell sx={{ fontWeight: "bold" }}>남은 기간</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {myTasks.map((task) => (
+                  <TableRow
+                    key={task.taskId}
+                    hover
+                    sx={{ cursor: "pointer" }}
+                    onClick={() => {
+                      // 해당 업무의 프로젝트로 이동 (구현 필요)
+                      console.log("업무 상세 이동:", task.taskId);
+                    }}
+                  >
+                    <TableCell>{task.title}</TableCell>
+                    <TableCell>{task.projectName}</TableCell>
+                    <TableCell>
+                      <Chip label={task.columnName} size="small" color="primary" variant="outlined" />
+                    </TableCell>
+                    <TableCell>{task.dueDate || "-"}</TableCell>
+                    <TableCell>
+                      <Chip
+                        label={getDueDateText(task.daysLeft, task.dueDate)}
+                        size="small"
+                        color={getDueDateColor(task.daysLeft)}
+                      />
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
+      </Paper>
 
-        {/* 최근 활동 */}
-        <Grid size={{ xs: 12, md: 6 }}>
-          <Paper elevation={2} sx={{ p: 2 }}>
-            <Typography variant="h6" fontWeight="bold" mb={2}>
-              최근 활동
-            </Typography>
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "center",
-                alignItems: "center",
-                minHeight: 200,
-                bgcolor: "background.default",
-                borderRadius: 1,
-              }}
-            >
-              <Typography variant="body2" color="text.secondary">
-                백엔드 API 구현이 필요합니다
-              </Typography>
-            </Box>
-          </Paper>
-        </Grid>
-      </Grid>
     </Container>
   );
 };

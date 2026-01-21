@@ -68,7 +68,7 @@ public class Task {
     public void updateDetails(String title, String content, LocalDate deadline, User worker) {
         if (title != null)
             this.title = title;
-        if (this.content != null)
+        if (content != null)
             this.content = content;
         if (deadline != null)
             this.deadline = deadline;
