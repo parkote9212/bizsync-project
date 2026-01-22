@@ -62,243 +62,6 @@
 
 ---
 
-## 🚨 필수 (CRITICAL)
-
-배포 전 반드시 완료해야 하는 항목입니다.
-
-### 1. Frontend 환경 변수 (난이도: ⭐)
-
-> ⚠️ Backend는 이미 `.env` + `application-dev.yml`로 환경변수 분리 완료
-
-#### 1.1 API URL 환경 변수화 ✅ 필수
-- **현재 상태**: `client.ts`에 하드코딩
-  ```typescript
-  const BASE_URL = "http://localhost:8080/api";
-  ```
-- **작업 내용**:
-  ```typescript
-  const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080/api";
-  ```
-- **파일**: `frontend/src/api/client.ts`
-
-#### 1.2 WebSocket URL 환경 변수화 ✅ 필수
-- **현재 상태**: 하드코딩 (`ws://localhost:8080/ws`)
-- **작업 내용**:
-  ```typescript
-  const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws";
-  
-  client.current = new Client({
-    brokerURL: WS_URL,
-    // ...
-  });
-  ```
-- **파일**:
-  - `frontend/src/hooks/useBoardSocket.ts`
-  - `frontend/src/hooks/useNotificationSocket.ts`
-
-#### 1.3 환경 변수 파일 생성 ✅ 필수
-- **작업 내용**:
-  ```bash
-  # frontend/.env.example (Git 커밋용)
-  VITE_API_BASE_URL=http://localhost:8080/api
-  VITE_WS_URL=ws://localhost:8080/ws
-  
-  # frontend/.env.production (배포용, gitignore)
-  VITE_API_BASE_URL=https://api.your-domain.com/api
-  VITE_WS_URL=wss://api.your-domain.com/ws
-  ```
-
----
-
-### 2. 프로덕션 설정 (난이도: ⭐⭐)
-
-#### 2.1 application-prod.yml 생성 ✅ 필수
-- **현재 상태**: `application-dev.yml`만 존재
-- **작업 내용**: `backend/src/main/resources/application-prod.yml` 생성
-  ```yaml
-  spring:
-    application:
-      name: BizSync
-  
-    datasource:
-      driver-class-name: ${SPRING_DATASOURCE_DRIVER}
-      url: ${SPRING_DATASOURCE_URL}
-      username: ${SPRING_DATASOURCE_USERNAME}
-      password: ${SPRING_DATASOURCE_PASSWORD}
-  
-    jpa:
-      hibernate:
-        ddl-auto: validate  # ❗ update → validate
-      show-sql: false       # ❗ 프로덕션에서는 false
-      properties:
-        hibernate:
-          format_sql: false
-          dialect: org.hibernate.dialect.MariaDBDialect
-  
-  app:
-    jwt:
-      secret: ${JWT_SECRET}
-      expiration-ms: ${JWT_EXPIRATION_MS:3600000}
-      refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
-  
-  server:
-    port: ${SERVER_PORT:8080}
-  
-  logging:
-    level:
-      root: WARN
-      com.bizsync.backend: INFO
-    file:
-      name: logs/bizsync.log
-  ```
-
-#### 2.2 CORS 프로덕션 도메인 추가 ✅ 필수
-- **현재 상태**: localhost만 허용
-  ```java
-  config.setAllowedOrigins(List.of("http://localhost:5173", "http://localhost:3000"));
-  ```
-- **작업 내용**: 환경 변수로 관리
-  ```java
-  @Value("${app.cors.allowed-origins:http://localhost:5173,http://localhost:3000}")
-  private String allowedOrigins;
-  
-  // corsConfigurationSource에서
-  config.setAllowedOrigins(Arrays.asList(allowedOrigins.split(",")));
-  ```
-- **파일**: `backend/src/main/java/com/bizsync/backend/common/config/SecurityConfig.java`
-
----
-
-### 3. Docker 컨테이너화 (난이도: ⭐⭐)
-
-#### 3.1 Backend Dockerfile ✅ 필수
-- **파일**: `backend/Dockerfile`
-  ```dockerfile
-  # Build Stage
-  FROM eclipse-temurin:21-jdk-alpine AS build
-  WORKDIR /app
-  COPY gradlew .
-  COPY gradle gradle
-  COPY build.gradle settings.gradle ./
-  COPY src src
-  RUN chmod +x ./gradlew && ./gradlew bootJar --no-daemon
-  
-  # Run Stage
-  FROM eclipse-temurin:21-jre-alpine
-  WORKDIR /app
-  COPY --from=build /app/build/libs/*.jar app.jar
-  
-  EXPOSE 8080
-  ENTRYPOINT ["java", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
-  ```
-
-#### 3.2 Frontend Dockerfile ✅ 필수
-- **파일**: `frontend/Dockerfile`
-  ```dockerfile
-  # Build Stage
-  FROM node:20-alpine AS build
-  WORKDIR /app
-  COPY package*.json ./
-  RUN npm ci
-  COPY . .
-  RUN npm run build
-  
-  # Run Stage
-  FROM nginx:alpine
-  COPY --from=build /app/dist /usr/share/nginx/html
-  COPY nginx.conf /etc/nginx/conf.d/default.conf
-  EXPOSE 80
-  CMD ["nginx", "-g", "daemon off;"]
-  ```
-
-#### 3.3 Nginx 설정 ✅ 필수
-- **파일**: `frontend/nginx.conf`
-  ```nginx
-  server {
-      listen 80;
-      server_name localhost;
-      root /usr/share/nginx/html;
-      index index.html;
-  
-      # SPA 라우팅 지원
-      location / {
-          try_files $uri $uri/ /index.html;
-      }
-  
-      # API 프록시 (선택)
-      location /api/ {
-          proxy_pass http://backend:8080/api/;
-          proxy_http_version 1.1;
-          proxy_set_header Host $host;
-          proxy_cache_bypass $http_upgrade;
-      }
-  
-      # WebSocket 프록시
-      location /ws {
-          proxy_pass http://backend:8080/ws;
-          proxy_http_version 1.1;
-          proxy_set_header Upgrade $http_upgrade;
-          proxy_set_header Connection "upgrade";
-      }
-  }
-  ```
-
-#### 3.4 docker-compose.yml ✅ 필수
-- **파일**: `docker-compose.yml` (프로젝트 루트)
-  ```yaml
-  version: '3.8'
-  
-  services:
-    backend:
-      build: ./backend
-      ports:
-        - "8080:8080"
-      environment:
-        - SPRING_DATASOURCE_URL=jdbc:mariadb://db:3306/bizsync?serverTimezone=Asia/Seoul
-        - SPRING_DATASOURCE_USERNAME=bizsync
-        - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
-        - JWT_SECRET=${JWT_SECRET}
-        - SPRING_PROFILES_ACTIVE=prod
-      depends_on:
-        - db
-      networks:
-        - bizsync-network
-  
-    frontend:
-      build:
-        context: ./frontend
-        args:
-          - VITE_API_BASE_URL=http://localhost:8080/api
-          - VITE_WS_URL=ws://localhost:8080/ws
-      ports:
-        - "80:80"
-      depends_on:
-        - backend
-      networks:
-        - bizsync-network
-  
-    db:
-      image: mariadb:10.11
-      environment:
-        - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD}
-        - MYSQL_DATABASE=bizsync
-        - MYSQL_USER=bizsync
-        - MYSQL_PASSWORD=${DB_PASSWORD}
-      volumes:
-        - db-data:/var/lib/mysql
-      networks:
-        - bizsync-network
-  
-  volumes:
-    db-data:
-  
-  networks:
-    bizsync-network:
-      driver: bridge
-  ```
-
----
-
 ## 💡 권장 (RECOMMENDED)
 
 운영 안정성을 위해 구현을 권장하는 항목입니다.
@@ -352,17 +115,95 @@
 
 ---
 
+### 8. 백엔드 헬스체크 (난이도: ⭐⭐)
+
+#### 8.1 Spring Boot Actuator 헬스체크 엔드포인트 추가 🔧 권장
+- **목적**: 컨테이너 및 로드밸런서에서 서버 상태 확인
+- **작업 내용**:
+  - `build.gradle`에 Actuator 의존성 추가
+    ```gradle
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    ```
+  - `application-prod.yml`에 헬스체크 엔드포인트 설정
+    ```yaml
+    management:
+      endpoints:
+        web:
+          exposure:
+            include: health,info
+      endpoint:
+        health:
+          show-details: when-authorized
+    ```
+  - `docker-compose.yml`의 healthcheck 설정 활용
+    ```yaml
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    ```
+- **파일**: 
+  - `backend/build.gradle`
+  - `backend/src/main/resources/application-prod.yml`
+  - `docker-compose.yml`
+
+#### 8.2 커스텀 헬스체크 (선택) 🔧 권장
+- **목적**: 데이터베이스 연결 상태 등 상세 헬스체크
+- **작업 내용**:
+  - `HealthIndicator` 구현하여 DB 연결 상태 확인
+  - WebSocket 연결 상태 확인 (선택)
+
+---
+
+### 9. CI/CD 구축 (난이도: ⭐⭐⭐⭐)
+
+#### 9.1 GitHub Actions 워크플로우 설정 🔧 권장
+- **목적**: 자동 빌드, 테스트, 배포 파이프라인 구축
+- **작업 내용**:
+  - **Backend CI/CD**:
+    ```yaml
+    # .github/workflows/backend-ci-cd.yml
+    - Java 21 환경에서 빌드
+    - 단위 테스트 실행
+    - Docker 이미지 빌드
+    - Docker Hub 또는 ECR에 푸시
+    - EC2에 자동 배포 (선택)
+    ```
+  - **Frontend CI/CD**:
+    ```yaml
+    # .github/workflows/frontend-ci-cd.yml
+    - Node.js 환경에서 빌드
+    - 린트 및 타입 체크
+    - Docker 이미지 빌드
+    - Docker Hub 또는 ECR에 푸시
+    - EC2에 자동 배포 (선택)
+    ```
+- **파일**: `.github/workflows/backend-ci-cd.yml`, `.github/workflows/frontend-ci-cd.yml`
+
+#### 9.2 배포 전략 🔧 권장
+- **Blue-Green 배포**: 무중단 배포를 위한 전략
+- **롤백 계획**: 배포 실패 시 자동 롤백
+- **환경 변수 관리**: GitHub Secrets 활용
+
+#### 9.3 Docker 이미지 태깅 전략 🔧 권장
+- **태그 규칙**: `v1.0.0`, `latest`, `main`, `develop`
+- **이미지 버전 관리**: Semantic Versioning
+
+---
+
 ## 🎨 선택 (OPTIONAL)
 
 시간 여유가 있을 때 구현하면 좋은 항목입니다.
 
-### 8. 추가 기능
+### 10. 추가 기능
 
-#### 8.2 이메일 알림 🎯 선택
+#### 10.1 이메일 알림 🎯 선택
 - **목적**: 결재 요청/승인/반려 시 이메일 발송
 - **도구**: Spring Mail, AWS SES
 
-#### 8.3 PWA 지원 🎯 선택
+#### 10.2 PWA 지원 🎯 선택
 - **목적**: 모바일 앱처럼 설치 가능
 - **작업**: Service Worker, manifest.json
 
@@ -372,16 +213,10 @@
 
 | 항목 | 난이도 | 중요도 | 예상 시간 | 우선순위 |
 |-----|--------|--------|-----------|---------|
-| Frontend API URL 환경변수 | ⭐ | 🔥🔥🔥 | 20분 | 1 |
-| Frontend WebSocket URL 환경변수 | ⭐ | 🔥🔥🔥 | 20분 | 1 |
-| Frontend .env 파일 생성 | ⭐ | 🔥🔥🔥 | 10분 | 1 |
-| application-prod.yml | ⭐ | 🔥🔥🔥 | 30분 | 1 |
-| CORS 프로덕션 설정 | ⭐ | 🔥🔥🔥 | 20분 | 1 |
-| Backend Dockerfile | ⭐⭐ | 🔥🔥🔥 | 1시간 | 2 |
-| Frontend Dockerfile | ⭐⭐ | 🔥🔥🔥 | 1시간 | 2 |
-| docker-compose.yml | ⭐⭐ | 🔥🔥🔥 | 1시간 | 2 |
 | 관리자 기능 | ⭐⭐⭐ | 🔥🔥 | 1일 | 4 |
 | 테스트 코드 | ⭐⭐⭐ | 🔥🔥 | 2일 | 4 |
+| 백엔드 헬스체크 | ⭐⭐ | 🔥🔥 | 1시간 | 3 |
+| CI/CD 구축 | ⭐⭐⭐⭐ | 🔥🔥🔥 | 1일 | 3 |
 
 ---
 
@@ -405,12 +240,13 @@
 - [x] docker-compose.yml 작성 완료 (EC2+RDS 환경)
 
 ### 배포 후 확인
-- [ ] 로그인/회원가입 테스트
-- [ ] 프로젝트 생성/수정/삭제 테스트
-- [ ] 칸반 보드 드래그앤드롭 테스트
-- [ ] WebSocket 실시간 동기화 테스트
-- [ ] 결재 프로세스 테스트
-- [ ] 에러 로그 모니터링
+- [x] 로그인/회원가입 테스트 ✅
+- [x] 프로젝트 생성/수정/삭제 테스트 ✅
+- [x] 칸반 보드 드래그앤드롭 테스트 ✅
+- [x] WebSocket 실시간 동기화 테스트 ✅
+- [x] 결재 프로세스 테스트 ✅
+- [x] 에러 로그 모니터링 ✅
+- [x] 배포 및 테스트 성공 ✅
 
 ---
 
@@ -420,3 +256,4 @@
 |-----|--------|----------|
 | 2026-01-22 | AI Assistant | 초기 TODO 리스트 작성 |
 | 2026-01-22 | AI Assistant | 구현 완료 현황 추가, Backend 환경변수 분리 완료 반영 |
+| 2026-01-22 | AI Assistant | 배포 및 테스트 성공 완료 표시, 백엔드 헬스체크 및 CI/CD 구축 항목 추가 |
