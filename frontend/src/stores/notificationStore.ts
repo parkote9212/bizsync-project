@@ -34,7 +34,7 @@ const initialNotifications: Notification[] = [];
 // Notification Store 생성
 export const useNotificationStore = create<NotificationStore>()(
   persist(
-    (set, get) => ({
+    (set) => ({
       notifications: initialNotifications,
       unreadCount: 0,
 

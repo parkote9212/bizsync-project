@@ -121,8 +121,8 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
           <Autocomplete
             options={searchOptions}
             value={selectedWorker}
-            onChange={(event, newValue) => setSelectedWorker(newValue)}
-            onInputChange={(event, newInputValue) => {
+            onChange={(_event, newValue) => setSelectedWorker(newValue)}
+            onInputChange={(_event, newInputValue) => {
               handleSearchUsers(newInputValue);
             }}
             getOptionLabel={(option) => `${option.name} (${option.email})`}

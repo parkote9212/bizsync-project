@@ -93,8 +93,8 @@ const ProjectInviteDialog: React.FC<ProjectInviteDialogProps> = ({
           <Autocomplete
             options={searchOptions}
             value={selectedUser}
-            onChange={(event, newValue) => setSelectedUser(newValue)}
-            onInputChange={(event, newInputValue) => {
+            onChange={(_event, newValue) => setSelectedUser(newValue)}
+            onInputChange={(_event, newInputValue) => {
               handleSearchUsers(newInputValue);
             }}
             getOptionLabel={(option) => `${option.name} (${option.email})`}
