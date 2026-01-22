@@ -18,8 +18,9 @@ export const useBoardSocket = (
     if (!projectId) return;
 
     // 1. 클라이언트 설정
+    const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws";
     client.current = new Client({
-      brokerURL: "ws://localhost:8080/ws", // 백엔드 주소 (ws 프로토콜)
+      brokerURL: WS_URL, // 백엔드 주소 (ws 프로토콜)
       reconnectDelay: 5000, // 연결 끊기면 5초 뒤 재시도
       onConnect: () => {
         console.log(`Connected to Project ${projectId}`);

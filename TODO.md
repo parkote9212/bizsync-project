@@ -303,22 +303,6 @@
 
 운영 안정성을 위해 구현을 권장하는 항목입니다.
 
-### 4. UI 보완 (난이도: ⭐⭐)
-
-#### 4.1 비밀번호 변경 UI 🔧 권장
-- **현재 상태**: Backend API 구현됨 (`POST /api/auth/change-password`)
-- **작업 내용**: 프로필 메뉴 또는 설정 페이지에 비밀번호 변경 UI 추가
-- **구현 위치**: `Layout.tsx` 프로필 메뉴 또는 새로운 `SettingsPage.tsx`
-- **API 연동**:
-  ```typescript
-  await client.post('/auth/change-password', {
-    currentPassword: '현재 비밀번호',
-    newPassword: '새 비밀번호'
-  });
-  ```
-
----
-
 ### 5. 관리자 기능 (난이도: ⭐⭐⭐)
 
 > **현재 상태**: `Role.ADMIN`은 정의되어 있으나 실제 사용되지 않음
@@ -343,18 +327,6 @@
 
 ---
 
-### 6. 데이터베이스 (난이도: ⭐⭐)
-
-#### 6.1 인덱스 추가 🔧 권장
-- **작업 내용**:
-  ```sql
-  CREATE INDEX idx_users_email ON users(email);
-  CREATE INDEX idx_project_member_user ON project_member(user_id);
-  CREATE INDEX idx_project_member_project ON project_member(project_id);
-  CREATE INDEX idx_task_worker ON task(worker_id);
-  CREATE INDEX idx_task_column ON task(column_id);
-  CREATE INDEX idx_approval_line_approver ON approval_line(approver_id, status);
-  ```
 
 #### 6.2 초기 데이터 스크립트 🔧 권장
 - **파일**: `backend/src/main/resources/data.sql`
@@ -386,11 +358,6 @@
 
 ### 8. 추가 기능
 
-#### 8.1 결재 취소 기능 🎯 선택
-- **목적**: 기안자가 PENDING 상태의 결재를 취소
-- **Backend**: `ApprovalService.cancelApproval()`
-- **Frontend**: 기안함에서 취소 버튼 추가
-
 #### 8.2 이메일 알림 🎯 선택
 - **목적**: 결재 요청/승인/반려 시 이메일 발송
 - **도구**: Spring Mail, AWS SES
@@ -413,7 +380,6 @@
 | Backend Dockerfile | ⭐⭐ | 🔥🔥🔥 | 1시간 | 2 |
 | Frontend Dockerfile | ⭐⭐ | 🔥🔥🔥 | 1시간 | 2 |
 | docker-compose.yml | ⭐⭐ | 🔥🔥🔥 | 1시간 | 2 |
-| 비밀번호 변경 UI | ⭐⭐ | 🔥🔥 | 2시간 | 3 |
 | 관리자 기능 | ⭐⭐⭐ | 🔥🔥 | 1일 | 4 |
 | 테스트 코드 | ⭐⭐⭐ | 🔥🔥 | 2일 | 4 |
 
@@ -422,15 +388,15 @@
 ## ✅ 배포 전 체크리스트
 
 ### 필수 체크 (Frontend)
-- [ ] API URL 환경 변수화 완료
-- [ ] WebSocket URL 환경 변수화 완료
-- [ ] `.env.example` 파일 생성 완료
-- [ ] `.env.production` 파일 생성 완료
+- [x] API URL 환경 변수화 완료
+- [x] WebSocket URL 환경 변수화 완료
+- [x] `.env.example` 파일 생성 완료
+- [x] `.env.production` 파일 생성 완료
 
 ### 필수 체크 (Backend)
 - [x] 환경 변수 분리 완료 (`.env` + `application-dev.yml`)
-- [ ] `application-prod.yml` 생성 완료
-- [ ] CORS 프로덕션 도메인 설정 완료
+- [x] `application-prod.yml` 생성 완료
+- [x] CORS 프로덕션 도메인 설정 완료
 
 ### 필수 체크 (Docker)
 - [ ] Backend Dockerfile 작성 완료

@@ -18,8 +18,9 @@ export const useNotificationSocket = (
   useEffect(() => {
     if (!userId) return;
 
+    const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws";
     client.current = new Client({
-      brokerURL: "ws://localhost:8080/ws",
+      brokerURL: WS_URL,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

@@ -7,13 +7,14 @@ spring:
     url: ${SPRING_DATASOURCE_URL}
     username: ${SPRING_DATASOURCE_USERNAME}
     password: ${SPRING_DATASOURCE_PASSWORD}
+
   jpa:
     hibernate:
-      ddl-auto: update
-      show-sql: true
+      ddl-auto: validate  # ❗ update → validate
+    show-sql: false       # ❗ 프로덕션에서는 false
     properties:
       hibernate:
-        format_sql: true
+        format_sql: false
         dialect: org.hibernate.dialect.MariaDBDialect
 
 servlet:
@@ -29,15 +30,18 @@ mybatis:
 
 app:
   jwt:
-    # Use JWT_SECRET env var if provided, otherwise fall back to a safe development default
-    secret: ${JWT_SECRET:your-secret-key-must-be-at-least-256-bits-long-for-HS256-algorithm-security}
-    # expiration in milliseconds; fallback to 3600000 (1 hour)
+    secret: ${JWT_SECRET}
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
-    # refresh token expiration in milliseconds; fallback to 604800000 (7 days)
-    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7일 (밀리초)
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
-# Additional dev-only settings can go here
 server:
   port: ${SERVER_PORT:8080}
+
+logging:
+  level:
+    root: WARN
+    com.bizsync.backend: INFO
+  file:
+    name: logs/bizsync.log
