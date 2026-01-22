@@ -1,0 +1,79 @@
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: bizsync-backend
+    ports:
+      - "8080:8080"
+    environment:
+      # 데이터소스 설정 (RDS 사용)
+      - SPRING_DATASOURCE_DRIVER=org.mariadb.jdbc.Driver
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      # JWT 설정
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-3600000}
+      - JWT_REFRESH_EXPIRATION_MS=${JWT_REFRESH_EXPIRATION_MS:-604800000}
+      # CORS 설정
+      - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      # 프로파일
+      - SPRING_PROFILES_ACTIVE=prod
+      # 서버 포트
+      - SERVER_PORT=8080
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        # 빌드 시 환경 변수 전달 (실제 배포 시 도메인으로 변경)
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080/api}
+        - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8080/ws}
+    container_name: bizsync-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+
+  # 로컬 개발용 DB (선택사항 - RDS 사용 시 주석 처리)
+  # db:
+  #   image: mariadb:10.11
+  #   container_name: bizsync-db
+  #   environment:
+  #     - MYSQL_ROOT_PASSWORD=${DB_ROOT_PASSWORD:-rootpassword}
+  #     - MYSQL_DATABASE=bizsync
+  #     - MYSQL_USER=bizsync
+  #     - MYSQL_PASSWORD=${DB_PASSWORD:-bizsync123}
+  #   volumes:
+  #     - db-data:/var/lib/mysql
+  #   ports:
+  #     - "3306:3306"
+  #   restart: unless-stopped
+  #   networks:
+  #     - bizsync-network
+  #   healthcheck:
+  #     test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+  #     interval: 10s
+  #     timeout: 5s
+  #     retries: 5
+
+networks:
+  bizsync-network:
+    driver: bridge
+
+# volumes:
+#   db-data:

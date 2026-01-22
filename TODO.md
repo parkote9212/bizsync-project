@@ -399,10 +399,10 @@
 - [x] CORS 프로덕션 도메인 설정 완료
 
 ### 필수 체크 (Docker)
-- [ ] Backend Dockerfile 작성 완료
-- [ ] Frontend Dockerfile 작성 완료
-- [ ] nginx.conf 작성 완료
-- [ ] docker-compose.yml 작성 완료
+- [x] Backend Dockerfile 작성 완료
+- [x] Frontend Dockerfile 작성 완료
+- [x] nginx.conf 작성 완료
+- [x] docker-compose.yml 작성 완료 (EC2+RDS 환경)
 
 ### 배포 후 확인
 - [ ] 로그인/회원가입 테스트
