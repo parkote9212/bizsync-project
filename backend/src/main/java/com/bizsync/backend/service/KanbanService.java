@@ -1,18 +1,10 @@
 package com.bizsync.backend.service;
 
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.bizsync.backend.common.annotation.RequireProjectLeader;
 import com.bizsync.backend.common.exception.ErrorCode;
 import com.bizsync.backend.common.exception.ForbiddenException;
-import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.common.util.SecurityUtil;
-import com.bizsync.backend.domain.entity.ColumnType;
-import com.bizsync.backend.domain.entity.KanbanColumn;
-import com.bizsync.backend.domain.entity.Project;
-import com.bizsync.backend.domain.entity.Task;
-import com.bizsync.backend.domain.entity.User;
+import com.bizsync.backend.domain.entity.*;
 import com.bizsync.backend.domain.repository.KanbanColumnRepository;
 import com.bizsync.backend.domain.repository.ProjectRepository;
 import com.bizsync.backend.domain.repository.TaskRepository;
@@ -21,8 +13,9 @@ import com.bizsync.backend.dto.request.ColumnCreateRequestDTO;
 import com.bizsync.backend.dto.request.TaskCreateRequestDTO;
 import com.bizsync.backend.dto.request.TaskUpdateRequestDTO;
 import com.bizsync.backend.dto.response.TaskDetailResponseDTO;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor

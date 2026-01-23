@@ -2,8 +2,6 @@ package com.bizsync.backend.service;
 
 import com.bizsync.backend.common.exception.BusinessException;
 import com.bizsync.backend.common.exception.ErrorCode;
-import com.bizsync.backend.common.exception.ForbiddenException;
-import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.domain.entity.AccountStatus;
 import com.bizsync.backend.domain.entity.Role;

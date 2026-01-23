@@ -38,20 +38,16 @@ app:
 
 admin:
   email: ${ADMIN_EMAIL:admin@bizsync.com}
-  password: ${ADMIN_PASSWORD:Admin123!@#}
+  password: ${ADMIN_PASSWORD}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,info,metrics
+        include: health
   endpoint:
     health:
       show-details: when-authorized
-  metrics:
-    export:
-      prometheus:
-        enabled: false
 
 server:
   port: ${SERVER_PORT:8080}

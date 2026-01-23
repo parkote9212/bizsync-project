@@ -67,12 +67,12 @@
 
     <!-- 사용자가 멤버로 참여한 프로젝트 목록 조회 (N+1 문제 해결) -->
     <select id="selectMyProjects" resultType="ProjectListResponseDTO">
-        SELECT p.project_id     AS projectId,
-               p.name          AS name,
-               p.description   AS description,
-               p.start_date    AS startDate,
-               p.end_date      AS endDate,
-               p.status        AS status
+        SELECT p.project_id  AS projectId,
+               p.name        AS name,
+               p.description AS description,
+               p.start_date  AS startDate,
+               p.end_date    AS endDate,
+               p.status      AS status
         FROM project_member pm
                  INNER JOIN project p ON pm.project_id = p.project_id
         WHERE pm.user_id = #{userId}

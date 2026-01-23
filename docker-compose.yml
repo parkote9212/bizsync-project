@@ -42,9 +42,9 @@ services:
     container_name: bizsync-frontend
     ports:
       - "80:80"
-  #  depends_on:
-  #    backend:
-  #      condition: service_healthy
+    depends_on:
+      backend:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - bizsync-network

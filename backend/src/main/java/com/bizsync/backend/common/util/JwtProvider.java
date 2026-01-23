@@ -4,7 +4,6 @@ import com.bizsync.backend.domain.entity.Role;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
@@ -28,7 +27,7 @@ public class JwtProvider {
                        @Value("${app.jwt.refresh-expiration-ms}") long refreshExpiration) {
         // JWT Secret 검증: 최소 길이 확인
         validateSecret(secret);
-        
+
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expiration = expiration;
         this.refreshExpiration = refreshExpiration;
@@ -37,7 +36,7 @@ public class JwtProvider {
     /**
      * JWT Secret의 최소 길이를 검증
      * HS256 알고리즘은 최소 256비트(32바이트)의 Secret이 필요
-     * 
+     *
      * @param secret 검증할 Secret 문자열
      * @throws IllegalArgumentException Secret이 너무 짧거나 null인 경우
      */
@@ -53,7 +52,7 @@ public class JwtProvider {
             throw new IllegalArgumentException(
                     String.format(
                             "JWT Secret이 너무 짧습니다. 최소 %d바이트(256비트)가 필요합니다. " +
-                            "현재 길이: %d바이트. 보안을 위해 충분히 긴 Secret을 사용해주세요.",
+                                    "현재 길이: %d바이트. 보안을 위해 충분히 긴 Secret을 사용해주세요.",
                             MIN_SECRET_LENGTH_BYTES,
                             secretBytes.length
                     )
@@ -69,12 +68,12 @@ public class JwtProvider {
         Date expirationDate = new Date(now.getTime() + expiration);
 
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))
+                .subject(String.valueOf(userId))
                 .claim("role", role.name())
                 .claim("type", "access")
-                .setIssuedAt(now)
-                .setExpiration(expirationDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(expirationDate)
+                .signWith(secretKey)
                 .compact();
     }
 
@@ -86,11 +85,11 @@ public class JwtProvider {
         Date expirationDate = new Date(now.getTime() + refreshExpiration);
 
         return Jwts.builder()
-                .setSubject(String.valueOf(userId))
+                .subject(String.valueOf(userId))
                 .claim("type", "refresh")
-                .setIssuedAt(now)
-                .setExpiration(expirationDate)
-                .signWith(secretKey, SignatureAlgorithm.HS256)
+                .issuedAt(now)
+                .expiration(expirationDate)
+                .signWith(secretKey)
                 .compact();
     }
 

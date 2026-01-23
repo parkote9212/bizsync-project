@@ -18,33 +18,39 @@ BizSync의 백엔드 서버입니다. Spring Boot 기반의 RESTful API와 WebSo
 ## 주요 기능
 
 ### 인증 및 보안
+
 - JWT 기반 인증 (Access Token + Refresh Token)
 - Spring Security를 통한 엔드포인트 보호
 - 역할 기반 접근 제어 (ADMIN, MEMBER)
 - 프로젝트별 권한 검증 (LEADER, MEMBER)
 
 ### 프로젝트 관리
+
 - 프로젝트 CRUD 작업
 - 프로젝트 멤버 초대 및 관리
 - 프로젝트 설정 및 상태 관리
 
 ### 칸반 보드
+
 - 컬럼 및 업무 관리
 - 업무 이동 및 순서 변경
 - WebSocket을 통한 실시간 보드 동기화
 - 업무 담당자 및 마감일 관리
 
 ### 결재 시스템
+
 - 결재 문서 생성 및 관리
 - 다단계 결재 라인 설정
 - 결재 상태 추적 및 알림
 - Excel 내보내기 기능
 
 ### 채팅
+
 - WebSocket 기반 실시간 메시징
 - 프로젝트별 채팅방 관리
 
 ### 대시보드
+
 - 프로젝트 통계 및 현황 조회
 
 ## 프로젝트 구조

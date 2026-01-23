@@ -1,11 +1,11 @@
 package com.bizsync.backend.dto.response;
 
-import java.util.Date;
-
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.Date;
 
 /**
  * JWT 토큰 응답 DTO

@@ -1,9 +1,9 @@
 package com.bizsync.backend.dto.request;
 
+import jakarta.validation.constraints.NotBlank;
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
-
-import jakarta.validation.constraints.NotBlank;
 
 public record ProjectUpdateRequestDTO(
         @NotBlank(message = "프로젝트 이름은 필수입니다.")

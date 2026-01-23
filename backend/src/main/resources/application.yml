@@ -3,5 +3,5 @@ spring:
     name: BizSync
 
   profiles:
-    active : dev
+    active: dev
 

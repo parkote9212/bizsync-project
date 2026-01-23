@@ -1,9 +1,5 @@
 package com.bizsync.backend.service;
 
-import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.bizsync.backend.common.exception.BusinessException;
 import com.bizsync.backend.common.exception.DuplicateException;
 import com.bizsync.backend.common.exception.ErrorCode;
@@ -16,9 +12,11 @@ import com.bizsync.backend.dto.request.LoginRequestDTO;
 import com.bizsync.backend.dto.request.PasswordChangeRequestDTO;
 import com.bizsync.backend.dto.request.SignumRequestDTO;
 import com.bizsync.backend.dto.response.JwtTokenResponse;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Slf4j
 @Service

@@ -7,6 +7,8 @@ import LoginPage from "./pages/LoginPage";
 import ProjectListPage from "./pages/ProjectListPage";
 import ApprovalPage from "./pages/ApprovalPage";
 import OrganizationPage from "./pages/OrganizationPage";
+import AdminDashboardPage from "./pages/AdminDashboardPage";
+import AdminUserManagementPage from "./pages/AdminUserManagementPage";
 
 function App() {
   return (
@@ -37,6 +39,10 @@ function App() {
 
           {/* 조직도 */}
           <Route path="/organization" element={<OrganizationPage />} />
+
+          {/* 관리자 */}
+          <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
+          <Route path="/admin/users" element={<AdminUserManagementPage />} />
         </Route>
       </Routes>
     </BrowserRouter>

@@ -1,10 +1,5 @@
 package com.bizsync.backend.service;
 
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.bizsync.backend.common.annotation.RequireProjectLeader;
 import com.bizsync.backend.common.annotation.RequireProjectMember;
 import com.bizsync.backend.common.exception.BusinessException;
@@ -18,8 +13,11 @@ import com.bizsync.backend.domain.repository.ProjectMemberRepository;
 import com.bizsync.backend.domain.repository.ProjectRepository;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.response.ProjectMemberResponseDTO;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
 
 /**
  * 프로젝트 멤버 관리 서비스

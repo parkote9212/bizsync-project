@@ -57,7 +57,7 @@ public class SecurityConfig {
                     auth.requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/actuator/health").permitAll()
                             .requestMatchers("/ws/**").permitAll();
-                    
+
                     if (isProduction()) {
                         auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").denyAll();
                         auth.requestMatchers("/actuator/**").hasRole("ADMIN");
@@ -65,7 +65,7 @@ public class SecurityConfig {
                         auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll();
                         auth.requestMatchers("/actuator/**").hasRole("ADMIN");
                     }
-                    
+
                     auth.requestMatchers("/api/admin/**").hasRole("ADMIN");
                     auth.anyRequest().authenticated();
                 })

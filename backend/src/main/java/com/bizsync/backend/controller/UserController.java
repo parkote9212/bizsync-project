@@ -1,21 +1,19 @@
 package com.bizsync.backend.controller;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
-
+import com.bizsync.backend.domain.entity.User;
+import com.bizsync.backend.domain.repository.UserRepository;
+import com.bizsync.backend.dto.response.ApiResponse;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.bizsync.backend.domain.entity.User;
-import com.bizsync.backend.domain.repository.UserRepository;
-import com.bizsync.backend.dto.response.ApiResponse;
-
-import lombok.RequiredArgsConstructor;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/users")

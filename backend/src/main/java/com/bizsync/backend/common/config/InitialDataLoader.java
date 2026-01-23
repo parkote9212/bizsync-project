@@ -32,7 +32,7 @@ public class InitialDataLoader implements CommandLineRunner {
     public void run(String... args) {
         if (userRepository.findByEmail(adminEmail).isEmpty()) {
             String encodedPassword = passwordEncoder.encode(adminPassword);
-            
+
             User admin = User.builder()
                     .email(adminEmail)
                     .password(encodedPassword)
@@ -44,7 +44,7 @@ public class InitialDataLoader implements CommandLineRunner {
                     .build();
 
             userRepository.save(admin);
-            
+
             String[] activeProfiles = environment.getActiveProfiles();
             boolean isProduction = false;
             for (String profile : activeProfiles) {
@@ -53,7 +53,7 @@ public class InitialDataLoader implements CommandLineRunner {
                     break;
                 }
             }
-            
+
             if (isProduction) {
                 log.error("========================================");
                 log.error("⚠️ 프로덕션 환경 초기 관리자 생성됨!");

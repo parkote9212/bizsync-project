@@ -76,6 +76,15 @@ const Layout = () => {
     { text: "조직도", icon: <PeopleIcon />, path: "/organization" },
   ];
 
+  const adminMenuItems: NavigationMenuItem[] = [
+    { text: "관리자 대시보드", icon: <DashboardIcon />, path: "/admin/dashboard" },
+    { text: "사용자 관리", icon: <PeopleIcon />, path: "/admin/users" },
+  ];
+
+  const allMenuItems = user.role === "ADMIN" 
+    ? [...menuItems, ...adminMenuItems]
+    : menuItems;
+
   const getPageTitle = () => {
     const currentPath = location.pathname;
 
@@ -83,7 +92,7 @@ const Layout = () => {
       return "칸반 보드";
     }
 
-    const menuItem = menuItems.find(item => item.path === currentPath);
+    const menuItem = allMenuItems.find(item => item.path === currentPath);
     if (menuItem) return menuItem.text;
 
     return "BizSync";
@@ -413,7 +422,7 @@ const Layout = () => {
 
         <Box sx={{ overflow: "auto" }}>
           <List>
-            {menuItems.map((item) => (
+            {allMenuItems.map((item) => (
               <ListItem key={item.text} disablePadding>
                 <ListItemButton
                   selected={location.pathname === item.path || location.pathname.startsWith(item.path + "/")}

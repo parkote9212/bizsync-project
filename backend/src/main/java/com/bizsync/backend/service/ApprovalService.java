@@ -1,23 +1,9 @@
 package com.bizsync.backend.service;
 
-import java.util.List;
-import java.util.Map;
-import java.util.function.Function;
-import java.util.stream.Collectors;
-
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.bizsync.backend.common.exception.ErrorCode;
 import com.bizsync.backend.common.exception.ForbiddenException;
 import com.bizsync.backend.common.exception.ResourceNotFoundException;
-import com.bizsync.backend.domain.entity.ApprovalDocument;
-import com.bizsync.backend.domain.entity.ApprovalLine;
-import com.bizsync.backend.domain.entity.ApprovalStatus;
-import com.bizsync.backend.domain.entity.Project;
-import com.bizsync.backend.domain.entity.User;
+import com.bizsync.backend.domain.entity.*;
 import com.bizsync.backend.domain.repository.ApprovalDocumentRepository;
 import com.bizsync.backend.domain.repository.ApprovalLineRepository;
 import com.bizsync.backend.domain.repository.ProjectRepository;
@@ -26,8 +12,16 @@ import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
 import com.bizsync.backend.dto.response.ApprovalDetailDTO;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor

@@ -1,17 +1,16 @@
 package com.bizsync.backend.domain.repository;
 
-import java.util.List;
-import java.util.Optional;
-
+import com.bizsync.backend.common.exception.ErrorCode;
+import com.bizsync.backend.common.exception.ResourceNotFoundException;
+import com.bizsync.backend.domain.entity.ProjectMember;
+import com.bizsync.backend.domain.entity.ProjectStatus;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import com.bizsync.backend.common.exception.ErrorCode;
-import com.bizsync.backend.common.exception.ResourceNotFoundException;
-import com.bizsync.backend.domain.entity.ProjectMember;
-import com.bizsync.backend.domain.entity.ProjectStatus;
+import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ProjectMemberRepository extends JpaRepository<ProjectMember, Long> {
