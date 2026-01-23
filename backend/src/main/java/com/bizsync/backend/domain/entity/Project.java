@@ -2,7 +2,6 @@ package com.bizsync.backend.domain.entity;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -25,7 +24,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Project {
+public class Project extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,12 +54,8 @@ public class Project {
     @Builder.Default
     private ProjectStatus status = ProjectStatus.IN_PROGRESS;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
         if (this.usedBudget == null)
             this.usedBudget = BigDecimal.ZERO;
         if (this.status == null)

@@ -16,6 +16,9 @@ import java.util.Date;
 @Component
 public class JwtProvider {
 
+    // HS256 알고리즘의 경우 최소 256비트(32바이트)의 Secret이 필요
+    private static final int MIN_SECRET_LENGTH_BYTES = 32;
+
     private final SecretKey secretKey;
     private final long expiration;
     private final long refreshExpiration;
@@ -23,9 +26,39 @@ public class JwtProvider {
     public JwtProvider(@Value("${app.jwt.secret}") String secret,
                        @Value("${app.jwt.expiration-ms}") long expiration,
                        @Value("${app.jwt.refresh-expiration-ms}") long refreshExpiration) {
+        // JWT Secret 검증: 최소 길이 확인
+        validateSecret(secret);
+        
         this.secretKey = Keys.hmacShaKeyFor(secret.getBytes(StandardCharsets.UTF_8));
         this.expiration = expiration;
         this.refreshExpiration = refreshExpiration;
+    }
+
+    /**
+     * JWT Secret의 최소 길이를 검증
+     * HS256 알고리즘은 최소 256비트(32바이트)의 Secret이 필요
+     * 
+     * @param secret 검증할 Secret 문자열
+     * @throws IllegalArgumentException Secret이 너무 짧거나 null인 경우
+     */
+    private void validateSecret(String secret) {
+        if (secret == null || secret.trim().isEmpty()) {
+            throw new IllegalArgumentException(
+                    "JWT Secret이 설정되지 않았습니다. 환경 변수 JWT_SECRET을 설정해주세요."
+            );
+        }
+
+        byte[] secretBytes = secret.getBytes(StandardCharsets.UTF_8);
+        if (secretBytes.length < MIN_SECRET_LENGTH_BYTES) {
+            throw new IllegalArgumentException(
+                    String.format(
+                            "JWT Secret이 너무 짧습니다. 최소 %d바이트(256비트)가 필요합니다. " +
+                            "현재 길이: %d바이트. 보안을 위해 충분히 긴 Secret을 사용해주세요.",
+                            MIN_SECRET_LENGTH_BYTES,
+                            secretBytes.length
+                    )
+            );
+        }
     }
 
     /**
@@ -62,14 +95,38 @@ public class JwtProvider {
     }
 
     /**
-     * 토큰이 유효한지 검사
+     * 토큰이 유효한지 검사 (만료 시간, 서명, 형식 모두 검증)
      */
     public boolean validateToken(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return false;
+        }
+
         try {
-            Jwts.parser()
+            Claims claims = Jwts.parser()
                     .verifyWith(secretKey)
                     .build()
-                    .parseSignedClaims(token);
+                    .parseSignedClaims(token)
+                    .getPayload();
+
+            // 만료 시간 검증
+            Date expiration = claims.getExpiration();
+            if (expiration == null || expiration.before(new Date())) {
+                return false;
+            }
+
+            // 발행 시간 검증 (미래 시간이면 유효하지 않음)
+            Date issuedAt = claims.getIssuedAt();
+            if (issuedAt != null && issuedAt.after(new Date())) {
+                return false;
+            }
+
+            // Subject(userId) 존재 여부 확인
+            String subject = claims.getSubject();
+            if (subject == null || subject.trim().isEmpty()) {
+                return false;
+            }
+
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             // 토큰 검증 실패 (만료, 변조, 잘못된 형식 등)

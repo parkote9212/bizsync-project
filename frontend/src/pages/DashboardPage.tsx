@@ -40,36 +40,30 @@ const DashboardPage = () => {
   const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
   const [myTasks, setMyTasks] = useState<MyTask[]>([]);
 
-  // 대시보드 통계 데이터 로드
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
         setLoading(true);
 
-        // 대시보드 통계 API 호출
         const statsResponse = await client.get("/dashboard/stats");
 
-        if (statsResponse.data?.status === "SUCCESS" && statsResponse.data?.data) {
-          const stats = statsResponse.data.data;
+        if (statsResponse.data) {
+          const stats = statsResponse.data;
           setProjectCount(stats.projectCount || 0);
           setTaskCount(stats.taskCount || 0);
           setPendingApprovalCount(stats.pendingApprovalCount || 0);
         } else {
-          // 예상치 못한 응답 형식
           console.warn("예상치 못한 응답 형식:", statsResponse.data);
           setProjectCount(0);
           setTaskCount(0);
           setPendingApprovalCount(0);
         }
 
-        // 내 업무 목록 조회 API 호출
         try {
           const tasksResponse = await client.get("/dashboard/my-tasks");
-          if (tasksResponse.data?.status === "SUCCESS" && tasksResponse.data?.data) {
-            // 마감일 임박 순으로 정렬
-            const tasks = tasksResponse.data.data;
+          if (tasksResponse.data) {
+            const tasks = tasksResponse.data;
             const sortedTasks = tasks.sort((a: MyTask, b: MyTask) => {
-              // daysLeft가 null인 경우는 마지막으로
               if (a.daysLeft === null) return 1;
               if (b.daysLeft === null) return -1;
               return a.daysLeft - b.daysLeft;
@@ -82,7 +76,6 @@ const DashboardPage = () => {
         }
       } catch (error) {
         console.error("대시보드 데이터 로드 실패:", error);
-        // 에러 발생 시 0으로 초기화
         setProjectCount(0);
         setTaskCount(0);
         setPendingApprovalCount(0);
@@ -93,16 +86,13 @@ const DashboardPage = () => {
     };
 
     fetchDashboardData();
-  }, [location.key]); // location.key가 변경될 때마다 (페이지 방문할 때마다) 실행
+  }, [location.key]);
 
-  // 카드 클릭 핸들러
   const handleProjectCardClick = () => {
     navigate("/projects");
   };
 
   const handleTaskCardClick = () => {
-    // 업무 목록 페이지가 구현되면 이동
-    // navigate("/tasks");
     console.log("업무 페이지는 아직 구현되지 않았습니다.");
   };
 
@@ -110,16 +100,14 @@ const DashboardPage = () => {
     navigate("/approvals");
   };
 
-  // 마감일 색상 결정
   const getDueDateColor = (daysLeft: number | null) => {
     if (daysLeft === null) return "default";
-    if (daysLeft < 0) return "error"; // 마감일 지남
-    if (daysLeft <= 3) return "error"; // 3일 이내
-    if (daysLeft <= 7) return "warning"; // 7일 이내
+    if (daysLeft < 0) return "error";
+    if (daysLeft <= 3) return "error";
+    if (daysLeft <= 7) return "warning";
     return "success";
   };
 
-  // 마감일 텍스트
   const getDueDateText = (daysLeft: number | null, dueDate: string | null) => {
     if (!dueDate) return "마감일 없음";
     if (daysLeft === null) return dueDate;
@@ -128,7 +116,6 @@ const DashboardPage = () => {
     return `${daysLeft}일 남음`;
   };
 
-  // Skeleton 렌더링 함수
   const renderSkeletonCard = () => (
     <Card elevation={2}>
       <CardContent>
@@ -143,10 +130,7 @@ const DashboardPage = () => {
 
   return (
     <Container maxWidth="lg">
-
-      {/* 상단 통계 카드 */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
-        {/* 1. 진행 중인 프로젝트 수 */}
         <Grid size={{ xs: 12, sm: 4 }}>
           {loading ? (
             renderSkeletonCard()
@@ -174,7 +158,6 @@ const DashboardPage = () => {
           )}
         </Grid>
 
-        {/* 2. 내가 진행 중인 업무 수 */}
         <Grid size={{ xs: 12, sm: 4 }}>
           {loading ? (
             renderSkeletonCard()
@@ -202,7 +185,6 @@ const DashboardPage = () => {
           )}
         </Grid>
 
-        {/* 3. 대기 중인 결재 수 */}
         <Grid size={{ xs: 12, sm: 4 }}>
           {loading ? (
             renderSkeletonCard()
@@ -231,7 +213,6 @@ const DashboardPage = () => {
         </Grid>
       </Grid>
 
-      {/* 내 업무 리스트 */}
       <Paper elevation={2} sx={{ mt: 4, p: 3 }}>
         <Typography variant="h6" fontWeight="bold" mb={2}>
           내 업무 리스트
@@ -276,7 +257,6 @@ const DashboardPage = () => {
                     hover
                     sx={{ cursor: "pointer" }}
                     onClick={() => {
-                      // 해당 업무의 프로젝트로 이동 (구현 필요)
                       console.log("업무 상세 이동:", task.taskId);
                     }}
                   >

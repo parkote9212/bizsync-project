@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class ApprovalDocument {
+public class ApprovalDocument extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -62,14 +62,10 @@ public class ApprovalDocument {
     @Column(precision = 19, scale = 2)
     private BigDecimal amount;
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
     private LocalDateTime completedAt;
 
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
         if (this.status == null)
             this.status = ApprovalStatus.PENDING;
     }

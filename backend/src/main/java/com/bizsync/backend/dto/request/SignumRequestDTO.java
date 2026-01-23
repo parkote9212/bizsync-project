@@ -28,6 +28,7 @@ public record SignumRequestDTO(
                 .empNo(this.empNo)
                 .department(this.department())
                 .role(Role.MEMBER)
+                .status(com.bizsync.backend.domain.entity.AccountStatus.PENDING)
                 .build();
     }
 }

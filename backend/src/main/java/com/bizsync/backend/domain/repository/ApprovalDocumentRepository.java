@@ -1,5 +1,7 @@
 package com.bizsync.backend.domain.repository;
 
+import com.bizsync.backend.common.exception.ErrorCode;
+import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.ApprovalDocument;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -15,4 +17,12 @@ public interface ApprovalDocumentRepository extends JpaRepository<ApprovalDocume
 
     // 프로젝트에 속한 결재 문서 조회
     List<ApprovalDocument> findByProject_ProjectId(Long projectId);
+
+    /**
+     * ID로 결재 문서 조회 (없으면 예외 발생)
+     */
+    default ApprovalDocument findByIdOrThrow(Long documentId) {
+        return findById(documentId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.APPROVAL_NOT_FOUND_ALT));
+    }
 }

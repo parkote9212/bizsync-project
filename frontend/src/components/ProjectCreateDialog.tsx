@@ -21,7 +21,6 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
   onClose,
   onCreate,
 }) => {
-  // 폼 상태 관리
   const [form, setForm] = useState({
     name: "",
     description: "",
@@ -39,14 +38,12 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
   };
 
   const handleSubmit = async () => {
-    // 유효성 검사
     if (!form.name || !form.startDate || !form.endDate) {
       alert("프로젝트 이름과 기간은 필수입니다.");
       return;
     }
 
     try {
-      // POST /projects
       await client.post("/projects", form);
 
       alert("프로젝트가 생성되었습니다.!");

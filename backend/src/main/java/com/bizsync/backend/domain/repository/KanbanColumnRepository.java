@@ -1,5 +1,7 @@
 package com.bizsync.backend.domain.repository;
 
+import com.bizsync.backend.common.exception.ErrorCode;
+import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.KanbanColumn;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -20,4 +22,20 @@ public interface KanbanColumnRepository extends JpaRepository<KanbanColumn, Long
 
     // 프로젝트의 모든 컬럼 조회
     List<KanbanColumn> findByProject_ProjectId(Long projectId);
+
+    /**
+     * ID로 칸반 컬럼 조회 (없으면 예외 발생)
+     */
+    default KanbanColumn findByIdOrThrow(Long columnId) {
+        return findById(columnId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.KANBAN_COLUMN_NOT_FOUND));
+    }
+
+    /**
+     * 프로젝트 ID와 이름으로 칸반 컬럼 조회 (없으면 예외 발생)
+     */
+    default KanbanColumn findByProjectIdAndNameOrThrow(Long projectId, String columnName) {
+        return findByProject_ProjectIdAndName(projectId, columnName)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.KANBAN_COLUMN_NOT_FOUND));
+    }
 }

@@ -30,8 +30,8 @@ public class ProjectSecurityService {
 		try {
 			Long userId = SecurityUtil.getCurrentUserIdOrThrow();
 
-			ProjectMember member = projectMemberRepository.findByProject_ProjectIdAndUser_UserId(projectId, userId)
-					.orElse(null);
+		ProjectMember member = projectMemberRepository.findByProjectAndUser(projectId, userId)
+				.orElse(null);
 
 			if (member == null) {
 				log.warn("프로젝트 멤버가 아닙니다. projectId={}, userId={}", projectId, userId);
@@ -61,7 +61,7 @@ public class ProjectSecurityService {
 		try {
 			Long userId = SecurityUtil.getCurrentUserIdOrThrow();
 
-			boolean isMember = projectMemberRepository.existsByProject_ProjectIdAndUser_UserId(projectId, userId);
+			boolean isMember = projectMemberRepository.existsByProjectAndUser(projectId, userId);
 			if (!isMember) {
 				log.warn("프로젝트 멤버가 아닙니다. projectId={}, userId={}", projectId, userId);
 			}

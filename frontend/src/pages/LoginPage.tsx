@@ -27,7 +27,6 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
 
-  // 회원가입 관련 상태
   const [signupOpen, setSignupOpen] = useState(false);
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
@@ -42,8 +41,6 @@ const LoginPage = () => {
     setError("");
 
     try {
-      // 백엔드 로그인 API 호출
-      // DTO: { email, password } -> LoginRequestDTO와 매칭
       const response = await client.post<{
         accessToken: string;
         refreshToken: string;
@@ -58,7 +55,6 @@ const LoginPage = () => {
         password,
       });
 
-      // 성공 시: 토큰 저장
       const {
         accessToken,
         refreshToken,
@@ -72,11 +68,9 @@ const LoginPage = () => {
       localStorage.setItem("accessToken", accessToken);
       localStorage.setItem("refreshToken", refreshToken);
 
-      // 이전 사용자 데이터 제거 (사용자 전환 시 보안)
       clearNotifications();
       resetProjects();
 
-      // 사용자 정보를 Zustand 스토어에 저장 (persist 미들웨어로 localStorage 자동 동기화)
       setUser({
         userId: userId || null,
         name: userName || null,
@@ -86,7 +80,6 @@ const LoginPage = () => {
         department: department || null,
       });
 
-      // 대시보드로 이동
       alert("로그인 성공!");
       navigate("/dashboard");
     } catch (err: unknown) {
@@ -101,8 +94,6 @@ const LoginPage = () => {
     setSignupSuccess(false);
 
     try {
-      // 백엔드 회원가입 API 호출
-      // DTO: { email, password, name, empNo, department } -> SignumRequestDTO와 매칭
       await client.post("/auth/signup", {
         email: signupEmail,
         password: signupPassword,
@@ -112,7 +103,6 @@ const LoginPage = () => {
       });
 
       setSignupSuccess(true);
-      // 회원가입 성공 시 폼 초기화 및 다이얼로그 닫기
       setTimeout(() => {
         setSignupOpen(false);
         setSignupEmail("");
@@ -147,24 +137,23 @@ const LoginPage = () => {
     <Box
       sx={{
         display: "flex",
-        justifyContent: "center", // 가로 중앙
-        alignItems: "center", // 세로 중앙
-        minHeight: "100vh", // 화면 전체 높이 사용
-        backgroundColor: "#f5f5f5", // (선택) 배경색을 연한 회색으로 줘서 카드 강조
+        justifyContent: "center",
+        alignItems: "center",
+        minHeight: "100vh",
+        backgroundColor: "#f5f5f5",
       }}
     >
       <Container component="main" maxWidth="xs">
         <Paper
-          elevation={6} // 그림자 효과를 좀 더 강하게 (3 -> 6)
+          elevation={6}
           sx={{
             p: 4,
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            borderRadius: 2, // 모서리 둥글게
+            borderRadius: 2,
           }}
         >
-          {/* 아이콘이나 로고가 있다면 여기에 추가 가능 */}
           <Typography
             component="h1"
             variant="h5"
@@ -214,7 +203,7 @@ const LoginPage = () => {
               type="submit"
               fullWidth
               variant="contained"
-              size="large" // 버튼 크기 키움
+              size="large"
               sx={{
                 mt: 3,
                 mb: 2,
@@ -242,7 +231,6 @@ const LoginPage = () => {
         </Paper>
       </Container>
 
-      {/* 회원가입 다이얼로그 */}
       <Dialog open={signupOpen} onClose={handleSignupDialogClose} maxWidth="sm" fullWidth>
         <DialogTitle>회원가입</DialogTitle>
         <DialogContent>

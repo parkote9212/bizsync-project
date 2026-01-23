@@ -1,5 +1,7 @@
 package com.bizsync.backend.dto.response;
 
+import com.bizsync.backend.domain.entity.Project;
+
 import java.time.LocalDate;
 
 public record ProjectListResponseDTO(
@@ -10,4 +12,17 @@ public record ProjectListResponseDTO(
         LocalDate endDate,
         String status
 ) {
+    /**
+     * Project 엔티티에서 DTO로 변환
+     */
+    public static ProjectListResponseDTO from(Project project) {
+        return new ProjectListResponseDTO(
+                project.getProjectId(),
+                project.getName(),
+                project.getDescription(),
+                project.getStartDate(),
+                project.getEndDate(),
+                project.getStatus().name()
+        );
+    }
 }

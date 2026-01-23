@@ -6,7 +6,8 @@ public enum Position {
     ASSISTANT_MANAGER("과장"),
     DEPUTY_GENERAL_MANAGER("차장"),
     GENERAL_MANAGER("부장"),
-    DIRECTOR("이사");
+    DIRECTOR("이사"),
+    EXECUTIVE("임원");
 
     private final String korean;
 

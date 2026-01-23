@@ -38,17 +38,34 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // Authorization 헤더에서 토큰 추출
             String token = extractToken(request);
 
-            // 토큰이 있고 유효한 경우
-            if (StringUtils.hasText(token) && jwtProvider.validateToken(token)) {
+            // 토큰이 있는 경우에만 검증 진행
+            if (StringUtils.hasText(token)) {
+                // 토큰 형식 기본 검증 (Bearer 형식은 이미 extractToken에서 처리)
+                if (!isValidTokenFormat(token)) {
+                    log.warn("Invalid token format: token does not meet required format");
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
+                // 토큰 유효성 검증
+                if (!jwtProvider.validateToken(token)) {
+                    log.warn("Token validation failed: token is invalid or expired");
+                    SecurityContextHolder.clearContext();
+                    filterChain.doFilter(request, response);
+                    return;
+                }
+
                 // Access Token인지 확인
                 if (jwtProvider.isAccessToken(token)) {
                     authenticateUser(token);
                 } else {
-                    log.warn("Refresh token used for authentication attempt");
+                    log.warn("Refresh token used for authentication attempt: {}", request.getRequestURI());
+                    SecurityContextHolder.clearContext();
                 }
             }
         } catch (Exception e) {
-            log.error("JWT Authentication failed: {}", e.getMessage());
+            log.error("JWT Authentication failed: {}", e.getMessage(), e);
             // 인증 실패 시 SecurityContext를 초기화
             SecurityContextHolder.clearContext();
         }
@@ -62,9 +79,26 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String extractToken(HttpServletRequest request) {
         String bearerToken = request.getHeader(HttpHeaders.AUTHORIZATION);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith("Bearer ")) {
-            return bearerToken.substring(7);
+            String token = bearerToken.substring(7).trim();
+            // 빈 토큰 체크
+            if (token.isEmpty()) {
+                return null;
+            }
+            return token;
         }
         return null;
+    }
+
+    /**
+     * 토큰 형식 유효성 검증 (기본적인 형식 체크)
+     */
+    private boolean isValidTokenFormat(String token) {
+        if (token == null || token.trim().isEmpty()) {
+            return false;
+        }
+        // JWT는 3개의 부분(header.payload.signature)으로 구성되며 점(.)으로 구분됨
+        String[] parts = token.split("\\.");
+        return parts.length == 3;
     }
 
     /**

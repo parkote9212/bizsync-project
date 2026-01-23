@@ -18,8 +18,11 @@ import org.springframework.web.bind.annotation.RestController;
 import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.dto.request.MemberInviteRequestDTO;
 import com.bizsync.backend.dto.request.ProjectCreateRequestDTO;
+import com.bizsync.backend.dto.response.ApiResponse;
 import com.bizsync.backend.dto.response.ProjectListResponseDTO;
+import com.bizsync.backend.dto.response.ProjectMemberResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
+import com.bizsync.backend.service.ProjectMemberService;
 import com.bizsync.backend.service.ProjectService;
 
 import jakarta.validation.Valid;
@@ -31,123 +34,85 @@ import lombok.RequiredArgsConstructor;
 public class ProjectController {
 
     private final ProjectService projectService;
+    private final ProjectMemberService projectMemberService;
 
-    /**
-     * 프로젝트 생성
-     * <p>
-     * SecurityUtil을 사용하여 현재 인증된 사용자 ID를 조회합니다.
-     * Authentication 파라미터를 사용하는 것보다 더 깔끔하고 테스트하기 좋습니다.
-     */
     @PostMapping
-    public ResponseEntity<Map<String, String>> createProject(
+    public ResponseEntity<ApiResponse<Void>> createProject(
             @Valid @RequestBody ProjectCreateRequestDTO dto) {
-        // SecurityUtil로 현재 인증된 사용자 ID 조회
-        // 인증되지 않은 경우 예외가 발생합니다 (Security Filter에서 이미 차단됨)
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
-
         projectService.createProject(userId, dto);
-
         return ResponseEntity.status(HttpStatus.CREATED)
-                .body(Map.of("message", "프로젝트 생성 성공!"));
+                .body(ApiResponse.success("프로젝트 생성 성공!"));
     }
 
-    /**
-     * 프로젝트 칸반 보드 조회
-     * GET /api/projects/{projectId}/board
-     */
     @GetMapping("/{projectId}/board")
-    public ResponseEntity<ProjectBoardDTO> getProjectBoard(@PathVariable Long projectId) {
-
+    public ResponseEntity<ApiResponse<ProjectBoardDTO>> getProjectBoard(@PathVariable Long projectId) {
         ProjectBoardDTO board = projectService.getProjectBoard(projectId);
-        return ResponseEntity.ok(board);
+        return ResponseEntity.ok(ApiResponse.success(board));
     }
 
-    /**
-     * 내 프로젝트 목록 조회
-     */
     @GetMapping
-    public ResponseEntity<List<ProjectListResponseDTO>> getProjectList() {
+    public ResponseEntity<ApiResponse<List<ProjectListResponseDTO>>> getProjectList() {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
-        return ResponseEntity.ok(projectService.getMyProjects(userId));
+        return ResponseEntity.ok(ApiResponse.success(projectService.getMyProjects(userId)));
     }
 
     @PostMapping("/{projectId}/invite")
-    public ResponseEntity<String> inviteMember(
+    public ResponseEntity<ApiResponse<Void>> inviteMember(
             @PathVariable Long projectId,
             @RequestBody @Valid MemberInviteRequestDTO dto) {
-        projectService.inviteMember(projectId, dto.email());
-        return ResponseEntity.ok("멤버 초대가 완료되었습니다.");
+        projectMemberService.inviteMember(projectId, dto.email());
+        return ResponseEntity.ok(ApiResponse.success("멤버 초대가 완료되었습니다."));
     }
 
-    /**
-     * 프로젝트 완료 처리
-     */
     @PatchMapping("/{projectId}/complete")
-    public ResponseEntity<Map<String, String>> completeProject(@PathVariable Long projectId) {
+    public ResponseEntity<ApiResponse<Void>> completeProject(@PathVariable Long projectId) {
         projectService.completeProject(projectId);
-        return ResponseEntity.ok(Map.of("message", "프로젝트가 완료되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success("프로젝트가 완료되었습니다."));
     }
 
-    /**
-     * 프로젝트 재진행 처리
-     */
     @PatchMapping("/{projectId}/reopen")
-    public ResponseEntity<Map<String, String>> reopenProject(@PathVariable Long projectId) {
+    public ResponseEntity<ApiResponse<Void>> reopenProject(@PathVariable Long projectId) {
         projectService.reopenProject(projectId);
-        return ResponseEntity.ok(Map.of("message", "프로젝트를 재진행합니다."));
+        return ResponseEntity.ok(ApiResponse.success("프로젝트를 재진행합니다."));
     }
 
-    /**
-     * 프로젝트 수정 (PL만)
-     */
     @PutMapping("/{projectId}")
-    public ResponseEntity<Map<String, String>> updateProject(
+    public ResponseEntity<ApiResponse<Void>> updateProject(
             @PathVariable Long projectId,
             @Valid @RequestBody com.bizsync.backend.dto.request.ProjectUpdateRequestDTO dto) {
         projectService.updateProject(projectId, dto);
-        return ResponseEntity.ok(Map.of("message", "프로젝트가 수정되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success("프로젝트가 수정되었습니다."));
     }
 
-    /**
-     * 프로젝트 삭제 (PL만)
-     */
     @DeleteMapping("/{projectId}")
-    public ResponseEntity<Map<String, String>> deleteProject(@PathVariable Long projectId) {
+    public ResponseEntity<ApiResponse<Void>> deleteProject(@PathVariable Long projectId) {
         projectService.deleteProject(projectId);
-        return ResponseEntity.ok(Map.of("message", "프로젝트가 삭제되었습니다."));
+        return ResponseEntity.ok(ApiResponse.success("프로젝트가 삭제되었습니다."));
     }
 
-    /**
-     * 프로젝트 멤버 목록 조회
-     */
     @GetMapping("/{projectId}/members")
-    public ResponseEntity<List<com.bizsync.backend.dto.response.ProjectMemberResponseDTO>> getProjectMembers(
+    public ResponseEntity<ApiResponse<List<ProjectMemberResponseDTO>>> getProjectMembers(
             @PathVariable Long projectId) {
-        return ResponseEntity.ok(projectService.getProjectMembers(projectId));
+        return ResponseEntity.ok(ApiResponse.success(projectMemberService.getProjectMembers(projectId)));
     }
 
-    /**
-     * 멤버 권한 변경 (PL만)
-     */
     @PatchMapping("/{projectId}/members/{memberId}/role")
-    public ResponseEntity<Map<String, String>> updateMemberRole(
+    public ResponseEntity<ApiResponse<Void>> updateMemberRole(
             @PathVariable Long projectId,
             @PathVariable Long memberId,
             @RequestBody Map<String, String> request) {
         String newRole = request.get("role");
-        projectService.updateMemberRole(projectId, memberId, newRole);
-        return ResponseEntity.ok(Map.of("message", "멤버 권한이 변경되었습니다."));
+        projectMemberService.updateMemberRole(projectId, memberId, newRole);
+        return ResponseEntity.ok(ApiResponse.success("멤버 권한이 변경되었습니다."));
     }
 
-    /**
-     * 멤버 삭제 (PL만)
-     */
     @DeleteMapping("/{projectId}/members/{memberId}")
-    public ResponseEntity<Map<String, String>> removeMember(
+    public ResponseEntity<ApiResponse<Void>> removeMember(
             @PathVariable Long projectId,
             @PathVariable Long memberId) {
-        projectService.removeMember(projectId, memberId);
-        return ResponseEntity.ok(Map.of("message", "멤버가 삭제되었습니다."));
+        projectMemberService.removeMember(projectId, memberId);
+        return ResponseEntity.ok(ApiResponse.success("멤버가 삭제되었습니다."));
     }
 
 }

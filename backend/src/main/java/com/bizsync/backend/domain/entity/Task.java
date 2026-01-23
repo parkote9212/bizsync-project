@@ -1,7 +1,6 @@
 package com.bizsync.backend.domain.entity;
 
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 
 import org.hibernate.annotations.ColumnDefault;
 
@@ -27,7 +26,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
-public class Task {
+public class Task extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -55,12 +54,8 @@ public class Task {
     @ColumnDefault("0")
     private Integer sequence; // 컬럼 내에서의 카드 순서
 
-    @Column(name = "created_at", updatable = false)
-    private LocalDateTime createdAt;
-
     @PrePersist
     public void prePersist() {
-        this.createdAt = LocalDateTime.now();
         if (this.sequence == null)
             this.sequence = 0;
     }

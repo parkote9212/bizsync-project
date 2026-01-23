@@ -1,5 +1,7 @@
 package com.bizsync.backend.service;
 
+import com.bizsync.backend.common.exception.ErrorCode;
+import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.KanbanColumn;
 import com.bizsync.backend.domain.entity.Project;
 import com.bizsync.backend.domain.entity.Task;
@@ -44,8 +46,7 @@ public class ExcelService {
      * | 진행 전  | 로그인   | user@co.kr   | 2026-02-01        | 내용    |
      */
     public int uploadTasksFromExcel(Long projectId, MultipartFile file) throws IOException {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 프로젝트입니다."));
+        Project project = projectRepository.findByIdOrThrow(projectId);
 
         Workbook workbook = new XSSFWorkbook(file.getInputStream());
         Sheet sheet = workbook.getSheetAt(0);
@@ -69,14 +70,10 @@ public class ExcelService {
 
                 // 컬럼 찾기
                 KanbanColumn column = kanbanColumnRepository
-                        .findByProject_ProjectIdAndName(projectId, columnName)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "컬럼을 찾을 수 없습니다: " + columnName));
+                        .findByProjectIdAndNameOrThrow(projectId, columnName);
 
                 // 담당자 찾기
-                User worker = userRepository.findByEmail(workerEmail)
-                        .orElseThrow(() -> new IllegalArgumentException(
-                                "사용자를 찾을 수 없습니다: " + workerEmail));
+                User worker = userRepository.findByEmailOrThrow(workerEmail);
 
                 // 마감일 파싱 (LocalDate)
                 LocalDate deadline = parseDeadline(deadlineStr);

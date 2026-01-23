@@ -40,7 +40,6 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [isEditing, setIsEditing] = useState(false);
 
-  // 수정 폼 상태
   const [editForm, setEditForm] = useState({
     title: "",
     content: "",
@@ -55,7 +54,6 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
     return response.data as TaskDetail;
   }, [taskId]);
 
-  // 상세 정보 로드 (언마운트 보호)
   useEffect(() => {
     if (!open || !taskId) return;
 
@@ -73,7 +71,7 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
             workerId: data.workerId ? String(data.workerId) : "",
             deadline: data.deadline || "",
           });
-          setIsEditing(false); // 모달 열릴 땐 항상 조회 모드
+          setIsEditing(false);
         }
       } catch (error) {
         console.error("업무 상세 조회 실패", error);
@@ -109,7 +107,7 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
           deadline: data.deadline || "",
         });
       }
-      await onUpdate(); // 부모(칸반보드) 갱신
+      await onUpdate();
     } catch (error) {
       console.error("수정 실패", error);
     }
@@ -131,7 +129,6 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
       {isEditing ? (
-        // --- 수정 모드 ---
         <>
           <DialogTitle>업무 수정</DialogTitle>
           <DialogContent>
@@ -184,7 +181,6 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
           </DialogActions>
         </>
       ) : (
-        // --- 조회 모드 ---
         <>
           <DialogTitle
             sx={{

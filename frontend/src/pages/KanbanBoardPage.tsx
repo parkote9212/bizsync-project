@@ -1,17 +1,13 @@
 import { useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-// 컴포넌트 Import
 import ColumnCreateDialog from "../components/ColumnCreateDialog";
 import ProjectInviteDialog from "../components/ProjectInviteDialog";
 import ProjectSettingsDialog from "../components/ProjectSettingsDialog";
 import TaskCreateDialog from "../components/TaskCreateDialog";
 import TaskDetailDialog from "../components/TaskDetailDialog";
-// Hooks Import
 import { useBoardSocket } from "../hooks/useBoardSocket";
 import { useKanbanBoard } from "../hooks/useKanbanBoard";
-// Types Import
 import type { TaskCreateData } from "../types/kanban";
-// Library Import
 import { DragDropContext, Draggable, Droppable } from "@hello-pangea/dnd";
 import {
   Alert,
@@ -27,7 +23,6 @@ import {
   Stack,
   Typography
 } from "@mui/material";
-// Icons Import
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
@@ -36,7 +31,6 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import ReplayIcon from "@mui/icons-material/Replay";
 import SettingsIcon from "@mui/icons-material/Settings";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
-// API Import
 import client from "../api/client";
 
 const KanbanBoardPage = () => {
@@ -51,7 +45,6 @@ const KanbanBoardPage = () => {
     refreshBoard,
   } = useKanbanBoard(projectId);
 
-  // 마감일까지 남은 일수 계산
   const getDaysUntilDeadline = (deadline?: string): number | null => {
     if (!deadline) return null;
     const today = new Date();
@@ -63,43 +56,26 @@ const KanbanBoardPage = () => {
     return diffDays;
   };
 
-  // 마감일 임박 여부 확인 (3일 이내)
   const isDeadlineNear = (deadline?: string): boolean => {
     const daysLeft = getDaysUntilDeadline(deadline);
     return daysLeft !== null && daysLeft >= 0 && daysLeft <= 3;
   };
 
-  // --- State ---
-
-  // 1. 컬럼 추가용 State
   const [isColumnCreateOpen, setIsColumnCreateOpen] = useState(false);
-
-  // 2. 업무 생성 모달용 State
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createColId, setCreateColId] = useState<number | null>(null);
-
-  // 3. 업무 상세 모달용 State
   const [selectedTaskId, setSelectedTaskId] = useState<number | null>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-
-  // 4. ★ 팀원 초대 모달용 State
   const [isInviteOpen, setIsInviteOpen] = useState(false);
-
-  // 프로젝트 설정 Dialog State
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-
-  // 5. 엑셀 업로드/다운로드용 State
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
-
-  // 6. 프로젝트 완료/재진행용 State
   const [completingProject, setCompletingProject] = useState(false);
 
-  // --- WebSocket 연결 ---
   useBoardSocket(projectId, refreshBoard);
 
   // 프로젝트 완료 처리

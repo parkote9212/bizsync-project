@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.bizsync.backend.domain.entity.User;
 import com.bizsync.backend.domain.repository.UserRepository;
+import com.bizsync.backend.dto.response.ApiResponse;
 
 import lombok.RequiredArgsConstructor;
 
@@ -23,14 +24,10 @@ public class UserController {
 
     private final UserRepository userRepository;
 
-    /**
-     * 전체 사용자 목록 조회 (조직도용)
-     */
     @GetMapping
-    public ResponseEntity<Map<String, Object>> getAllUsers() {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> getAllUsers() {
         List<User> users = userRepository.findAll();
 
-        // HashMap으로 명시적으로 생성
         List<Map<String, Object>> userList = users.stream()
                 .map(user -> {
                     Map<String, Object> userMap = new HashMap<>();
@@ -44,19 +41,11 @@ public class UserController {
                 })
                 .collect(Collectors.toList());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "SUCCESS");
-        response.put("data", userList);
-        response.put("message", null);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(userList));
     }
 
-    /**
-     * 사용자 검색 (이름 또는 이메일)
-     */
     @GetMapping("/search")
-    public ResponseEntity<Map<String, Object>> searchUsers(@RequestParam String keyword) {
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> searchUsers(@RequestParam String keyword) {
         List<User> users = userRepository.findByNameContainingOrEmailContaining(keyword, keyword);
 
         List<Map<String, Object>> userList = users.stream()
@@ -71,10 +60,6 @@ public class UserController {
                 })
                 .collect(Collectors.toList());
 
-        Map<String, Object> response = new HashMap<>();
-        response.put("status", "SUCCESS");
-        response.put("data", userList);
-
-        return ResponseEntity.ok(response);
+        return ResponseEntity.ok(ApiResponse.success(userList));
     }
 }

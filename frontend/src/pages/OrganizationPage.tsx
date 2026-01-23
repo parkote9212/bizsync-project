@@ -27,8 +27,8 @@ const OrganizationPage = () => {
         setLoading(true);
         const response = await client.get("/users");
 
-        if (response.data?.status === "SUCCESS" && response.data?.data) {
-          setUsers(response.data.data);
+        if (response.data) {
+          setUsers(response.data);
         } else {
           console.warn("예상치 못한 응답 형식:", response.data);
           setUsers([]);

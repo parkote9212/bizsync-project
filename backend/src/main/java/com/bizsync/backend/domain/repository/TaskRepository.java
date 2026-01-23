@@ -8,6 +8,8 @@ import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
+import com.bizsync.backend.common.exception.ErrorCode;
+import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.ColumnType;
 import com.bizsync.backend.domain.entity.Task;
 
@@ -48,4 +50,12 @@ public interface TaskRepository extends JpaRepository<Task, Long> {
      * 프로젝트의 모든 업무 삭제
      */
     void deleteByColumn_Project_ProjectId(Long projectId);
+
+    /**
+     * ID로 업무 조회 (없으면 예외 발생)
+     */
+    default Task findByIdOrThrow(Long taskId) {
+        return findById(taskId)
+                .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.KANBAN_TASK_NOT_FOUND));
+    }
 }

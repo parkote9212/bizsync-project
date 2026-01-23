@@ -51,11 +51,9 @@ const Layout = () => {
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
 
-  // Zustand 스토어에서 사용자 정보 가져오기 (persist 미들웨어로 localStorage와 자동 동기화)
   const user = useUserStore((state) => state.user);
   const userId = user.userId;
 
-  // Zustand notificationStore 사용
   const addNotification = useNotificationStore((state) => state.addNotification);
   const notifications = useNotificationStore((state) => state.notifications);
   const unreadCount = useNotificationStore((state) => state.unreadCount);
@@ -63,14 +61,12 @@ const Layout = () => {
   const markAllAsRead = useNotificationStore((state) => state.markAllAsRead);
   const removeNotification = useNotificationStore((state) => state.removeNotification);
 
-  // 알림 수신 핸들러 - notificationStore 저장 + 실시간 Snackbar 표시
   const handleNotification = useCallback((notification: Notification) => {
     addNotification(notification);
     setSnackbarMessage(notification.message);
     setSnackbarOpen(true);
   }, [addNotification]);
 
-  // WebSocket 연결
   useNotificationSocket(userId, handleNotification);
 
   const menuItems: NavigationMenuItem[] = [
@@ -80,20 +76,16 @@ const Layout = () => {
     { text: "조직도", icon: <PeopleIcon />, path: "/organization" },
   ];
 
-  // 현재 페이지 제목 가져오기
   const getPageTitle = () => {
     const currentPath = location.pathname;
 
-    // 프로젝트 상세 페이지 (칸반 보드)
     if (currentPath.startsWith("/projects/") && currentPath.match(/\/projects\/\d+$/)) {
       return "칸반 보드";
     }
 
-    // 일반 페이지 매칭
     const menuItem = menuItems.find(item => item.path === currentPath);
     if (menuItem) return menuItem.text;
 
-    // 기본값
     return "BizSync";
   };
 
@@ -101,16 +93,13 @@ const Layout = () => {
   const clearNotifications = useNotificationStore((state) => state.clearAll);
   const resetProjects = useProjectStore((state) => state.reset);
 
-  // 다크모드 스토어
   const themeMode = useThemeStore((state) => state.mode);
   const toggleTheme = useThemeStore((state) => state.toggleMode);
   const isDarkMode = themeMode === "dark";
 
   const handleLogout = () => {
-    // 1. 사용자별 데이터 스토어 초기화 (이전 사용자 데이터 노출 방지)
     clearNotifications();
     resetProjects();
-    // 2. 토큰·사용자 정보 제거
     localStorage.removeItem("accessToken");
     localStorage.removeItem("refreshToken");
     clearUser();
@@ -133,7 +122,6 @@ const Layout = () => {
 
   return (
     <Box sx={{ display: "flex" }}>
-      {/* AppBar (상단 헤더) */}
       <AppBar
         position="fixed"
         color="default"
@@ -144,7 +132,6 @@ const Layout = () => {
         }}
       >
         <Toolbar>
-          {/* 현재 페이지 제목 */}
           <Typography
             variant="h5"
             noWrap
@@ -158,7 +145,6 @@ const Layout = () => {
             {getPageTitle()}
           </Typography>
 
-          {/* 알림 아이콘 */}
           <IconButton
             color="inherit"
             onClick={handleNotificationClick}
@@ -183,7 +169,6 @@ const Layout = () => {
             {isDarkMode ? <Brightness7Icon /> : <Brightness4Icon />}
           </IconButton>
 
-          {/* 알림 메뉴 */}
           <Menu
             anchorEl={notificationAnchor}
             open={Boolean(notificationAnchor)}
@@ -203,7 +188,6 @@ const Layout = () => {
             }}
           >
             <Box sx={{ p: 1 }}>
-              {/* 알림 헤더 */}
               <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", px: 2, py: 1 }}>
                 <Typography variant="h6" fontWeight="bold">
                   알림
@@ -234,12 +218,10 @@ const Layout = () => {
                   <MenuItem
                     key={notification.id || notification.timestamp}
                     onClick={() => {
-                      // 알림 읽음 처리
                       if (notification.id) {
                         markAsRead(notification.id);
                       }
                       handleMenuClose();
-                      // 알림 타입에 따라 이동
                       if (notification.type === "APPROVAL") {
                         navigate(`/approvals`);
                       } else if (notification.type === "BOARD" && notification.targetId) {
@@ -289,7 +271,6 @@ const Layout = () => {
             </Box>
           </Menu>
 
-          {/* 프로필 영역 */}
           <Box display="flex" alignItems="center" gap={1}>
             <Box
               display="flex"
@@ -330,7 +311,6 @@ const Layout = () => {
             </Button>
           </Box>
 
-          {/* 프로필 메뉴 */}
           <Menu
             anchorEl={profileAnchor}
             open={Boolean(profileAnchor)}
@@ -391,7 +371,6 @@ const Layout = () => {
             </MenuItem>
           </Menu>
 
-          {/* 비밀번호 변경 Dialog */}
           <PasswordChangeDialog
             open={passwordDialogOpen}
             onClose={() => setPasswordDialogOpen(false)}
@@ -399,7 +378,6 @@ const Layout = () => {
         </Toolbar>
       </AppBar>
 
-      {/* Sidebar */}
       <Drawer
         variant="permanent"
         sx={{
@@ -411,7 +389,6 @@ const Layout = () => {
           },
         }}
       >
-        {/* 로고 영역 */}
         <Box
           sx={{
             height: 64,
@@ -471,7 +448,6 @@ const Layout = () => {
         </Box>
       </Drawer>
 
-      {/* 메인 컨텐츠 영역 */}
       <Box
         component="main"
         sx={{
