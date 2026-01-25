@@ -116,9 +116,11 @@ export const useKanbanBoard = (projectId: string | undefined) => {
         columnType: data.columnType,
       });
       await fetchBoard();
-    } catch (error) {
+    } catch (error: unknown) {
       console.error("컬럼 생성 실패", error);
-      alert("컬럼 생성 실패");
+      const axiosError = error as { response?: { data?: { message?: string }; status?: number } };
+      const errorMessage = axiosError.response?.data?.message || "컬럼 생성에 실패했습니다.";
+      alert(errorMessage);
     }
   };
 

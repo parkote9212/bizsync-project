@@ -66,7 +66,11 @@ client.interceptors.response.use(
     return response;
   },
   (error) => {
-    if (error.response && error.response.status === 401) {
+    // 로그인 페이지에서의 401은 리다이렉트하지 않음 (비밀번호 오류 등)
+    const isLoginPage = window.location.pathname === "/login" || window.location.pathname === "/";
+    const isAuthRequest = error.config?.url?.includes("/auth/");
+    
+    if (error.response && error.response.status === 401 && !isLoginPage && !isAuthRequest) {
       console.error("인증 실패! 로그인이 필요합니다.");
       clearUserDataOnAuthFailure();
       window.location.href = "/login";

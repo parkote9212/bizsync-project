@@ -108,7 +108,11 @@ const LoginPage = () => {
       }
     } catch (err: unknown) {
       console.error(err);
-      setError("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
+      const axiosError = err as { response?: { data?: { message?: string; error?: string } } };
+      const errorMessage = axiosError.response?.data?.message ||
+                          axiosError.response?.data?.error ||
+                          "로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.";
+      setError(errorMessage);
     }
   };
 
