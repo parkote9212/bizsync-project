@@ -21,8 +21,6 @@ interface ApprovalListProps {
   loading: boolean;
   tabValue: number;
   onViewDetail: (documentId: number) => void;
-  onApprove?: (documentId: number) => void;
-  onReject?: (documentId: number) => void;
 }
 
 /**
@@ -36,16 +34,12 @@ interface ApprovalListProps {
  * @param {boolean} props.loading - 로딩 상태
  * @param {number} props.tabValue - 현재 탭 인덱스 (0: 기안함, 1: 대기함, 2: 완료함)
  * @param {Function} props.onViewDetail - 상세보기 버튼 클릭 시 호출되는 함수
- * @param {Function} [props.onApprove] - 승인 버튼 클릭 시 호출되는 함수 (대기함에서만 표시)
- * @param {Function} [props.onReject] - 반려 버튼 클릭 시 호출되는 함수 (대기함에서만 표시)
  */
 export const ApprovalList: React.FC<ApprovalListProps> = ({
   items,
   loading,
   tabValue,
   onViewDetail,
-  onApprove,
-  onReject,
 }) => {
   if (loading) {
     return (
@@ -89,32 +83,7 @@ export const ApprovalList: React.FC<ApprovalListProps> = ({
                   >
                     상세보기
                   </Button>
-                  {tabValue === 1 && item.docStatus === ApprovalStatus.PENDING && (
-                    <>
-                      {onApprove && (
-                        <Button
-                          size="small"
-                          color="primary"
-                          variant="contained"
-                          onClick={() => onApprove(item.documentId)}
-                          sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
-                        >
-                          승인
-                        </Button>
-                      )}
-                      {onReject && (
-                        <Button
-                          size="small"
-                          color="error"
-                          variant="outlined"
-                          onClick={() => onReject(item.documentId)}
-                          sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
-                        >
-                          반려
-                        </Button>
-                      )}
-                    </>
-                  )}
+                  {/* 승인/반려 버튼은 상세보기에서만 표시 (결재선 순서 확인 필요) */}
                 </Box>
               </TableCell>
             </TableRow>

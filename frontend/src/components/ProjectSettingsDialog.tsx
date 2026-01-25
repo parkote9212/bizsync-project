@@ -18,13 +18,23 @@ import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
 import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
+/**
+ * 프로젝트 설정 다이얼로그 Props
+ */
 interface ProjectSettingsDialogProps {
+  /** 다이얼로그 열림/닫힘 상태 */
   open: boolean;
+  /** 다이얼로그 닫기 콜백 */
   onClose: () => void;
+  /** 프로젝트 ID */
   projectId: string | undefined;
+  /** 프로젝트 정보 업데이트 후 콜백 */
   onUpdate: () => void;
 }
 
+/**
+ * 프로젝트 데이터 인터페이스
+ */
 interface ProjectData {
   name: string;
   description: string;
@@ -33,6 +43,16 @@ interface ProjectData {
   totalBudget: number;
 }
 
+/**
+ * 프로젝트 설정 다이얼로그 컴포넌트
+ *
+ * <p>프로젝트 정보를 수정하고 삭제할 수 있는 다이얼로그입니다.
+ * 프로젝트명, 설명, 기간, 예산을 수정할 수 있으며, 프로젝트 취소 기능도 제공합니다.
+ *
+ * @component
+ * @param {ProjectSettingsDialogProps} props - 컴포넌트 props
+ * @returns {JSX.Element} 프로젝트 설정 다이얼로그
+ */
 const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
   open,
   onClose,

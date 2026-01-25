@@ -17,6 +17,7 @@ import { ApprovalProcessDialog } from "../components/approval/ApprovalProcessDia
 import { useMutation } from "../hooks/useApi";
 import { useConfirmDialog } from "../hooks/useConfirmDialog";
 import { useToast } from "../hooks/useToast";
+import { useUserStore } from "../stores/userStore";
 import type {
   ApprovalDetail,
   ApprovalProcessRequest,
@@ -34,6 +35,7 @@ import { ApprovalStatus } from "../types/approval";
  * @component
  */
 const ApprovalPage = () => {
+  // 상태 관리 섹션
   const [tabValue, setTabValue] = useState(0);
   const [myDrafts, setMyDrafts] = useState<ApprovalSummary[]>([]);
   const [myPending, setMyPending] = useState<ApprovalSummary[]>([]);
@@ -47,6 +49,8 @@ const ApprovalPage = () => {
   const [processDialogOpen, setProcessDialogOpen] = useState(false);
   const [processDocumentId, setProcessDocumentId] = useState<number | null>(null);
 
+  // 훅 초기화 섹션
+  const user = useUserStore((state) => state.user);
   const { showToast, toastState, closeToast } = useToast();
   const { showConfirm, confirmDialogState, closeConfirm } = useConfirmDialog();
   const { execute: createApproval } = useMutation({
@@ -59,11 +63,11 @@ const ApprovalPage = () => {
     loadingKey: "processApproval",
   });
   const { execute: cancelApproval } = useMutation({
-    showToastOnSuccess: true,
-    successMessage: "결재가 취소되었습니다.",
+    showToastOnSuccess: false, // 수동으로 토스트 표시
     loadingKey: "cancelApproval",
   });
 
+  // 데이터 로드 섹션
   useEffect(() => {
     if (tabValue === 0) {
       fetchMyDrafts();
@@ -113,7 +117,7 @@ const ApprovalPage = () => {
     }
   };
 
-
+  // 이벤트 핸들러 섹션
   const handleCreateApproval = async (data: {
     title: string;
     content: string;
@@ -174,6 +178,9 @@ const ApprovalPage = () => {
         });
 
         if (result !== null) {
+          // 확인 다이얼로그 닫기
+          closeConfirm();
+          
           // 상세보기가 열려있으면 닫기
           if (detailDialogOpen && selectedDocumentId === documentId) {
             setDetailDialogOpen(false);
@@ -203,6 +210,12 @@ const ApprovalPage = () => {
         });
 
         if (result !== null) {
+          // 확인 다이얼로그 닫기
+          closeConfirm();
+          
+          // 토스트 표시 (ApprovalPage의 Toast 컴포넌트 사용)
+          showToast("결재가 취소되었습니다.", "success");
+          
           // 상세보기가 열려있으면 닫기
           if (detailDialogOpen && selectedDocumentId === documentId) {
             setDetailDialogOpen(false);
@@ -251,10 +264,40 @@ const ApprovalPage = () => {
     }
   };
 
+  /**
+   * 현재 사용자가 다음 결재자인지 확인
+   * 
+   * @param {ApprovalDetail | null} detail - 결재 상세 정보
+   * @returns {boolean} 현재 사용자가 다음 결재자인지 여부
+   */
+  const isCurrentUserNextApprover = (detail: ApprovalDetail | null): boolean => {
+    if (!detail || !user.name) return false;
+
+    // 현재 사용자의 결재선 찾기
+    const userLine = detail.approvalLines.find(
+      (line) => line.approverName === user.name
+    );
+
+    if (!userLine) return false;
+
+    // 현재 사용자의 결재선이 PENDING 상태가 아니면 false
+    if (userLine.status !== ApprovalStatus.PENDING) return false;
+
+    // 현재 사용자의 sequence보다 작은 모든 결재선이 APPROVED 상태인지 확인
+    const previousLines = detail.approvalLines.filter(
+      (line) => line.sequence < userLine.sequence
+    );
+
+    // 이전 결재선이 모두 APPROVED 상태여야 함
+    return previousLines.every((line) => line.status === ApprovalStatus.APPROVED);
+  };
+
+  // 렌더링 섹션
   const currentItems = tabValue === 0 ? myDrafts : tabValue === 1 ? myPending : myCompleted;
 
   return (
     <Container maxWidth="lg">
+      {/* 헤더 섹션: 결재 기안 버튼 */}
       <Box
         display="flex"
         justifyContent="flex-end"
@@ -271,6 +314,7 @@ const ApprovalPage = () => {
         </Button>
       </Box>
 
+      {/* 결재 목록 섹션: 탭 및 리스트 */}
       <Paper elevation={2}>
         <Tabs value={tabValue} onChange={(_, v) => setTabValue(v)}>
           <Tab label="내 기안함" />
@@ -283,11 +327,10 @@ const ApprovalPage = () => {
           loading={loading}
           tabValue={tabValue}
           onViewDetail={handleViewDetail}
-          onApprove={tabValue === 1 ? handleApprove : undefined}
-          onReject={tabValue === 1 ? handleOpenRejectDialog : undefined}
         />
       </Paper>
 
+      {/* 다이얼로그 섹션 */}
       <ApprovalCreateForm
         open={createDialogOpen}
         onClose={() => setCreateDialogOpen(false)}
@@ -299,18 +342,25 @@ const ApprovalPage = () => {
         loading={detailLoading}
         data={detailData}
         tabValue={tabValue}
+        currentUserName={user.name}
         onClose={() => {
           setDetailDialogOpen(false);
           setSelectedDocumentId(null);
           setDetailData(null);
         }}
         onApprove={
-          detailData?.status === ApprovalStatus.PENDING && tabValue === 1 && selectedDocumentId
+          detailData?.status === ApprovalStatus.PENDING && 
+          tabValue === 1 && 
+          selectedDocumentId &&
+          isCurrentUserNextApprover(detailData)
             ? () => handleApprove(selectedDocumentId)
             : undefined
         }
         onReject={
-          detailData?.status === ApprovalStatus.PENDING && tabValue === 1 && selectedDocumentId
+          detailData?.status === ApprovalStatus.PENDING && 
+          tabValue === 1 && 
+          selectedDocumentId &&
+          isCurrentUserNextApprover(detailData)
             ? () => handleOpenRejectDialog(selectedDocumentId)
             : undefined
         }

@@ -16,11 +16,22 @@ import { useEffect, useState } from "react";
 import client from "../api/client";
 import type { User } from "../types/common";
 
+/**
+ * 조직도 페이지 컴포넌트
+ *
+ * <p>전체 사용자 목록을 카드 형태로 표시하는 페이지입니다.
+ * 사용자 검색 기능을 제공하며, 이름, 이메일, 부서, 사번으로 검색할 수 있습니다.
+ *
+ * @component
+ * @returns {JSX.Element} 조직도 페이지
+ */
 const OrganizationPage = () => {
+  // 상태 관리 섹션
   const [loading, setLoading] = useState(false);
   const [users, setUsers] = useState<User[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
 
+  // 데이터 로드 섹션
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -44,6 +55,12 @@ const OrganizationPage = () => {
     fetchUsers();
   }, []);
 
+  // 유틸리티 함수 섹션
+  /**
+   * 검색어에 따라 사용자 목록 필터링
+   *
+   * @returns {User[]} 필터링된 사용자 목록
+   */
   const filteredUsers = users.filter((user) => {
     const search = searchTerm.toLowerCase();
     return (
@@ -54,11 +71,12 @@ const OrganizationPage = () => {
     );
   });
 
+  // 렌더링 섹션
   return (
     <Container maxWidth="lg">
-
-
+      {/* 검색 및 사용자 목록 섹션 */}
       <Paper elevation={2} sx={{ p: 3 }}>
+        {/* 검색 입력 섹션 */}
         <TextField
           fullWidth
           placeholder="이름, 이메일, 부서, 사번으로 검색"
@@ -74,6 +92,7 @@ const OrganizationPage = () => {
           sx={{ mb: 3 }}
         />
 
+        {/* 사용자 카드 목록 섹션 */}
         {loading ? (
           <Box display="flex" justifyContent="center" p={4}>
             <CircularProgress />

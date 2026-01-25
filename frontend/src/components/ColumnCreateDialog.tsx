@@ -15,12 +15,28 @@ import React, { useState } from "react";
 import Toast from "./Toast";
 import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
+/**
+ * 컬럼 생성 다이얼로그 Props
+ */
 interface ColumnCreateDialogProps {
+  /** 다이얼로그 열림/닫힘 상태 */
   open: boolean;
+  /** 다이얼로그 닫기 콜백 */
   onClose: () => void;
+  /** 컬럼 생성 제출 콜백 */
   onSubmit: (data: { name: string; description?: string; columnType?: string }) => void;
 }
 
+/**
+ * 컬럼 생성 다이얼로그 컴포넌트
+ *
+ * <p>칸반 보드에 새로운 컬럼을 생성하는 다이얼로그입니다.
+ * 컬럼명, 설명, 컬럼 타입(TODO, IN_PROGRESS, DONE)을 입력할 수 있습니다.
+ *
+ * @component
+ * @param {ColumnCreateDialogProps} props - 컴포넌트 props
+ * @returns {JSX.Element} 컬럼 생성 다이얼로그
+ */
 const ColumnCreateDialog: React.FC<ColumnCreateDialogProps> = ({
   open,
   onClose,

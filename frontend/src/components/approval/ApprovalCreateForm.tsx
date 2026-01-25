@@ -1,6 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import {
   Alert,
+  Autocomplete,
   Button,
   Dialog,
   DialogActions,
@@ -13,13 +14,16 @@ import {
   Select,
   TextField,
   Typography,
+  CircularProgress,
+  Box,
 } from "@mui/material";
 import type { ApprovalFormData, ApprovalCreateRequest } from "../../types/approval";
 import { ApprovalType } from "../../types/approval";
-import type { UserSearchResult } from "../../types/user";
 import { SearchAutocomplete } from "../SearchAutocomplete";
 import { useUserSearch } from "../../hooks/useUserSearch";
 import { formatCurrency } from "../../utils/approval";
+import { projectApi } from "../../api/project";
+import type { Project } from "../../types/kanban";
 
 interface ApprovalCreateFormProps {
   open: boolean;
@@ -67,6 +71,80 @@ export const ApprovalCreateForm: React.FC<ApprovalCreateFormProps> = ({
   }>({});
 
   const { searchOptions, searchLoading, handleSearchUsers, clearSearch } = useUserSearch();
+  
+  // 프로젝트 검색 관련 상태
+  const [myProjects, setMyProjects] = useState<Project[]>([]);
+  const [projectSearchKeyword, setProjectSearchKeyword] = useState("");
+  const [projectSearchOptions, setProjectSearchOptions] = useState<Project[]>([]);
+  const [projectSearchLoading, setProjectSearchLoading] = useState(false);
+  const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+  const projectSearchTimerRef = useRef<number | null>(null);
+
+  // 내가 속한 프로젝트 목록 로드
+  useEffect(() => {
+    if (open) {
+      const fetchMyProjects = async () => {
+        try {
+          const projects = await projectApi.getProjects();
+          setMyProjects(projects);
+        } catch (error) {
+          console.error("프로젝트 목록 조회 실패:", error);
+          setMyProjects([]);
+        }
+      };
+      fetchMyProjects();
+    } else {
+      setMyProjects([]);
+      setSelectedProject(null);
+      setProjectSearchKeyword("");
+      setProjectSearchOptions([]);
+    }
+  }, [open]);
+
+  // 프로젝트 검색 필터링
+  useEffect(() => {
+    if (projectSearchTimerRef.current) {
+      clearTimeout(projectSearchTimerRef.current);
+    }
+
+    if (!projectSearchKeyword || projectSearchKeyword.length < 1) {
+      setProjectSearchOptions([]);
+      return;
+    }
+
+    setProjectSearchLoading(true);
+    projectSearchTimerRef.current = setTimeout(() => {
+      const keyword = projectSearchKeyword.toLowerCase();
+      const filtered = myProjects.filter(
+        (project) =>
+          project.name.toLowerCase().includes(keyword) ||
+          project.projectId.toString().includes(keyword)
+      );
+      setProjectSearchOptions(filtered);
+      setProjectSearchLoading(false);
+    }, 300);
+
+    return () => {
+      if (projectSearchTimerRef.current) {
+        clearTimeout(projectSearchTimerRef.current);
+      }
+    };
+  }, [projectSearchKeyword, myProjects]);
+
+  const handleProjectSearch = useCallback((keyword: string) => {
+    setProjectSearchKeyword(keyword);
+  }, []);
+
+  const handleProjectChange = useCallback((project: Project | null) => {
+    setSelectedProject(project);
+    setFormData((prev) => ({
+      ...prev,
+      projectId: project ? project.projectId.toString() : "",
+    }));
+    if (formErrors.projectId) {
+      setFormErrors((prev) => ({ ...prev, projectId: undefined }));
+    }
+  }, [formErrors.projectId]);
 
   const handleSubmit = async () => {
     const approverIds = formData.approvers.map((user) => user.userId);
@@ -117,6 +195,9 @@ export const ApprovalCreateForm: React.FC<ApprovalCreateFormProps> = ({
       approvers: [],
     });
     clearSearch();
+    setSelectedProject(null);
+    setProjectSearchKeyword("");
+    setProjectSearchOptions([]);
   };
 
   const handleClose = () => {
@@ -130,6 +211,9 @@ export const ApprovalCreateForm: React.FC<ApprovalCreateFormProps> = ({
     });
     setFormErrors({});
     clearSearch();
+    setSelectedProject(null);
+    setProjectSearchKeyword("");
+    setProjectSearchOptions([]);
     onClose();
   };
 
@@ -167,19 +251,46 @@ export const ApprovalCreateForm: React.FC<ApprovalCreateFormProps> = ({
           {formData.type === "EXPENSE" && (
             <>
               <Grid size={{ xs: 12, sm: 6 }}>
-                <TextField
+                <Autocomplete
                   fullWidth
-                  label="프로젝트 ID"
-                  required
-                  value={formData.projectId}
-                  onChange={(e) => {
-                    setFormData({ ...formData, projectId: e.target.value });
-                    if (formErrors.projectId) {
-                      setFormErrors({ ...formErrors, projectId: undefined });
-                    }
-                  }}
-                  error={!!formErrors.projectId}
-                  helperText={formErrors.projectId || ""}
+                  options={projectSearchOptions}
+                  value={selectedProject}
+                  onChange={(_event, newValue) => handleProjectChange(newValue)}
+                  onInputChange={(_event, newInputValue) => handleProjectSearch(newInputValue)}
+                  getOptionLabel={(option) => `${option.name} (ID: ${option.projectId})`}
+                  loading={projectSearchLoading}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="프로젝트 검색 (이름 또는 ID)"
+                      required
+                      placeholder="프로젝트 이름 또는 ID 입력"
+                      error={!!formErrors.projectId}
+                      helperText={formErrors.projectId || "내가 속한 프로젝트만 검색됩니다"}
+                      InputProps={{
+                        ...params.InputProps,
+                        endAdornment: (
+                          <>
+                            {projectSearchLoading ? <CircularProgress color="inherit" size={20} /> : null}
+                            {params.InputProps.endAdornment}
+                          </>
+                        ),
+                      }}
+                    />
+                  )}
+                  renderOption={(props, option) => (
+                    <li {...props}>
+                      <Box>
+                        <Typography variant="body2" fontWeight="medium">
+                          {option.name}
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          ID: {option.projectId} | {option.description || "설명 없음"}
+                        </Typography>
+                      </Box>
+                    </li>
+                  )}
+                  noOptionsText="검색 결과가 없습니다"
                 />
               </Grid>
               <Grid size={{ xs: 12 }}>

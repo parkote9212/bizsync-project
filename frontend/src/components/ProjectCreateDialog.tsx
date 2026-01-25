@@ -12,12 +12,28 @@ import client from "../api/client";
 import Toast from "./Toast";
 import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
+/**
+ * 프로젝트 생성 다이얼로그 Props
+ */
 interface ProjectCreateDialogProps {
+  /** 다이얼로그 열림/닫힘 상태 */
   open: boolean;
+  /** 다이얼로그 닫기 콜백 */
   onClose: () => void;
+  /** 프로젝트 생성 완료 후 콜백 */
   onCreate: () => void;
 }
 
+/**
+ * 프로젝트 생성 다이얼로그 컴포넌트
+ *
+ * <p>새로운 프로젝트를 생성하는 다이얼로그입니다.
+ * 프로젝트명, 설명, 시작일, 종료일, 예산을 입력할 수 있습니다.
+ *
+ * @component
+ * @param {ProjectCreateDialogProps} props - 컴포넌트 props
+ * @returns {JSX.Element} 프로젝트 생성 다이얼로그
+ */
 const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
   open,
   onClose,

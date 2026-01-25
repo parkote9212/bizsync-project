@@ -17,7 +17,9 @@ import client from "../api/client";
 import ProjectCreateDialog from "../components/ProjectCreateDialog";
 import type { ProjectStatus } from "../types/common";
 
-// DTO 타입 정의
+/**
+ * 프로젝트 정보 인터페이스
+ */
 interface Project {
   projectId: number;
   name: string;
@@ -29,7 +31,12 @@ interface Project {
   usedBudget?: number;
 }
 
-// 프로젝트 상태별 표시 설정
+/**
+ * 프로젝트 상태에 따른 표시 설정 반환
+ *
+ * @param {ProjectStatus} status - 프로젝트 상태
+ * @returns {{ label: string; color: "primary" | "success" | "default" | "warning" | "error" }} 상태별 라벨과 색상
+ */
 const getStatusConfig = (status: ProjectStatus) => {
   switch (status) {
     case "IN_PROGRESS":
@@ -47,11 +54,22 @@ const getStatusConfig = (status: ProjectStatus) => {
   }
 };
 
+/**
+ * 프로젝트 목록 페이지 컴포넌트
+ *
+ * <p>사용자가 참여한 프로젝트 목록을 카드 형태로 표시하는 페이지입니다.
+ * 프로젝트 생성, 프로젝트 상세 조회 기능을 제공합니다.
+ *
+ * @component
+ * @returns {JSX.Element} 프로젝트 목록 페이지
+ */
 const ProjectListPage = () => {
+  // 상태 관리 섹션
   const navigate = useNavigate();
   const [projects, setProjects] = useState<Project[]>([]);
   const [openModal, setOpenModal] = useState(false);
 
+  // 데이터 로드 섹션
   // 프로젝트 목록 조회 (데이터만 반환)
   const fetchProjects = useCallback(async (): Promise<Project[]> => {
     const response = await client.get("/projects");

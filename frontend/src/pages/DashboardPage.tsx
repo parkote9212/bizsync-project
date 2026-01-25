@@ -22,6 +22,9 @@ import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import client from "../api/client";
 
+/**
+ * 내 업무 정보 인터페이스
+ */
 interface MyTask {
   taskId: number;
   title: string;
@@ -31,7 +34,17 @@ interface MyTask {
   daysLeft: number | null;
 }
 
+/**
+ * 대시보드 페이지 컴포넌트
+ *
+ * <p>사용자의 프로젝트, 업무, 결재 현황을 한눈에 볼 수 있는 대시보드입니다.
+ * 통계 카드와 내 업무 리스트를 표시합니다.
+ *
+ * @component
+ * @returns {JSX.Element} 대시보드 페이지
+ */
 const DashboardPage = () => {
+  // 상태 관리 섹션
   const navigate = useNavigate();
   const location = useLocation();
   const [loading, setLoading] = useState(true);
@@ -40,6 +53,7 @@ const DashboardPage = () => {
   const [pendingApprovalCount, setPendingApprovalCount] = useState(0);
   const [myTasks, setMyTasks] = useState<MyTask[]>([]);
 
+  // 데이터 로드 섹션
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
@@ -88,6 +102,7 @@ const DashboardPage = () => {
     fetchDashboardData();
   }, [location.key]);
 
+  // 이벤트 핸들러 섹션
   const handleProjectCardClick = () => {
     navigate("/projects");
   };
@@ -100,6 +115,12 @@ const DashboardPage = () => {
     navigate("/approvals");
   };
 
+  /**
+   * 마감일까지 남은 일수에 따른 색상 반환
+   *
+   * @param {number | null} daysLeft - 마감일까지 남은 일수 (null인 경우 마감일 없음)
+   * @returns {"default" | "error" | "warning" | "success"} MUI Chip 색상
+   */
   const getDueDateColor = (daysLeft: number | null) => {
     if (daysLeft === null) return "default";
     if (daysLeft < 0) return "error";
@@ -108,6 +129,13 @@ const DashboardPage = () => {
     return "success";
   };
 
+  /**
+   * 마감일까지 남은 일수에 따른 텍스트 반환
+   *
+   * @param {number | null} daysLeft - 마감일까지 남은 일수
+   * @param {string | null} dueDate - 마감일 문자열
+   * @returns {string} 마감일 관련 텍스트
+   */
   const getDueDateText = (daysLeft: number | null, dueDate: string | null) => {
     if (!dueDate) return "마감일 없음";
     if (daysLeft === null) return dueDate;
@@ -116,6 +144,7 @@ const DashboardPage = () => {
     return `${daysLeft}일 남음`;
   };
 
+  // 유틸리티 함수 섹션
   const renderSkeletonCard = () => (
     <Card elevation={2}>
       <CardContent>
@@ -128,8 +157,10 @@ const DashboardPage = () => {
     </Card>
   );
 
+  {/* 렌더링 섹션 */}
   return (
     <Container maxWidth="lg">
+      {/* 통계 카드 섹션 */}
       <Grid container spacing={3} sx={{ mb: 4 }}>
         <Grid size={{ xs: 12, sm: 4 }}>
           {loading ? (
@@ -213,6 +244,7 @@ const DashboardPage = () => {
         </Grid>
       </Grid>
 
+      {/* 내 업무 리스트 섹션 */}
       <Paper elevation={2} sx={{ mt: 4, p: 3 }}>
         <Typography variant="h6" fontWeight="bold" mb={2}>
           내 업무 리스트

@@ -7,6 +7,7 @@ import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.*;
 import com.bizsync.backend.domain.repository.ApprovalDocumentRepository;
 import com.bizsync.backend.domain.repository.ApprovalLineRepository;
+import com.bizsync.backend.domain.repository.ProjectMemberRepository;
 import com.bizsync.backend.domain.repository.ProjectRepository;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
@@ -42,6 +43,7 @@ public class ApprovalService {
     private final UserRepository userRepository;
     private final NotificationService notificationService;
     private final ProjectRepository projectRepository;
+    private final ProjectMemberRepository projectMemberRepository;
 
     /**
      * 결재 문서를 생성하고 결재선을 설정합니다.
@@ -50,10 +52,16 @@ public class ApprovalService {
      * @param dto       결재 생성 요청 DTO
      * @return 생성된 결재 문서 ID
      * @throws ResourceNotFoundException 결재자가 존재하지 않는 경우
+     * @throws BusinessException 비용 결재 시 기안자가 프로젝트 멤버가 아닌 경우
      */
     public Long createApproval(Long drafterId, ApprovalCreateRequestDTO dto) {
         User drafter = userRepository.findByIdOrThrow(drafterId);
         Project project = getProjectIfExists(dto.projectId());
+
+        // 비용 결재 시 기안자가 프로젝트 멤버인지 검증
+        if (project != null && !projectMemberRepository.existsByProjectAndUser(project.getProjectId(), drafterId)) {
+            throw new BusinessException(ErrorCode.PROJECT_MEMBER_NOT_FOUND);
+        }
 
         ApprovalDocument document = createApprovalDocument(drafter, project, dto);
         ApprovalDocument savedDoc = approvalDocumentRepository.save(document);

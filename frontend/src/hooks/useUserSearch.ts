@@ -1,4 +1,4 @@
-import { useState, useCallback, useRef, useEffect } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import client from "../api/client";
 import type { UserSearchResult } from "../types/user";
 
@@ -53,7 +53,7 @@ export const useUserSearch = (options: UseUserSearchOptions = {}) => {
 
   const [searchOptions, setSearchOptions] = useState<UserSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const debounceTimerRef = useRef<number | null>(null);
 
   const handleSearchUsers = useCallback(async (keyword: string) => {
     // 최소 글자 수 검증
@@ -71,8 +71,9 @@ export const useUserSearch = (options: UseUserSearchOptions = {}) => {
     debounceTimerRef.current = setTimeout(async () => {
       setSearchLoading(true);
       try {
-        const response = await client.get(`/users/search?keyword=${keyword}`);
-        setSearchOptions(response.data.data || []);
+        const response = await client.get(`/users/search?keyword=${encodeURIComponent(keyword)}`);
+        // 클라이언트 인터셉터에서 이미 data를 추출하므로 response.data가 리스트입니다
+        setSearchOptions(Array.isArray(response.data) ? response.data : []);
       } catch (error) {
         console.error("사용자 검색 실패:", error);
         setSearchOptions([]);

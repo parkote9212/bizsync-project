@@ -9,12 +9,12 @@ import {
 import type { UserSearchResult } from "../types/user";
 
 interface SearchAutocompleteProps {
-  value: UserSearchResult | null;
+  value?: UserSearchResult | null;
   options: UserSearchResult[];
   loading?: boolean;
   label?: string;
   placeholder?: string;
-  onChange: (value: UserSearchResult | null) => void;
+  onChange?: (value: UserSearchResult | null) => void;
   onInputChange: (value: string) => void;
   multiple?: boolean;
   valueMultiple?: UserSearchResult[];
@@ -59,7 +59,7 @@ interface SearchAutocompleteProps {
  * ```
  */
 export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({
-  value,
+  value = null,
   options,
   loading = false,
   label = "사용자 검색",
@@ -130,7 +130,11 @@ export const SearchAutocomplete: React.FC<SearchAutocompleteProps> = ({
     <Autocomplete
       options={options}
       value={value}
-      onChange={(_event, newValue) => onChange(newValue)}
+      onChange={(_event, newValue) => {
+        if (onChange) {
+          onChange(newValue);
+        }
+      }}
       onInputChange={(_event, newInputValue) => onInputChange(newInputValue)}
       getOptionLabel={(option) => `${option.name} (${option.email})`}
       loading={loading}

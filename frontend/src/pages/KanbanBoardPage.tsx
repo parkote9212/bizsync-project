@@ -36,7 +36,18 @@ import UploadFileIcon from "@mui/icons-material/UploadFile";
 import client from "../api/client";
 import { projectApi } from "../api/project";
 
+/**
+ * 칸반 보드 페이지 컴포넌트
+ *
+ * <p>프로젝트의 칸반 보드를 표시하고 관리하는 페이지입니다.
+ * 드래그 앤 드롭으로 업무를 이동할 수 있으며, 업무 생성, 컬럼 생성,
+ * 팀원 초대, 프로젝트 설정 등의 기능을 제공합니다.
+ *
+ * @component
+ * @returns {JSX.Element} 칸반 보드 페이지
+ */
 const KanbanBoardPage = () => {
+  // 상태 및 훅 초기화 섹션
   const { projectId } = useParams();
   const theme = useTheme();
 
@@ -49,6 +60,12 @@ const KanbanBoardPage = () => {
     refreshBoard,
   } = useKanbanBoard(projectId);
 
+  /**
+   * 마감일까지 남은 일수 계산
+   *
+   * @param {string | undefined} deadline - 마감일 문자열 (YYYY-MM-DD)
+   * @returns {number | null} 남은 일수 (음수면 지난 일수, null이면 마감일 없음)
+   */
   const getDaysUntilDeadline = (deadline?: string): number | null => {
     if (!deadline) return null;
     const today = new Date();
@@ -60,11 +77,18 @@ const KanbanBoardPage = () => {
     return diffDays;
   };
 
+  /**
+   * 마감일이 임박했는지 확인 (3일 이내)
+   *
+   * @param {string | undefined} deadline - 마감일 문자열
+   * @returns {boolean} 마감일이 임박했는지 여부
+   */
   const isDeadlineNear = (deadline?: string): boolean => {
     const daysLeft = getDaysUntilDeadline(deadline);
     return daysLeft !== null && daysLeft >= 0 && daysLeft <= 3;
   };
 
+  // 로컬 상태 관리 섹션
   const [isColumnCreateOpen, setIsColumnCreateOpen] = useState(false);
   const [isCreateOpen, setIsCreateOpen] = useState(false);
   const [createColId, setCreateColId] = useState<number | null>(null);
@@ -80,8 +104,10 @@ const KanbanBoardPage = () => {
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [completingProject, setCompletingProject] = useState(false);
 
+  // WebSocket 연결 섹션
   useBoardSocket(projectId, refreshBoard);
 
+  // 프로젝트 관리 핸들러 섹션
   // 프로젝트 완료 처리
   const handleCompleteProject = async () => {
     if (!projectId) return;
@@ -142,8 +168,7 @@ const KanbanBoardPage = () => {
     }
   };
 
-  // --- Handlers ---
-
+  // 업무 및 컬럼 관리 핸들러 섹션
   // [모달 열기] 카드 추가 버튼 클릭 시
   const openCreateDialog = (columnId: number) => {
     setCreateColId(columnId);
@@ -187,6 +212,7 @@ const KanbanBoardPage = () => {
     }
   };
 
+  // 엑셀 파일 관리 핸들러 섹션
   // [엑셀 업로드] 파일 선택 다이얼로그 열기
   const handleUploadClick = () => {
     fileInputRef.current?.click();
@@ -266,8 +292,7 @@ const KanbanBoardPage = () => {
     }
   };
 
-  // --- Render ---
-
+  // 렌더링 섹션
   if (loading && !boardData) {
     return (
       <Box
@@ -292,8 +317,8 @@ const KanbanBoardPage = () => {
         backgroundColor: theme.palette.background.default,
         overflowX: "auto",
       }}
-    >
-      {/* ★ 헤더 영역 수정: 제목과 버튼들을 양옆으로 배치 */}
+      >
+      {/* 헤더 섹션: 프로젝트 정보 및 액션 버튼 */}
       <Stack
         direction={{ xs: "column", sm: "row" }}
         justifyContent="space-between"
@@ -490,7 +515,7 @@ const KanbanBoardPage = () => {
         </Stack>
       </Stack>
 
-      {/* 숨겨진 파일 input */}
+      {/* 파일 업로드 input (숨김) */}
       <input
         ref={fileInputRef}
         type="file"
@@ -499,9 +524,10 @@ const KanbanBoardPage = () => {
         onChange={handleFileChange}
       />
 
+      {/* 칸반 보드 섹션: 드래그 앤 드롭 컨텍스트 */}
       <DragDropContext onDragEnd={handleDragEnd}>
         <Stack direction="row" spacing={2} alignItems="flex-start">
-          {/* 컬럼 리스트 */}
+          {/* 컬럼 리스트 섹션 */}
           {boardData.columns.map((column) => (
             <Paper
               key={column.columnId}
@@ -686,7 +712,7 @@ const KanbanBoardPage = () => {
             </Paper>
           ))}
 
-          {/* 리스트(컬럼) 추가 버튼 */}
+          {/* 컬럼 추가 버튼 섹션 */}
           <Box sx={{ minWidth: 300, width: 300 }}>
             <Button
               variant="contained"
@@ -711,6 +737,7 @@ const KanbanBoardPage = () => {
             </Button>
           </Box>
 
+          {/* 다이얼로그 섹션 */}
           {/* 컬럼 생성 모달 */}
           <ColumnCreateDialog
             open={isColumnCreateOpen}
@@ -723,6 +750,7 @@ const KanbanBoardPage = () => {
             open={isCreateOpen}
             onClose={() => setIsCreateOpen(false)}
             onSubmit={handleCreateSubmit}
+            projectId={projectId ? Number(projectId) : null}
           />
 
           {/* 업무 상세 모달 */}
@@ -750,7 +778,7 @@ const KanbanBoardPage = () => {
         </Stack>
       </DragDropContext>
 
-      {/* Snackbar for notifications */}
+      {/* 알림 섹션 */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={4000}

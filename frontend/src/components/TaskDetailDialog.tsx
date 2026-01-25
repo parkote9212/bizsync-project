@@ -17,13 +17,23 @@ import ConfirmDialog from "./ConfirmDialog";
 import Toast from "./Toast";
 import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
+/**
+ * 업무 상세 다이얼로그 Props
+ */
 interface TaskDetailDialogProps {
+  /** 업무 ID (null인 경우 다이얼로그가 닫힌 상태) */
   taskId: number | null;
+  /** 다이얼로그 열림/닫힘 상태 */
   open: boolean;
+  /** 다이얼로그 닫기 콜백 */
   onClose: () => void;
-  onUpdate: () => Promise<void>; // 수정/삭제 후 목록 새로고침용
+  /** 수정/삭제 후 목록 새로고침 콜백 */
+  onUpdate: () => Promise<void>;
 }
 
+/**
+ * 업무 상세 정보 인터페이스
+ */
 interface TaskDetail {
   taskId: number;
   title: string;
@@ -34,6 +44,16 @@ interface TaskDetail {
   columnName: string;
 }
 
+/**
+ * 업무 상세 다이얼로그 컴포넌트
+ *
+ * <p>업무의 상세 정보를 조회하고, 수정 및 삭제할 수 있는 다이얼로그입니다.
+ * 업무 제목, 설명, 마감일, 담당자 정보를 표시하고 수정할 수 있습니다.
+ *
+ * @component
+ * @param {TaskDetailDialogProps} props - 컴포넌트 props
+ * @returns {JSX.Element | null} 업무 상세 다이얼로그 (task가 없으면 null)
+ */
 const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
   taskId,
   open,
@@ -53,6 +73,11 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
     deadline: "",
   });
 
+  /**
+   * 업무 상세 정보 조회
+   *
+   * @returns {Promise<TaskDetail | null>} 업무 상세 정보 (taskId가 없으면 null)
+   */
   const fetchTaskDetail = useCallback(async (): Promise<TaskDetail | null> => {
     if (!taskId) return null;
     const response = await client.get(`/tasks/${taskId}`);
@@ -90,6 +115,11 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
     };
   }, [open, taskId, fetchTaskDetail]);
 
+  /**
+   * 업무 수정 처리
+   *
+   * <p>수정된 업무 정보를 서버에 저장하고 목록을 새로고침합니다.
+   */
   const handleUpdate = async () => {
     if (!taskId) return;
     try {
@@ -120,6 +150,11 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
     }
   };
 
+  /**
+   * 업무 삭제 처리
+   *
+   * <p>업무를 삭제하고 목록을 새로고침한 후 다이얼로그를 닫습니다.
+   */
   const handleDelete = async () => {
     if (!taskId) return;
     try {

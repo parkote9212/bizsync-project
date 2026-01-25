@@ -107,19 +107,27 @@ public class KanbanService {
      * 업무를 생성합니다.
      *
      * <p>담당자(workerId)가 지정되지 않으면 현재 사용자가 담당자로 설정됩니다.
+     * 담당자는 반드시 프로젝트 멤버여야 합니다.
      *
      * @param columId 컬럼 ID
      * @param dto     업무 생성 요청 DTO
      * @return 생성된 업무 ID
+     * @throws BusinessException 담당자가 프로젝트 멤버가 아닌 경우
      */
     public Long createTask(Long columId, TaskCreateRequestDTO dto) {
         KanbanColumn column = kanbanColumnRepository.findByIdOrThrow(columId);
+        Long projectId = column.getProject().getProjectId();
 
         Long workerId = dto.workerId();
         if (workerId == null) {
             workerId = SecurityUtil.getCurrentUserIdOrThrow();
         }
         User worker = userRepository.findByIdOrThrow(workerId);
+
+        // 담당자가 프로젝트 멤버인지 검증
+        if (!projectMemberRepository.existsByProjectAndUser(projectId, workerId)) {
+            throw new BusinessException(ErrorCode.PROJECT_MEMBER_NOT_FOUND);
+        }
 
         int nextSequence = taskRepository.findMaxSequence(columId) + 1;
 
@@ -150,16 +158,27 @@ public class KanbanService {
     /**
      * 업무 정보를 수정합니다.
      *
+     * <p>담당자 변경 시 담당자는 반드시 프로젝트 멤버여야 합니다.
+     *
      * @param taskId 업무 ID
      * @param dto    업무 수정 요청 DTO
+     * @throws BusinessException 담당자가 프로젝트 멤버가 아닌 경우
      */
     @Transactional
     public void updateTask(Long taskId, TaskUpdateRequestDTO dto) {
         Task task = taskRepository.findByIdOrThrow(taskId);
+        Long projectId = task.getProjectId();
+        if (projectId == null) {
+            throw new BusinessException(ErrorCode.PROJECT_NOT_LINKED);
+        }
 
         User worker = null;
         if (dto.workerId() != null) {
             worker = userRepository.findByIdOrThrow(dto.workerId());
+            // 담당자가 프로젝트 멤버인지 검증
+            if (!projectMemberRepository.existsByProjectAndUser(projectId, dto.workerId())) {
+                throw new BusinessException(ErrorCode.PROJECT_MEMBER_NOT_FOUND);
+            }
         }
 
         task.updateDetails(dto.title(),

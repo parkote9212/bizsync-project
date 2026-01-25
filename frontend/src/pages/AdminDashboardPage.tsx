@@ -33,10 +33,12 @@ import { useUserStore } from "../stores/userStore";
 import type { AdminDashboardStatistics } from "../types/admin";
 
 const AdminDashboardPage = () => {
+  // 상태 관리 섹션
   const user = useUserStore((state) => state.user);
   const [statistics, setStatistics] = useState<AdminDashboardStatistics | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // 데이터 로드 섹션
   useEffect(() => {
     if (user.role !== "ADMIN") {
       return;
@@ -74,7 +76,7 @@ const AdminDashboardPage = () => {
     );
   }
 
-  // 차트 데이터 준비
+  // 차트 데이터 준비 섹션
   const userStatusData = statistics
     ? [
       { name: "활성", value: statistics.activeUsers, color: "#4caf50" },
@@ -92,13 +94,31 @@ const AdminDashboardPage = () => {
     ].filter((item) => item.value > 0)
     : [];
 
+  // 프로젝트 상태별 색상 정의
+  const getProjectStatusColor = (status: string) => {
+    switch (status) {
+      case "기획중":
+        return "#9e9e9e"; // grey
+      case "진행중":
+        return "#2196f3"; // blue
+      case "완료":
+        return "#4caf50"; // green
+      case "보류":
+        return "#ff9800"; // orange
+      case "취소":
+        return "#f44336"; // red
+      default:
+        return "#9e9e9e";
+    }
+  };
+
   const projectStatusData = statistics
     ? [
-      { name: "기획중", value: statistics.planningProjects },
-      { name: "진행중", value: statistics.inProgressProjects },
-      { name: "완료", value: statistics.completedProjects },
-      { name: "보류", value: statistics.onHoldProjects },
-      { name: "취소", value: statistics.cancelledProjects },
+      { name: "기획중", value: statistics.planningProjects, color: getProjectStatusColor("기획중") },
+      { name: "진행중", value: statistics.inProgressProjects, color: getProjectStatusColor("진행중") },
+      { name: "완료", value: statistics.completedProjects, color: getProjectStatusColor("완료") },
+      { name: "보류", value: statistics.onHoldProjects, color: getProjectStatusColor("보류") },
+      { name: "취소", value: statistics.cancelledProjects, color: getProjectStatusColor("취소") },
     ].filter((item) => item.value > 0)
     : [];
 
@@ -115,8 +135,10 @@ const AdminDashboardPage = () => {
     : [];
 
 
+  {/* 렌더링 섹션 */}
   return (
     <Box sx={{ width: "100%", px: { xs: 2, sm: 3, md: 4 } }}>
+      {/* 헤더 섹션 */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           관리자 대시보드
@@ -125,7 +147,7 @@ const AdminDashboardPage = () => {
 
       {statistics && (
         <>
-          {/* 핵심 KPI 카드 */}
+          {/* 핵심 KPI 카드 섹션 */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card sx={{ height: "100%" }}>
@@ -201,7 +223,7 @@ const AdminDashboardPage = () => {
             </Grid>
           </Grid>
 
-          {/* 차트 영역 */}
+          {/* 차트 영역 섹션 */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {/* 사용자 상태별 파이 차트 */}
             <Grid size={{ xs: 12, md: 6 }}>
@@ -292,7 +314,11 @@ const AdminDashboardPage = () => {
                         <YAxis />
                         <Tooltip />
                         <Legend />
-                        <Bar dataKey="value" fill="#2196f3" name="프로젝트 수" />
+                        <Bar dataKey="value" name="프로젝트 수">
+                          {projectStatusData.map((entry, index) => (
+                            <Cell key={`cell-${index}`} fill={entry.color} />
+                          ))}
+                        </Bar>
                       </BarChart>
                     </ResponsiveContainer>
                   ) : (
@@ -342,7 +368,7 @@ const AdminDashboardPage = () => {
             </Grid>
           </Grid>
 
-          {/* 상세 통계 카드 */}
+          {/* 상세 통계 카드 섹션 */}
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 6 }}>
               <Card>
@@ -408,7 +434,9 @@ const AdminDashboardPage = () => {
                         <Typography color="textSecondary" variant="body2">
                           기획중
                         </Typography>
-                        <Typography variant="h5">{statistics.planningProjects}</Typography>
+                        <Typography variant="h5" color="text.secondary">
+                          {statistics.planningProjects}
+                        </Typography>
                       </Box>
                     </Grid>
                     <Grid size={{ xs: 6 }}>
@@ -434,10 +462,20 @@ const AdminDashboardPage = () => {
                     <Grid size={{ xs: 6 }}>
                       <Box>
                         <Typography color="textSecondary" variant="body2">
-                          보류/취소
+                          보류
                         </Typography>
-                        <Typography variant="h5">
-                          {statistics.onHoldProjects + statistics.cancelledProjects}
+                        <Typography variant="h5" color="warning.main">
+                          {statistics.onHoldProjects}
+                        </Typography>
+                      </Box>
+                    </Grid>
+                    <Grid size={{ xs: 6 }}>
+                      <Box>
+                        <Typography color="textSecondary" variant="body2">
+                          취소
+                        </Typography>
+                        <Typography variant="h5" color="error.main">
+                          {statistics.cancelledProjects}
                         </Typography>
                       </Box>
                     </Grid>

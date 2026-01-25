@@ -19,6 +19,9 @@ import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
 import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
+/**
+ * 프로젝트 멤버 정보 인터페이스
+ */
 interface Member {
   userId: number;
   name: string;
@@ -28,10 +31,24 @@ interface Member {
   role: "PL" | "MEMBER";
 }
 
+/**
+ * 프로젝트 멤버 탭 Props
+ */
 interface ProjectMembersTabProps {
+  /** 프로젝트 ID */
   projectId: string | undefined;
 }
 
+/**
+ * 프로젝트 멤버 관리 탭 컴포넌트
+ *
+ * <p>프로젝트에 소속된 멤버 목록을 표시하고 관리하는 컴포넌트입니다.
+ * 멤버의 권한 변경 및 제거 기능을 제공합니다.
+ *
+ * @component
+ * @param {ProjectMembersTabProps} props - 컴포넌트 props
+ * @returns {JSX.Element} 프로젝트 멤버 관리 탭
+ */
 const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);

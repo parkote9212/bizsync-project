@@ -38,13 +38,13 @@ public class ProjectMemberService {
     /**
      * 프로젝트에 멤버를 초대합니다.
      *
-     * <p>프로젝트 리더만 초대할 수 있으며, 이미 멤버인 경우 예외가 발생합니다.
+     * <p>프로젝트 멤버는 누구나 초대할 수 있으며, 이미 멤버인 경우 예외가 발생합니다.
      *
      * @param projectId 프로젝트 ID
      * @param email     초대할 사용자 이메일
      * @throws DuplicateException 이미 프로젝트 멤버인 경우
      */
-    @RequireProjectLeader
+    @RequireProjectMember
     public void inviteMember(Long projectId, String email) {
         // 1. 프로젝트 확인
         Project project = projectRepository.findByIdOrThrow(projectId);

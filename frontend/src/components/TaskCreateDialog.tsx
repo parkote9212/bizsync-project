@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -10,21 +10,40 @@ import {
 } from "@mui/material";
 import type { TaskCreateData } from "../types/kanban";
 import { useToast } from "../hooks/useToast";
-import { useUserSearch } from "../hooks/useUserSearch";
 import { SearchAutocomplete } from "./SearchAutocomplete";
 import Toast from "./Toast";
 import type { UserSearchResult } from "../types/user";
+import client from "../api/client";
 
+/**
+ * 업무 생성 다이얼로그 Props
+ */
 interface TaskCreateDialogProps {
+  /** 다이얼로그 열림/닫힘 상태 */
   open: boolean;
+  /** 다이얼로그 닫기 콜백 */
   onClose: () => void;
+  /** 업무 생성 제출 콜백 */
   onSubmit: (data: TaskCreateData) => void;
+  /** 프로젝트 ID (프로젝트 멤버만 검색하기 위해 필요) */
+  projectId?: number | null;
 }
 
+/**
+ * 업무 생성 다이얼로그 컴포넌트
+ *
+ * <p>새로운 업무를 생성하는 다이얼로그입니다.
+ * 제목, 설명, 마감일, 담당자를 입력할 수 있습니다.
+ *
+ * @component
+ * @param {TaskCreateDialogProps} props - 컴포넌트 props
+ * @returns {JSX.Element} 업무 생성 다이얼로그
+ */
 const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   open,
   onClose,
   onSubmit,
+  projectId,
 }) => {
   const [form, setForm] = useState({
     title: "",
@@ -35,9 +54,71 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
   const [selectedWorker, setSelectedWorker] = useState<UserSearchResult | null>(null);
   const [titleError, setTitleError] = useState("");
   const { showToast, toastState, closeToast } = useToast();
-  const { searchOptions, searchLoading, handleSearchUsers, clearSearch } = useUserSearch();
+  const [projectMembers, setProjectMembers] = useState<UserSearchResult[]>([]);
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchOptions, setSearchOptions] = useState<UserSearchResult[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // 프로젝트 멤버 목록 로드
+  useEffect(() => {
+    if (open && projectId) {
+      const fetchProjectMembers = async () => {
+        try {
+          const response = await client.get(`/projects/${projectId}/members`);
+          const members = response.data || [];
+          // ProjectMemberResponseDTO를 UserSearchResult 형식으로 변환
+          const memberList: UserSearchResult[] = members.map((member: any) => ({
+            userId: member.userId,
+            name: member.name,
+            email: member.email,
+            department: member.department || "",
+            position: member.position || "",
+          }));
+          setProjectMembers(memberList);
+        } catch (error) {
+          console.error("프로젝트 멤버 목록 조회 실패:", error);
+          setProjectMembers([]);
+        }
+      };
+      fetchProjectMembers();
+    } else {
+      setProjectMembers([]);
+    }
+  }, [open, projectId]);
+
+  // 검색어에 따라 프로젝트 멤버 필터링
+  useEffect(() => {
+    if (!searchKeyword || searchKeyword.length < 2) {
+      setSearchOptions([]);
+      return;
+    }
+
+    setSearchLoading(true);
+    const keyword = searchKeyword.toLowerCase();
+    const filtered = projectMembers.filter(
+      (member) =>
+        member.name.toLowerCase().includes(keyword) ||
+        member.email.toLowerCase().includes(keyword)
+    );
+    setSearchOptions(filtered);
+    setSearchLoading(false);
+  }, [searchKeyword, projectMembers]);
+
+  const handleSearchUsers = (keyword: string) => {
+    setSearchKeyword(keyword);
+  };
+
+  const clearSearch = () => {
+    setSearchKeyword("");
+    setSearchOptions([]);
+  };
+
+  /**
+   * 폼 입력값 변경 핸들러
+   *
+   * @param {React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>} e - 입력 이벤트
+   */
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setForm((prev) => ({ ...prev, [name]: value }));
   };
@@ -64,6 +145,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
     });
     setSelectedWorker(null);
     clearSearch();
+    setSearchKeyword("");
   };
 
   return (
@@ -89,7 +171,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             label="설명"
             name="content"
             value={form.content}
-            onChange={handleChange}
+            onChange={(e) => handleChange(e)}
             fullWidth
             multiline
             rows={3}
@@ -107,7 +189,7 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
             value={selectedWorker}
             options={searchOptions}
             loading={searchLoading}
-            label="담당자 검색 (이름 또는 이메일)"
+            label="담당자 검색 (프로젝트 멤버만 검색 가능)"
             placeholder="비워두면 본인이 담당자가 됩니다"
             onChange={setSelectedWorker}
             onInputChange={handleSearchUsers}

@@ -42,7 +42,17 @@ import client from "../api/client";
 import type { AdminUser, AccountStatus, UserRole, AdminUserStatistics } from "../types/admin";
 import { useUserStore } from "../stores/userStore";
 
+/**
+ * 관리자 사용자 관리 페이지 컴포넌트
+ *
+ * <p>관리자가 사용자 목록을 조회하고, 사용자 상태 변경, 권한 변경, 직급 변경, 비밀번호 재설정 등의 작업을 수행할 수 있는 페이지입니다.
+ * 사용자 통계, 필터링, 검색 기능을 제공합니다.
+ *
+ * @component
+ * @returns {JSX.Element} 관리자 사용자 관리 페이지
+ */
 const AdminUserManagementPage = () => {
+  // 상태 관리 섹션
   const user = useUserStore((state) => state.user);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(false);
@@ -61,6 +71,7 @@ const AdminUserManagementPage = () => {
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" as "success" | "error" });
   const [statistics, setStatistics] = useState<AdminUserStatistics | null>(null);
 
+  // 데이터 로드 섹션
   useEffect(() => {
     if (user.role !== "ADMIN") {
       return;
@@ -107,6 +118,7 @@ const AdminUserManagementPage = () => {
     }
   };
 
+  // 이벤트 핸들러 섹션
   const handleAction = async () => {
     if (!selectedUser) return;
 
@@ -169,6 +181,13 @@ const AdminUserManagementPage = () => {
     setActionDialogOpen(true);
   };
 
+  // 유틸리티 함수 섹션
+  /**
+   * 계정 상태에 따른 색상 반환
+   *
+   * @param {AccountStatus} status - 계정 상태
+   * @returns {"success" | "warning" | "error" | "default"} MUI Chip 색상
+   */
   const getStatusColor = (status: AccountStatus) => {
     switch (status) {
       case "ACTIVE":
@@ -184,6 +203,12 @@ const AdminUserManagementPage = () => {
     }
   };
 
+  /**
+   * 계정 상태에 따른 라벨 반환
+   *
+   * @param {AccountStatus} status - 계정 상태
+   * @returns {string} 상태 라벨
+   */
   const getStatusLabel = (status: AccountStatus) => {
     switch (status) {
       case "ACTIVE":
@@ -199,6 +224,12 @@ const AdminUserManagementPage = () => {
     }
   };
 
+  /**
+   * 사용자 권한에 따른 라벨 반환
+   *
+   * @param {UserRole} role - 사용자 권한
+   * @returns {string} 권한 라벨
+   */
   const getRoleLabel = (role: UserRole) => {
     switch (role) {
       case "ADMIN":
@@ -220,13 +251,16 @@ const AdminUserManagementPage = () => {
     );
   }
 
+  // 렌더링 섹션
   return (
     <Box sx={{ width: "100%", px: { xs: 2, sm: 3, md: 4 } }}>
+      {/* 헤더 섹션 */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           사용자 관리
         </Typography>
 
+        {/* 통계 카드 섹션 */}
         {statistics && (
           <Grid container spacing={2} sx={{ mb: 3 }}>
             <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -278,6 +312,7 @@ const AdminUserManagementPage = () => {
           </Grid>
         )}
 
+        {/* 필터 섹션 */}
         <Paper sx={{ p: 2, mb: 2 }}>
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, sm: 3 }}>
@@ -354,6 +389,7 @@ const AdminUserManagementPage = () => {
           </Grid>
         </Paper>
 
+        {/* 사용자 목록 테이블 섹션 */}
         <TableContainer component={Paper}>
           <Table>
             <TableHead>
@@ -513,6 +549,7 @@ const AdminUserManagementPage = () => {
           </Box>
         )}
 
+        {/* 다이얼로그 섹션 */}
         <Dialog open={actionDialogOpen} onClose={() => setActionDialogOpen(false)} maxWidth="sm" fullWidth>
           <DialogTitle>
             {actionType === "approve" && "사용자 승인"}
@@ -587,6 +624,7 @@ const AdminUserManagementPage = () => {
           </DialogActions>
         </Dialog>
 
+        {/* 알림 섹션 */}
         <Snackbar
           open={snackbar.open}
           autoHideDuration={3000}
