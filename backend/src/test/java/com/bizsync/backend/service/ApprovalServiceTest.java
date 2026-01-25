@@ -14,8 +14,6 @@ import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +24,7 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ExtendWith(MockitoExtension.class)
 class ApprovalServiceTest {
 
     @InjectMocks
@@ -49,7 +47,6 @@ class ApprovalServiceTest {
 
     @Test
     @DisplayName("결재 상신 시: 문서는 PENDING 상태여야 하고, 결재선은 순서대로 저장되어야 한다")
-    @WithMockUser(username = "1", roles = {"MEMBER"})
     void createApproval_success() {
         // given
         Long drafterId = 1L; // 기안자 (나)
@@ -101,7 +98,6 @@ class ApprovalServiceTest {
 
     @Test
     @DisplayName("마지막 결재자가 승인하면 문서 상태가 APPROVED로 변경되어야 한다")
-    @WithMockUser(username = "20", roles = {"MEMBER"})
     void processApproval_final_approve() {
         // given
         Long documentId = 100L;

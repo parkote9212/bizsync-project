@@ -5,7 +5,7 @@ import App from "./App.tsx";
 import { useThemeStore } from "./stores/themeStore";
 
 // 테마 래퍼 컴포넌트
-function ThemeWrapper() {
+export function ThemeWrapper() {
   // mode를 직접 구독하여 변경사항 감지 및 리렌더링
   const mode = useThemeStore((state) => state.mode);
 

@@ -153,12 +153,13 @@ const AdminUserManagementPage = () => {
             role: newRole,
           });
           break;
-        case "changePosition":
+        case "changePosition": {
           const positionValue = newPosition && newPosition.trim() !== "" ? newPosition : null;
           await client.patch(`/admin/users/${selectedUser.userId}/position`, {
             position: positionValue,
           });
           break;
+        }
       }
 
       setActionDialogOpen(false);

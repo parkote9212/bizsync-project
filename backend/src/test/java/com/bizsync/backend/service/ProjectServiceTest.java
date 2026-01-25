@@ -12,8 +12,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.test.context.support.WithMockUser;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 
 import java.math.BigDecimal;
 import java.time.LocalDate;
@@ -23,7 +21,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.verify;
 
-@ExtendWith({MockitoExtension.class, SpringExtension.class})
+@ExtendWith(MockitoExtension.class)
 class ProjectServiceTest {
 
     @InjectMocks
@@ -40,7 +38,6 @@ class ProjectServiceTest {
 
     @Test
     @DisplayName("프로젝트 생성 시 프로젝트 저장 & 생성자가 멤버로 등록되어야 함")
-    @WithMockUser(username = "1", roles = {"MEMBER"})
     void createProject_success() {
         // given
         Long userId = 1L;
