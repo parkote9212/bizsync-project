@@ -1,5 +1,6 @@
 package com.bizsync.backend.dto.request;
 
+import com.bizsync.backend.domain.entity.AccountStatus;
 import com.bizsync.backend.domain.entity.Role;
 import com.bizsync.backend.domain.entity.User;
 import jakarta.validation.constraints.Email;
@@ -28,7 +29,7 @@ public record SignumRequestDTO(
                 .empNo(this.empNo)
                 .department(this.department())
                 .role(Role.MEMBER)
-                .status(com.bizsync.backend.domain.entity.AccountStatus.PENDING)
+                .status(AccountStatus.PENDING)
                 .build();
     }
 }

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.bizsync.backend.mapper.TaskMapper">
+
+    <resultMap id="TaskResultMap" type="com.bizsync.backend.domain.entity.Task">
+        <id property="taskId" column="task_id"/>
+        <result property="title" column="title"/>
+        <result property="content" column="content"/>
+        <result property="deadline" column="deadline"/>
+        <result property="sequence" column="sequence"/>
+
+        <association property="column" javaType="com.bizsync.backend.domain.entity.KanbanColumn">
+            <id property="columnId" column="column_id"/>
+            <result property="name" column="column_name"/>
+            <result property="sequence" column="column_sequence"/>
+            <result property="columnType" column="column_type"/>
+            <result property="description" column="column_description"/>
+
+            <association property="project" javaType="com.bizsync.backend.domain.entity.Project">
+                <id property="projectId" column="project_id"/>
+            </association>
+        </association>
+
+        <association property="worker" javaType="com.bizsync.backend.domain.entity.User">
+            <id property="userId" column="worker_id"/>
+            <result property="name" column="worker_name"/>
+            <result property="email" column="worker_email"/>
+        </association>
+    </resultMap>
+
+    <select id="selectTasksByProjectIdOrderByColumnSequenceAndTaskSequence" resultMap="TaskResultMap">
+        SELECT t.task_id,
+               t.title,
+               t.content,
+               t.deadline,
+               t.sequence,
+
+               c.column_id,
+               c.name        AS column_name,
+               c.sequence    AS column_sequence,
+               c.column_type,
+               c.description AS column_description,
+               c.project_id,
+
+               u.user_id     AS worker_id,
+               u.name        AS worker_name,
+               u.email       AS worker_email
+
+        FROM task t
+                 INNER JOIN kanban_column c ON t.column_id = c.column_id
+                 LEFT JOIN users u ON t.worker_id = u.user_id
+
+        WHERE c.project_id = #{projectId}
+
+        ORDER BY c.sequence ASC, t.sequence ASC
+    </select>
+
+</mapper>

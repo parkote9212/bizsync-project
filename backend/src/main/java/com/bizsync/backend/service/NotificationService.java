@@ -7,6 +7,13 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 
+/**
+ * 알림 발송 관련 비즈니스 로직을 처리하는 서비스
+ * 
+ * <p>결재 승인/반려 알림, 결재 요청 알림 등의 WebSocket 기반 실시간 알림을 제공합니다.
+ * 
+ * @author BizSync Team
+ */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,7 +30,7 @@ public class NotificationService {
      */
     public void sendToUser(Long userId, String message, Long targetId) {
         // 알림 객체 생성
-        NotificationDTO notification = new NotificationDTO("APPROVAL", message, targetId);
+        NotificationDTO notification = NotificationDTO.from("APPROVAL", message, targetId);
 
         // 개인 채널로 발송 (/sub/notification/1)
         String destination = "/sub/notification/" + userId;

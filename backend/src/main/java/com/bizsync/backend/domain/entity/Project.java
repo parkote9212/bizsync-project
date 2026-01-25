@@ -1,5 +1,7 @@
 package com.bizsync.backend.domain.entity;
 
+import com.bizsync.backend.common.exception.BusinessException;
+import com.bizsync.backend.common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -51,11 +53,10 @@ public class Project extends BaseEntity {
     }
 
     public void spendBudget(BigDecimal amount) {
-
         BigDecimal expectedUsage = this.usedBudget.add(amount);
 
         if (this.totalBudget.compareTo(expectedUsage) < 0) {
-            throw new IllegalStateException("예산이 초과되었습니다.");
+            throw new BusinessException(ErrorCode.BUDGET_EXCEEDED);
         }
         this.usedBudget = expectedUsage;
     }

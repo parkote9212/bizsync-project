@@ -9,6 +9,13 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+/**
+ * 관리자 대시보드 통계 관련 비즈니스 로직을 처리하는 서비스
+ * 
+ * <p>사용자, 프로젝트, 업무, 결재 등의 통계 정보를 제공합니다.
+ * 
+ * @author BizSync Team
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional(readOnly = true)
@@ -20,6 +27,11 @@ public class AdminDashboardService {
     private final ApprovalDocumentRepository approvalDocumentRepository;
     private final ProjectMemberRepository projectMemberRepository;
 
+    /**
+     * 관리자 대시보드 통계 정보를 조회합니다.
+     * 
+     * @return 대시보드 통계 DTO (사용자, 프로젝트, 업무, 결재 통계 포함)
+     */
     public AdminDashboardStatisticsDTO getDashboardStatistics() {
         long totalUsers = userRepository.count();
         long pendingUsers = userRepository.countByStatus(AccountStatus.PENDING);
@@ -40,7 +52,7 @@ public class AdminDashboardService {
         long totalTasks = taskRepository.count();
         long totalApprovals = approvalDocumentRepository.count();
 
-        return new AdminDashboardStatisticsDTO(
+        return AdminDashboardStatisticsDTO.from(
                 totalUsers,
                 pendingUsers,
                 activeUsers,

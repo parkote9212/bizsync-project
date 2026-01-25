@@ -8,8 +8,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 /**
- * 프로젝트 권한 검증 서비스
- * Spring Security의 @PreAuthorize에서 사용
+ * 프로젝트 권한 검증 비즈니스 로직을 처리하는 서비스
+ * 
+ * <p>Spring Security의 @PreAuthorize에서 사용되며,
+ * 프로젝트 리더 및 멤버 권한 검증 기능을 제공합니다.
+ * 
+ * @author BizSync Team
  */
 @Slf4j
 @Service

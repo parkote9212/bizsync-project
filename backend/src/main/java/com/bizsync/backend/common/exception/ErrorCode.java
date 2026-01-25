@@ -39,6 +39,7 @@ public enum ErrorCode {
 
     // Budget
     BUDGET_EXCEEDED(HttpStatus.BAD_REQUEST, "예산이 초과되었습니다."),
+    BUDGET_INSUFFICIENT(HttpStatus.BAD_REQUEST, "프로젝트 예산이 부족합니다."),
 
     // Approval
     APPROVAL_NOT_FOUND(HttpStatus.NOT_FOUND, "결재 문서를 찾을 수 없습니다."),
@@ -49,6 +50,12 @@ public enum ErrorCode {
     APPROVAL_ALREADY_PROCESSED(HttpStatus.CONFLICT, "이미 처리된 결재입니다."),
     APPROVAL_SEQUENCE_VIOLATION(HttpStatus.BAD_REQUEST, "이전 결재자가 승인하지 않았습니다."),
     APPROVAL_APPROVER_NOT_FOUND(HttpStatus.NOT_FOUND, "존재하지 않는 결재자가 포함되어 있습니다."),
+    APPROVAL_ALREADY_APPROVED(HttpStatus.BAD_REQUEST, "이미 최종 승인된 결재는 취소할 수 없습니다."),
+    APPROVAL_ALREADY_REJECTED(HttpStatus.BAD_REQUEST, "이미 반려된 결재는 취소할 수 없습니다."),
+    APPROVAL_ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "이미 취소된 결재입니다."),
+    APPROVAL_REJECT_COMMENT_REQUIRED(HttpStatus.BAD_REQUEST, "반려 사유는 필수입니다."),
+    APPROVAL_EXPENSE_PROJECT_REQUIRED(HttpStatus.BAD_REQUEST, "비용 결재는 프로젝트 ID가 필수입니다."),
+    APPROVAL_EXPENSE_AMOUNT_REQUIRED(HttpStatus.BAD_REQUEST, "비용 결재는 유효한 금액이 필수입니다."),
 
     // Auth
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다."),

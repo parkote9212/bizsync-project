@@ -15,10 +15,6 @@ import java.util.Optional;
 @Repository
 public interface TaskRepository extends JpaRepository<Task, Long> {
 
-    /**
-     * 프로젝트의 모든 업무 조회 (컬럼 순서, 태스크 순서대로 정렬)
-     */
-    List<Task> findByColumn_Project_ProjectIdOrderByColumn_SequenceAscSequenceAsc(Long projectId);
 
     // 해당 컬럼에서 가장 큰 순서 값 가져오기
     @Query("SELECT COALESCE(MAX(t.sequence), 0) FROM Task t WHERE t.column.columnId = :columnId")

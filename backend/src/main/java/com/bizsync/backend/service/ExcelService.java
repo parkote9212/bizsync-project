@@ -8,6 +8,7 @@ import com.bizsync.backend.domain.repository.KanbanColumnRepository;
 import com.bizsync.backend.domain.repository.ProjectRepository;
 import com.bizsync.backend.domain.repository.TaskRepository;
 import com.bizsync.backend.domain.repository.UserRepository;
+import com.bizsync.backend.mapper.TaskMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.poi.ss.usermodel.*;
@@ -24,6 +25,13 @@ import java.time.format.DateTimeParseException;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 엑셀 파일 처리 관련 비즈니스 로직을 처리하는 서비스
+ * 
+ * <p>엑셀 파일을 통한 업무 대량 등록 및 업무 목록 엑셀 다운로드 기능을 제공합니다.
+ * 
+ * @author BizSync Team
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -31,17 +39,27 @@ import java.util.List;
 public class ExcelService {
 
     private final TaskRepository taskRepository;
+    private final TaskMapper taskMapper;
     private final KanbanColumnRepository kanbanColumnRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
 
     /**
-     * 엑셀 파일을 읽어서 업무(Task)를 대량 등록
-     * <p>
-     * 엑셀 형식:
-     * | 컬럼명    | 업무제목 | 담당자(이메일) | 마감일(yyyy-MM-dd) | 상세내용 |
-     * | -------- | ------- | ------------ | ----------------- | ------- |
-     * | 진행 전  | 로그인   | user@co.kr   | 2026-02-01        | 내용    |
+     * 엑셀 파일을 읽어서 업무(Task)를 대량 등록합니다.
+     * 
+     * <p>엑셀 형식:
+     * <ul>
+     *   <li>컬럼명: 칸반 컬럼 이름</li>
+     *   <li>업무제목: 업무 제목</li>
+     *   <li>담당자(이메일): 담당자 이메일</li>
+     *   <li>마감일(yyyy-MM-dd): 마감일</li>
+     *   <li>상세내용: 업무 상세 내용</li>
+     * </ul>
+     * 
+     * @param projectId 프로젝트 ID
+     * @param file 엑셀 파일
+     * @return 등록된 업무 수
+     * @throws IOException 파일 읽기 오류
      */
     public int uploadTasksFromExcel(Long projectId, MultipartFile file) throws IOException {
         Project project = projectRepository.findByIdOrThrow(projectId);
@@ -70,8 +88,16 @@ public class ExcelService {
                 KanbanColumn column = kanbanColumnRepository
                         .findByProjectIdAndNameOrThrow(projectId, columnName);
 
-                // 담당자 찾기
-                User worker = userRepository.findByEmailOrThrow(workerEmail);
+                // 담당자 찾기 (이메일이 없으면 null로 설정)
+                User worker = null;
+                if (workerEmail != null && !workerEmail.isBlank()) {
+                    try {
+                        worker = userRepository.findByEmailOrThrow(workerEmail);
+                    } catch (Exception e) {
+                        log.warn("엑셀 {}번 행: 담당자 이메일을 찾을 수 없습니다. email={}", rowIndex, workerEmail);
+                        // 담당자를 찾을 수 없어도 업무는 생성 (null로 설정)
+                    }
+                }
 
                 // 마감일 파싱 (LocalDate)
                 LocalDate deadline = parseDeadline(deadlineStr);
@@ -106,11 +132,17 @@ public class ExcelService {
     }
 
     /**
-     * 프로젝트의 모든 업무를 엑셀로 다운로드
+     * 프로젝트의 모든 업무를 엑셀 파일로 다운로드합니다.
+     * 
+     * <p>컬럼 순서와 업무 순서대로 정렬하여 엑셀 파일을 생성합니다.
+     * 
+     * @param projectId 프로젝트 ID
+     * @return 엑셀 파일 바이트 배열
+     * @throws IOException 파일 생성 오류
      */
     @Transactional(readOnly = true)
     public byte[] downloadTasksAsExcel(Long projectId) throws IOException {
-        List<Task> tasks = taskRepository.findByColumn_Project_ProjectIdOrderByColumn_SequenceAscSequenceAsc(projectId);
+        List<Task> tasks = taskMapper.selectTasksByProjectIdOrderByColumnSequenceAndTaskSequence(projectId);
 
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Tasks");
@@ -137,7 +169,7 @@ public class ExcelService {
             Row row = sheet.createRow(rowIndex++);
             row.createCell(0).setCellValue(task.getColumn().getName());
             row.createCell(1).setCellValue(task.getTitle());
-            row.createCell(2).setCellValue(task.getWorker().getEmail());
+            row.createCell(2).setCellValue(task.getWorker() != null ? task.getWorker().getEmail() : "미배정");
             row.createCell(3).setCellValue(task.getDeadline() != null ? task.getDeadline().format(formatter) : "");
             row.createCell(4).setCellValue(task.getContent() != null ? task.getContent() : "");
         }

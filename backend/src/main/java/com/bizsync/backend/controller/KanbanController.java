@@ -22,6 +22,13 @@ import java.io.IOException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 
+/**
+ * 칸반 보드 관련 REST API 컨트롤러
+ * 
+ * <p>칸반 컬럼 생성/삭제, 업무 생성/수정/삭제/이동, 엑셀 업로드/다운로드 등의 API를 제공합니다.
+ * 
+ * @author BizSync Team
+ */
 @RestController
 @RequestMapping("/api")
 @RequiredArgsConstructor
@@ -31,6 +38,13 @@ public class KanbanController {
     private final SimpMessagingTemplate messagingTemplate;
     private final ExcelService excelService;
 
+    /**
+     * 칸반 컬럼을 생성합니다.
+     * 
+     * @param projectId 프로젝트 ID
+     * @param dto 컬럼 생성 요청 DTO
+     * @return 생성된 컬럼 ID
+     */
     @PostMapping("/projects/{projectId}/columns")
     public ResponseEntity<ApiResponse<Long>> createColumn(
             @PathVariable Long projectId,
@@ -41,12 +55,25 @@ public class KanbanController {
                 .body(ApiResponse.success(columnId, "컬럼 생성 성공"));
     }
 
+    /**
+     * 칸반 컬럼을 삭제합니다.
+     * 
+     * @param columnId 삭제할 컬럼 ID
+     * @return 성공 응답
+     */
     @DeleteMapping("/columns/{columnId}")
     public ResponseEntity<ApiResponse<Void>> deleteColumn(@PathVariable Long columnId) {
         kanbanService.deleteColumn(columnId);
         return ResponseEntity.ok(ApiResponse.success("컬럼이 삭제되었습니다."));
     }
 
+    /**
+     * 업무를 생성합니다.
+     * 
+     * @param columnId 컬럼 ID
+     * @param dto 업무 생성 요청 DTO
+     * @return 생성된 업무 ID
+     */
     @PostMapping("/columns/{columnId}/tasks")
     public ResponseEntity<ApiResponse<Long>> createTask(
             @PathVariable Long columnId,
@@ -57,11 +84,24 @@ public class KanbanController {
                 .body(ApiResponse.success(taskId, "업무 생성 성공"));
     }
 
+    /**
+     * 업무 상세 정보를 조회합니다.
+     * 
+     * @param taskId 업무 ID
+     * @return 업무 상세 정보
+     */
     @GetMapping("/tasks/{taskId}")
     public ResponseEntity<ApiResponse<TaskDetailResponseDTO>> getTaskDetail(@PathVariable Long taskId) {
         return ResponseEntity.ok(ApiResponse.success(kanbanService.getTaskDetail(taskId)));
     }
 
+    /**
+     * 업무 정보를 수정합니다.
+     * 
+     * @param taskId 업무 ID
+     * @param dto 업무 수정 요청 DTO
+     * @return 성공 응답
+     */
     @PutMapping("/tasks/{taskId}")
     public ResponseEntity<ApiResponse<Void>> updateTask(
             @PathVariable Long taskId,
@@ -71,12 +111,27 @@ public class KanbanController {
         return ResponseEntity.ok(ApiResponse.success("업무가 수정되었습니다."));
     }
 
+    /**
+     * 업무를 삭제합니다.
+     * 
+     * @param taskId 삭제할 업무 ID
+     * @return 성공 응답
+     */
     @DeleteMapping("/tasks/{taskId}")
     public ResponseEntity<ApiResponse<Void>> deleteTask(@PathVariable Long taskId) {
         kanbanService.deleteTask(taskId);
         return ResponseEntity.ok(ApiResponse.success("업무가 삭제되었습니다."));
     }
 
+    /**
+     * 업무를 다른 컬럼으로 이동하거나 순서를 변경합니다.
+     * 
+     * <p>이동 완료 후 WebSocket을 통해 보드 업데이트 알림을 전송합니다.
+     * 
+     * @param taskId 이동할 업무 ID
+     * @param dto 업무 이동 요청 DTO
+     * @return 성공 응답
+     */
     @PutMapping("/tasks/{taskId}/move")
     public ResponseEntity<ApiResponse<Void>> moveTask(
             @PathVariable Long taskId,
@@ -90,6 +145,13 @@ public class KanbanController {
         return ResponseEntity.ok(ApiResponse.success("이동 완료"));
     }
 
+    /**
+     * 엑셀 파일을 업로드하여 업무를 대량 등록합니다.
+     * 
+     * @param projectId 프로젝트 ID
+     * @param file 엑셀 파일
+     * @return 등록된 업무 수
+     */
     @PostMapping("/projects/{projectId}/excel")
     public ResponseEntity<ApiResponse<Integer>> uploadTasksExcel(
             @PathVariable Long projectId,
@@ -104,6 +166,12 @@ public class KanbanController {
         }
     }
 
+    /**
+     * 프로젝트의 모든 업무를 엑셀 파일로 다운로드합니다.
+     * 
+     * @param projectId 프로젝트 ID
+     * @return 엑셀 파일 (바이트 배열)
+     */
     @GetMapping("/projects/{projectId}/excel")
     public ResponseEntity<byte[]> downloadTasksExcel(@PathVariable Long projectId) {
         try {

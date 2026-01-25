@@ -1,5 +1,7 @@
 package com.bizsync.backend.dto.request;
 
+import com.bizsync.backend.common.exception.BusinessException;
+import com.bizsync.backend.common.exception.ErrorCode;
 import com.bizsync.backend.domain.entity.ApprovalType;
 import jakarta.validation.constraints.*;
 
@@ -31,15 +33,15 @@ public record ApprovalCreateRequestDTO(
      * 비용 결재 전용 검증
      * - type이 EXPENSE일 때 projectId와 amount 필수 체크
      *
-     * @throws IllegalArgumentException 검증 실패 시
+     * @throws BusinessException 검증 실패 시
      */
     public void validateExpenseApproval() {
         if (type == ApprovalType.EXPENSE) {
             if (projectId == null) {
-                throw new IllegalArgumentException("비용 결재는 프로젝트 ID가 필수입니다.");
+                throw new BusinessException(ErrorCode.APPROVAL_EXPENSE_PROJECT_REQUIRED);
             }
             if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
-                throw new IllegalArgumentException("비용 결재는 유효한 금액이 필수입니다.");
+                throw new BusinessException(ErrorCode.APPROVAL_EXPENSE_AMOUNT_REQUIRED);
             }
         }
     }

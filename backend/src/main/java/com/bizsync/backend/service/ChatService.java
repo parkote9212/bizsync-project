@@ -9,6 +9,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * 채팅 관련 비즈니스 로직을 처리하는 서비스
+ * 
+ * <p>채팅 메시지 저장 및 조회 기능을 제공합니다.
+ * 
+ * @author BizSync Team
+ */
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -17,7 +24,10 @@ public class ChatService {
     private final ChatMessageRepository chatMessageRepository;
 
     /**
-     * 메시지 저장
+     * 채팅 메시지를 저장합니다.
+     * 
+     * @param dto 채팅 메시지 DTO
+     * @return 저장된 채팅 메시지 DTO
      */
     public ChatMessageDTO saveMessage(ChatMessageDTO dto) {
         ChatMessage message = ChatMessage.builder()
@@ -28,25 +38,20 @@ public class ChatService {
 
         ChatMessage saved = chatMessageRepository.save(message);
 
-        return new ChatMessageDTO(
-                saved.getRoomId(),
-                saved.getSender(),
-                saved.getContent()
-        );
+        return ChatMessageDTO.from(saved);
     }
 
     /**
-     * 채팅 내역 조회
+     * 특정 채팅방의 메시지 내역을 조회합니다.
+     * 
+     * @param roomId 채팅방 ID
+     * @return 채팅 메시지 목록 (시간순 정렬)
      */
     @Transactional(readOnly = true)
     public List<ChatMessageDTO> getChatHistory(Long roomId) {
-        return chatMessageRepository.findByRoomIdOrderBySentAtAsc(roomId).stream()
-                .map(msg -> new ChatMessageDTO(
-                        msg.getRoomId(),
-                        msg.getSender(),
-                        msg.getContent()
-                ))
-                .toList();
+        return ChatMessageDTO.fromList(
+                chatMessageRepository.findByRoomIdOrderBySentAtAsc(roomId)
+        );
     }
 
 }

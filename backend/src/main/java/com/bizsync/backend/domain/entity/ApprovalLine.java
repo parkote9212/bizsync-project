@@ -1,5 +1,7 @@
 package com.bizsync.backend.domain.entity;
 
+import com.bizsync.backend.common.exception.BusinessException;
+import com.bizsync.backend.common.exception.ErrorCode;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -45,7 +47,7 @@ public class ApprovalLine extends BaseTimeEntity {
 
     public void reject(String comment) {
         if (comment == null || comment.trim().isEmpty()) {
-            throw new IllegalArgumentException("반려 사유는 필수입니다.");
+            throw new BusinessException(ErrorCode.APPROVAL_REJECT_COMMENT_REQUIRED);
         }
         this.status = ApprovalStatus.REJECTED;
         this.comment = comment;
