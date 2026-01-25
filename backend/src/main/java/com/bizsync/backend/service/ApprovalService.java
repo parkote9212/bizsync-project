@@ -5,11 +5,7 @@ import com.bizsync.backend.common.exception.ErrorCode;
 import com.bizsync.backend.common.exception.ForbiddenException;
 import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.*;
-import com.bizsync.backend.domain.repository.ApprovalDocumentRepository;
-import com.bizsync.backend.domain.repository.ApprovalLineRepository;
-import com.bizsync.backend.domain.repository.ProjectMemberRepository;
-import com.bizsync.backend.domain.repository.ProjectRepository;
-import com.bizsync.backend.domain.repository.UserRepository;
+import com.bizsync.backend.domain.repository.*;
 import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
@@ -52,7 +48,7 @@ public class ApprovalService {
      * @param dto       결재 생성 요청 DTO
      * @return 생성된 결재 문서 ID
      * @throws ResourceNotFoundException 결재자가 존재하지 않는 경우
-     * @throws BusinessException 비용 결재 시 기안자가 프로젝트 멤버가 아닌 경우
+     * @throws BusinessException         비용 결재 시 기안자가 프로젝트 멤버가 아닌 경우
      */
     public Long createApproval(Long drafterId, ApprovalCreateRequestDTO dto) {
         User drafter = userRepository.findByIdOrThrow(drafterId);

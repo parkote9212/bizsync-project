@@ -56,7 +56,7 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> {
                     auth.requestMatchers("/api/auth/**").permitAll()
                             .requestMatchers("/actuator/health").permitAll()
-                            .requestMatchers("/ws/**").permitAll();
+                            .requestMatchers("/ws/**", "/ws-kanban/**").permitAll();
 
                     if (isProduction()) {
                         auth.requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").denyAll();

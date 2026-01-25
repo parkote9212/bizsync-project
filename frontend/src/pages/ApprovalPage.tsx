@@ -268,29 +268,41 @@ const ApprovalPage = () => {
    * 현재 사용자가 다음 결재자인지 확인
    * 
    * @param {ApprovalDetail | null} detail - 결재 상세 정보
+   * @param {number | null | undefined} currentUserId - 현재 사용자 ID
    * @returns {boolean} 현재 사용자가 다음 결재자인지 여부
    */
-  const isCurrentUserNextApprover = (detail: ApprovalDetail | null): boolean => {
-    if (!detail || !user.name) return false;
+  const isCurrentUserNextApprover = (detail: ApprovalDetail | null, currentUserId: number | null | undefined): boolean => {
+    if (!detail || !currentUserId) {
+      return false;
+    }
 
-    // 현재 사용자의 결재선 찾기
-    const userLine = detail.approvalLines.find(
-      (line) => line.approverName === user.name
-    );
+    // 타입 안전한 비교: 명시적으로 Number로 변환
+    const normalizedUserId = Number(currentUserId);
 
-    if (!userLine) return false;
+    // 현재 사용자의 결재선 찾기 (타입 안전한 비교)
+    const userLine = detail.approvalLines.find((line) => {
+      const normalizedApproverId = Number(line.approverId);
+      return normalizedApproverId === normalizedUserId;
+    });
+
+    if (!userLine) {
+      return false;
+    }
 
     // 현재 사용자의 결재선이 PENDING 상태가 아니면 false
-    if (userLine.status !== ApprovalStatus.PENDING) return false;
+    if (userLine.status !== ApprovalStatus.PENDING) {
+      return false;
+    }
 
     // 현재 사용자의 sequence보다 작은 모든 결재선이 APPROVED 상태인지 확인
     const previousLines = detail.approvalLines.filter(
       (line) => line.sequence < userLine.sequence
     );
 
-    // 이전 결재선이 모두 APPROVED 상태여야 함
-    return previousLines.every((line) => line.status === ApprovalStatus.APPROVED);
+    // 이전 결재선이 모두 APPROVED 상태여야 함 (이전 결재선이 없으면 첫 번째 결재자이므로 true)
+    return previousLines.length === 0 || previousLines.every((line) => line.status === ApprovalStatus.APPROVED);
   };
+
 
   // 렌더링 섹션
   const currentItems = tabValue === 0 ? myDrafts : tabValue === 1 ? myPending : myCompleted;
@@ -327,6 +339,46 @@ const ApprovalPage = () => {
           loading={loading}
           tabValue={tabValue}
           onViewDetail={handleViewDetail}
+          onApprove={
+            tabValue === 1
+              ? async (documentId: number) => {
+                  // 상세 정보를 먼저 가져와서 권한 체크
+                  try {
+                    const detailData = await approvalApi.getApprovalDetail(documentId);
+                    const isMyTurn = isCurrentUserNextApprover(detailData, user.userId);
+                    if (!isMyTurn) {
+                      showToast("이전 결재자의 승인이 필요합니다.", "warning");
+                      return;
+                    }
+                    // 권한이 있으면 승인 처리 (handleApprove는 내부에서 확인 다이얼로그를 띄움)
+                    handleApprove(documentId);
+                  } catch (error) {
+                    console.error("결재 상세 조회 실패", error);
+                    showToast("결재 정보를 불러오는데 실패했습니다.", "error");
+                  }
+                }
+              : undefined
+          }
+          onReject={
+            tabValue === 1
+              ? async (documentId: number) => {
+                  // 상세 정보를 먼저 가져와서 권한 체크
+                  try {
+                    const detailData = await approvalApi.getApprovalDetail(documentId);
+                    const isMyTurn = isCurrentUserNextApprover(detailData, user.userId);
+                    if (!isMyTurn) {
+                      showToast("이전 결재자의 승인이 필요합니다.", "warning");
+                      return;
+                    }
+                    // 권한이 있으면 반려 다이얼로그 열기
+                    handleOpenRejectDialog(documentId);
+                  } catch (error) {
+                    console.error("결재 상세 조회 실패", error);
+                    showToast("결재 정보를 불러오는데 실패했습니다.", "error");
+                  }
+                }
+              : undefined
+          }
         />
       </Paper>
 
@@ -343,25 +395,44 @@ const ApprovalPage = () => {
         data={detailData}
         tabValue={tabValue}
         currentUserName={user.name}
+        currentUserId={user.userId}
         onClose={() => {
           setDetailDialogOpen(false);
           setSelectedDocumentId(null);
           setDetailData(null);
         }}
         onApprove={
-          detailData?.status === ApprovalStatus.PENDING && 
-          tabValue === 1 && 
-          selectedDocumentId &&
-          isCurrentUserNextApprover(detailData)
-            ? () => handleApprove(selectedDocumentId)
+          tabValue === 1 && selectedDocumentId
+            ? () => {
+                // 데이터가 없거나 PENDING 상태가 아니면 처리하지 않음
+                if (!detailData || detailData.status !== ApprovalStatus.PENDING) {
+                  return;
+                }
+                // 권한 체크: 현재 사용자가 다음 결재자인지 확인
+                const isMyTurn = isCurrentUserNextApprover(detailData, user.userId);
+                if (!isMyTurn) {
+                  showToast("이전 결재자의 승인이 필요합니다.", "warning");
+                  return;
+                }
+                handleApprove(selectedDocumentId);
+              }
             : undefined
         }
         onReject={
-          detailData?.status === ApprovalStatus.PENDING && 
-          tabValue === 1 && 
-          selectedDocumentId &&
-          isCurrentUserNextApprover(detailData)
-            ? () => handleOpenRejectDialog(selectedDocumentId)
+          tabValue === 1 && selectedDocumentId
+            ? () => {
+                // 데이터가 없거나 PENDING 상태가 아니면 처리하지 않음
+                if (!detailData || detailData.status !== ApprovalStatus.PENDING) {
+                  return;
+                }
+                // 권한 체크: 현재 사용자가 다음 결재자인지 확인
+                const isMyTurn = isCurrentUserNextApprover(detailData, user.userId);
+                if (!isMyTurn) {
+                  showToast("이전 결재자의 승인이 필요합니다.", "warning");
+                  return;
+                }
+                handleOpenRejectDialog(selectedDocumentId);
+              }
             : undefined
         }
         onCancel={

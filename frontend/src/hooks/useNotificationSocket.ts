@@ -19,11 +19,30 @@ export const useNotificationSocket = (
     if (!userId) return;
 
     const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws";
+    // JWT 토큰 가져오기
+    const accessToken = localStorage.getItem("accessToken");
+    
+    if (!accessToken) {
+      console.warn("Access token not found. WebSocket connection may fail.");
+    } else {
+      console.log("Connecting to Notification WebSocket with token (length:", accessToken.length, ")");
+    }
+    
     client.current = new Client({
       brokerURL: WS_URL,
+      connectHeaders: accessToken
+        ? {
+            Authorization: `Bearer ${accessToken}`,
+          }
+        : {},
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+      debug: (str) => {
+        if (str.includes("CONNECT") || str.includes("SEND") || str.includes("SUBSCRIBE") || str.includes("ERROR")) {
+          console.log("[STOMP Debug - Notification]", str);
+        }
+      },
       onConnect: () => {
         console.log(`Connected to Notification WebSocket for user ${userId}`);
         setConnected(true);

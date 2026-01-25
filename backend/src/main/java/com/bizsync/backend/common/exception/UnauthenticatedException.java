@@ -5,8 +5,19 @@ package com.bizsync.backend.common.exception;
  * GlobalExceptionHandler에서 401 UNAUTHORIZED로 매핑.
  */
 public class UnauthenticatedException extends RuntimeException {
+    private final ErrorCode errorCode;
+
+    public UnauthenticatedException(ErrorCode errorCode) {
+        super(errorCode.getMessage());
+        this.errorCode = errorCode;
+    }
 
     public UnauthenticatedException(String message) {
         super(message);
+        this.errorCode = ErrorCode.UNAUTHENTICATED;
+    }
+
+    public ErrorCode getErrorCode() {
+        return errorCode;
     }
 }

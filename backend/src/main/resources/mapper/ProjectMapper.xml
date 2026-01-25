@@ -72,14 +72,14 @@
     <!-- 사용자가 멤버로 참여한 프로젝트 목록 조회 (N+1 문제 해결) -->
     <!-- CANCELLED 상태는 제외 (삭제된 프로젝트는 목록에 표시하지 않음) -->
     <select id="selectMyProjects" resultType="ProjectListResponseDTO">
-        SELECT p.project_id    AS projectId,
-               p.name          AS name,
-               p.description   AS description,
-               p.start_date    AS startDate,
-               p.end_date      AS endDate,
-               p.status        AS status,
-               p.total_budget  AS totalBudget,
-               p.used_budget   AS usedBudget
+        SELECT p.project_id   AS projectId,
+               p.name         AS name,
+               p.description  AS description,
+               p.start_date   AS startDate,
+               p.end_date     AS endDate,
+               p.status       AS status,
+               p.total_budget AS totalBudget,
+               p.used_budget  AS usedBudget
         FROM project_member pm
                  INNER JOIN project p ON pm.project_id = p.project_id
         WHERE pm.user_id = #{userId}

@@ -1,11 +1,5 @@
 package com.bizsync.backend.service;
 
-import java.math.BigDecimal;
-import java.util.List;
-
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.bizsync.backend.common.annotation.RequireProjectLeader;
 import com.bizsync.backend.common.annotation.RequireProjectMember;
 import com.bizsync.backend.common.exception.ErrorCode;
@@ -22,8 +16,12 @@ import com.bizsync.backend.dto.request.ProjectUpdateRequestDTO;
 import com.bizsync.backend.dto.response.ProjectListResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
 import com.bizsync.backend.mapper.ProjectMapper;
-
 import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.math.BigDecimal;
+import java.util.List;
 
 /**
  * 프로젝트 관련 비즈니스 로직을 처리하는 서비스

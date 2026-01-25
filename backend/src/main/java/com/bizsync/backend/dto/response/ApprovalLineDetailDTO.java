@@ -8,16 +8,16 @@ import com.bizsync.backend.domain.entity.ApprovalStatus;
  */
 public record ApprovalLineDetailDTO(
         Integer sequence,
+        Long approverId,
         String approverName,
         ApprovalStatus status,
-        String comment
-) {
+        String comment) {
     public static ApprovalLineDetailDTO from(ApprovalLine line) {
         return new ApprovalLineDetailDTO(
                 line.getSequence(),
+                line.getApprover().getUserId(),
                 line.getApprover().getName(),
                 line.getStatus(),
-                line.getComment()
-        );
+                line.getComment());
     }
 }

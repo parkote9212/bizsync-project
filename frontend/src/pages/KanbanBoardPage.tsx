@@ -5,6 +5,7 @@ import ProjectInviteDialog from "../components/ProjectInviteDialog";
 import ProjectSettingsDialog from "../components/ProjectSettingsDialog";
 import TaskCreateDialog from "../components/TaskCreateDialog";
 import TaskDetailDialog from "../components/TaskDetailDialog";
+import { ChatPanel } from "../components/ChatPanel";
 import { useBoardSocket } from "../hooks/useBoardSocket";
 import { useKanbanBoard } from "../hooks/useKanbanBoard";
 import type { TaskCreateData } from "../types/kanban";
@@ -33,6 +34,7 @@ import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
 import SettingsIcon from "@mui/icons-material/Settings";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
+import ChatIcon from "@mui/icons-material/Chat";
 import client from "../api/client";
 import { projectApi } from "../api/project";
 
@@ -103,6 +105,7 @@ const KanbanBoardPage = () => {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState<"success" | "error">("success");
   const [completingProject, setCompletingProject] = useState(false);
+  const [chatPanelOpen, setChatPanelOpen] = useState(false);
 
   // WebSocket 연결 섹션
   useBoardSocket(projectId, refreshBoard);
@@ -356,6 +359,24 @@ const KanbanBoardPage = () => {
             <Typography variant="body2" color="text.secondary">
               사용 예산 : {boardData.usedBudget != null ? Number(boardData.usedBudget).toLocaleString() : "0"}원
             </Typography>
+            <Typography 
+              variant="body2" 
+              color={(() => {
+                const total = boardData.totalBudget != null ? Number(boardData.totalBudget) : 0;
+                const used = boardData.usedBudget != null ? Number(boardData.usedBudget) : 0;
+                const remaining = total - used;
+                if (remaining < 0) return "error.main";
+                if (remaining / total < 0.1) return "warning.main";
+                return "success.main";
+              })()}
+              sx={{ fontWeight: "medium" }}
+            >
+              남은 예산 : {(() => {
+                const total = boardData.totalBudget != null ? Number(boardData.totalBudget) : 0;
+                const used = boardData.usedBudget != null ? Number(boardData.usedBudget) : 0;
+                return (total - used).toLocaleString();
+              })()}원
+            </Typography>
           </Box>
         </Paper>
 
@@ -406,6 +427,31 @@ const KanbanBoardPage = () => {
             }}
           >
             {downloading ? "다운로드 중..." : "엑셀 다운로드"}
+          </Button>
+
+          {/* 채팅 패널 토글 버튼 */}
+          <Button
+            variant={chatPanelOpen ? "contained" : "outlined"}
+            color="primary"
+            size="small"
+            startIcon={<ChatIcon />}
+            onClick={() => setChatPanelOpen(!chatPanelOpen)}
+            sx={{
+              fontWeight: "bold",
+              fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              backgroundColor: chatPanelOpen && theme.palette.mode === "dark" 
+                ? theme.palette.primary.main 
+                : theme.palette.mode === "dark" 
+                ? theme.palette.background.paper 
+                : "transparent",
+              "&:hover": {
+                backgroundColor: theme.palette.mode === "dark"
+                  ? theme.palette.action.hover
+                  : undefined,
+              },
+            }}
+          >
+            채팅
           </Button>
 
           {/* 프로젝트 진행/완료/재진행 버튼 (PL만) */}
@@ -777,6 +823,27 @@ const KanbanBoardPage = () => {
           />
         </Stack>
       </DragDropContext>
+
+      {/* 채팅 패널 섹션 */}
+      {chatPanelOpen && projectId && (
+        <Box
+          sx={{
+            position: "fixed",
+            right: 0,
+            top: 0,
+            height: "100vh",
+            zIndex: 1300,
+            display: "flex",
+            alignItems: "stretch",
+            boxShadow: theme.shadows[8],
+          }}
+        >
+          <ChatPanel
+            roomId={Number(projectId)}
+            onClose={() => setChatPanelOpen(false)}
+          />
+        </Box>
+      )}
 
       {/* 알림 섹션 */}
       <Snackbar

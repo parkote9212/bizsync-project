@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import {
   Box,
   Button,
@@ -19,38 +19,6 @@ import type { ApprovalDetail } from "../../types/approval";
 import { ApprovalStatus } from "../../types/approval";
 import { formatDate, formatCurrency, getStatusColor, getStatusLabel, getTypeLabel } from "../../utils/approval";
 
-/**
- * 현재 사용자가 다음 결재자인지 확인
- * 
- * @param {ApprovalDetail | null} detail - 결재 상세 정보
- * @param {string | null | undefined} currentUserName - 현재 사용자 이름
- * @returns {boolean} 현재 사용자가 다음 결재자인지 여부
- */
-const isCurrentUserNextApprover = (
-  detail: ApprovalDetail | null,
-  currentUserName: string | null | undefined
-): boolean => {
-  if (!detail || !currentUserName) return false;
-
-  // 현재 사용자의 결재선 찾기
-  const userLine = detail.approvalLines.find(
-    (line) => line.approverName === currentUserName
-  );
-
-  if (!userLine) return false;
-
-  // 현재 사용자의 결재선이 PENDING 상태가 아니면 false
-  if (userLine.status !== ApprovalStatus.PENDING) return false;
-
-  // 현재 사용자의 sequence보다 작은 모든 결재선이 APPROVED 상태인지 확인
-  const previousLines = detail.approvalLines.filter(
-    (line) => line.sequence < userLine.sequence
-  );
-
-  // 이전 결재선이 모두 APPROVED 상태여야 함
-  return previousLines.every((line) => line.status === ApprovalStatus.APPROVED);
-};
-
 interface ApprovalDetailViewProps {
   open: boolean;
   loading: boolean;
@@ -61,6 +29,7 @@ interface ApprovalDetailViewProps {
   onReject?: () => void;
   onCancel?: () => void;
   currentUserName?: string | null;
+  currentUserId?: number | null;
 }
 
 /**
@@ -90,9 +59,69 @@ export const ApprovalDetailView: React.FC<ApprovalDetailViewProps> = ({
   onReject,
   onCancel,
   currentUserName,
+  currentUserId,
 }) => {
-  // 현재 사용자가 다음 결재자인지 확인
-  const canApprove = isCurrentUserNextApprover(data, currentUserName ?? null);
+  // data가 있을 때만 canApprove 계산 (useMemo 사용)
+  const canApprove = useMemo(() => {
+    if (!data || !currentUserId) {
+      console.log('canApprove: data 또는 currentUserId 없음', { 
+        hasData: !!data, 
+        currentUserId 
+      });
+      return false;
+    }
+
+    // 타입 안전한 비교: 명시적으로 Number로 변환
+    const normalizedUserId = Number(currentUserId);
+    
+    // 현재 사용자의 결재선 찾기 (타입 안전한 비교)
+    const userLine = data.approvalLines.find((line) => {
+      const normalizedApproverId = Number(line.approverId);
+      return normalizedApproverId === normalizedUserId;
+    });
+
+    console.log('canApprove 계산:', {
+      currentUserId: normalizedUserId,
+      userLine: userLine ? {
+        sequence: userLine.sequence,
+        approverName: userLine.approverName,
+        status: userLine.status
+      } : null,
+      approvalLines: data.approvalLines.map(line => ({
+        approverId: line.approverId,
+        approverName: line.approverName,
+        sequence: line.sequence,
+        status: line.status
+      }))
+    });
+
+    if (!userLine) {
+      console.log('canApprove: userLine을 찾을 수 없음');
+      return false;
+    }
+
+    // 현재 사용자의 결재선이 PENDING 상태가 아니면 false
+    if (userLine.status !== ApprovalStatus.PENDING) {
+      console.log('canApprove: userLine 상태가 PENDING이 아님', userLine.status);
+      return false;
+    }
+
+    // 현재 사용자의 sequence보다 작은 모든 결재선이 APPROVED 상태인지 확인
+    const previousLines = data.approvalLines.filter(
+      (line) => line.sequence < userLine.sequence
+    );
+
+    // 이전 결재선이 모두 APPROVED 상태여야 함 (이전 결재선이 없으면 첫 번째 결재자이므로 true)
+    const result = previousLines.length === 0 || 
+      previousLines.every((line) => line.status === ApprovalStatus.APPROVED);
+    
+    console.log('canApprove 결과:', result, {
+      previousLinesCount: previousLines.length,
+      previousLinesStatus: previousLines.map(l => ({ sequence: l.sequence, status: l.status }))
+    });
+    
+    return result;
+  }, [data, currentUserId]);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>{data?.title || "결재 상세"}</DialogTitle>
@@ -169,8 +198,9 @@ export const ApprovalDetailView: React.FC<ApprovalDetailViewProps> = ({
           </Button>
         )}
 
-        {/* 결재자: PENDING 상태이고 현재 사용자가 다음 결재자일 때만 승인/반려 버튼 */}
-        {data?.status === ApprovalStatus.PENDING && tabValue === 1 && canApprove && (
+        {/* 결재자: PENDING 상태이고 결재 대기함(tabValue === 1)일 때 승인/반려 버튼 표시 */}
+        {/* 버튼은 항상 표시하고, 클릭 시 권한 체크 (방안 3) */}
+        {data && data.status === ApprovalStatus.PENDING && tabValue === 1 && (onApprove || onReject) && (
           <>
             {onApprove && (
               <Button color="primary" variant="contained" onClick={onApprove}>

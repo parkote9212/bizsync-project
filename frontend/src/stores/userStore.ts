@@ -35,12 +35,27 @@ export const useUserStore = create<UserStore>()(
       user: initialUser,
       setUser: (userData) =>
         set((state) => ({
-          user: { ...state.user, ...userData },
+          user: { 
+            ...state.user, 
+            ...userData,
+            // userId를 명시적으로 number로 변환
+            userId: userData.userId !== undefined 
+              ? (typeof userData.userId === 'number' ? userData.userId : Number(userData.userId))
+              : state.user.userId
+          },
         })),
       clearUser: () => set({ user: initialUser }),
     }),
     {
       name: "user-storage", // localStorage 키 이름
+      // localStorage에서 복원 시 userId를 number로 변환
+      deserialize: (str) => {
+        const parsed = JSON.parse(str);
+        if (parsed?.state?.user?.userId !== undefined && parsed?.state?.user?.userId !== null) {
+          parsed.state.user.userId = Number(parsed.state.user.userId);
+        }
+        return parsed;
+      },
     }
   )
 );

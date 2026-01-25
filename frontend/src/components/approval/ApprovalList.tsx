@@ -21,6 +21,8 @@ interface ApprovalListProps {
   loading: boolean;
   tabValue: number;
   onViewDetail: (documentId: number) => void;
+  onApprove?: (documentId: number) => void;
+  onReject?: (documentId: number) => void;
 }
 
 /**
@@ -40,6 +42,8 @@ export const ApprovalList: React.FC<ApprovalListProps> = ({
   loading,
   tabValue,
   onViewDetail,
+  onApprove,
+  onReject,
 }) => {
   if (loading) {
     return (
@@ -78,12 +82,41 @@ export const ApprovalList: React.FC<ApprovalListProps> = ({
                 <Box display="flex" gap={1} sx={{ flexWrap: "wrap" }}>
                   <Button
                     size="small"
+                    variant="outlined"
                     onClick={() => onViewDetail(item.documentId)}
                     sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
                   >
                     상세보기
                   </Button>
-                  {/* 승인/반려 버튼은 상세보기에서만 표시 (결재선 순서 확인 필요) */}
+                  {/* 결재 대기함(tabValue === 1)이고 PENDING 상태일 때 승인/반려 버튼 표시 */}
+                  {tabValue === 1 && 
+                   item.docStatus === ApprovalStatus.PENDING && 
+                   (onApprove || onReject) && (
+                    <>
+                      {onApprove && (
+                        <Button
+                          size="small"
+                          variant="contained"
+                          color="primary"
+                          onClick={() => onApprove(item.documentId)}
+                          sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
+                        >
+                          승인
+                        </Button>
+                      )}
+                      {onReject && (
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          color="error"
+                          onClick={() => onReject(item.documentId)}
+                          sx={{ fontSize: { xs: "0.7rem", sm: "0.8125rem" } }}
+                        >
+                          반려
+                        </Button>
+                      )}
+                    </>
+                  )}
                 </Box>
               </TableCell>
             </TableRow>

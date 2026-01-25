@@ -58,6 +58,7 @@ public enum ErrorCode {
     APPROVAL_EXPENSE_AMOUNT_REQUIRED(HttpStatus.BAD_REQUEST, "비용 결재는 유효한 금액이 필수입니다."),
 
     // Auth
+    UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "인증된 사용자가 없습니다."),
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다."),
     NOT_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "Refresh Token이 아닙니다."),
 

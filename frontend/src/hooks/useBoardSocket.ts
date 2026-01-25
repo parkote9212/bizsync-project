@@ -19,9 +19,28 @@ export const useBoardSocket = (
 
     // 1. 클라이언트 설정
     const WS_URL = import.meta.env.VITE_WS_URL || "ws://localhost:8080/ws";
+    // JWT 토큰 가져오기
+    const accessToken = localStorage.getItem("accessToken");
+    
+    if (!accessToken) {
+      console.warn("Access token not found. WebSocket connection may fail.");
+    } else {
+      console.log("Connecting to Board WebSocket with token (length:", accessToken.length, ")");
+    }
+    
     client.current = new Client({
       brokerURL: WS_URL, // 백엔드 주소 (ws 프로토콜)
+      connectHeaders: accessToken
+        ? {
+            Authorization: `Bearer ${accessToken}`,
+          }
+        : {},
       reconnectDelay: 5000, // 연결 끊기면 5초 뒤 재시도
+      debug: (str) => {
+        if (str.includes("CONNECT") || str.includes("SEND") || str.includes("SUBSCRIBE") || str.includes("ERROR")) {
+          console.log("[STOMP Debug - Board]", str);
+        }
+      },
       onConnect: () => {
         console.log(`Connected to Project ${projectId}`);
 

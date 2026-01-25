@@ -32,6 +32,7 @@ export interface ApprovalSummary {
 // 결재선 정보
 export interface ApprovalLine {
   sequence: number;
+  approverId: number;
   approverName: string;
   status: ApprovalStatus;
   comment?: string;
