@@ -1,6 +1,25 @@
-# BizSync
+# BizSync - 기업형 프로젝트 협업 플랫폼
 
-BizSync는 프로젝트 관리, 칸반 보드, 결재 시스템, 채팅 기능을 제공하는 협업 플랫폼입니다.
+> 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을 통합한 팀 협업 솔루션
+
+[![Deploy to AWS](https://github.com/parkote9212/bizsync-project/actions/workflows/deploy.yml/badge.svg)](https://github.com/parkote9212/bizsync-project/actions/workflows/deploy.yml)
+
+## 🌐 Live Demo
+
+**배포 URL**: [http://54.180.155.0](http://54.180.155.0)
+
+### 🔐 Demo Account
+
+| 역할 | 이메일 | 비밀번호 |
+|------|--------|----------|
+| 관리자 | admin@bizsync.com | Admin123!@# |
+| 일반 사용자 | test1@test.com | test1234 |
+| 일반 사용자 | test2@test.com | test1234 |
+| 일반 사용자 | test3@test.com | test1234 |
+
+> ⚠️ 테스트용 계정입니다. 데이터는 주기적으로 초기화됩니다.
+
+---
 
 ## 📋 프로젝트 개요
 
@@ -8,19 +27,111 @@ BizSync는 팀 협업을 위한 통합 프로젝트 관리 솔루션으로, 다�
 
 - **프로젝트 관리**: 프로젝트 생성, 멤버 초대, 권한 관리
 - **칸반 보드**: 실시간 업무 관리 및 Drag & Drop 기능
-- **결재 시스템**: 문서 기반 결재 프로세스
-- **채팅**: 실시간 메시징
+- **결재 시스템**: 다단계 결재 라인, 예산 관리
+- **실시간 채팅**: WebSocket 기반 프로젝트별 채팅방
 - **대시보드**: 프로젝트 현황 및 통계
+- **관리자 페이지**: 사용자 승인, 계정 관리
 
-## 🏗️ 아키텍처
+---
+
+## 🏗️ 시스템 아키텍처
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│                        AWS Cloud                                 │
+├─────────────────────────────────────────────────────────────────┤
+│                                                                  │
+│   ┌─────────────┐    ┌─────────────────────────────────────┐    │
+│   │   GitHub    │    │           EC2 (t2.micro)            │    │
+│   │   Actions   │───▶│  ┌─────────┐  ┌─────────────────┐   │    │
+│   │   (CI/CD)   │    │  │  Nginx  │  │ Docker Compose  │   │    │
+│   └─────────────┘    │  │ (Proxy) │  │ ┌─────────────┐ │   │    │
+│         │            │  └────┬────┘  │ │  Frontend   │ │   │    │
+│         │            │       │       │ │  (React)    │ │   │    │
+│         ▼            │       │       │ └─────────────┘ │   │    │
+│   ┌─────────────┐    │       │       │ ┌─────────────┐ │   │    │
+│   │     ECR     │    │       └──────▶│ │  Backend    │ │   │    │
+│   │  (Registry) │───▶│               │ │ (Spring)    │ │   │    │
+│   └─────────────┘    │               │ └──────┬──────┘ │   │    │
+│                      │               └────────┼────────┘   │    │
+│                      └────────────────────────┼────────────┘    │
+│                                               │                  │
+│                      ┌────────────────────────▼────────────┐    │
+│                      │         RDS (MariaDB 10.11)         │    │
+│                      │     bizsync-db.xxx.rds.amazonaws    │    │
+│                      └─────────────────────────────────────┘    │
+│                                                                  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 🛠️ 기술 스택
+
+### Backend
+| 기술 | 버전 | 용도 |
+|------|------|------|
+| Java | 21 | 언어 (Virtual Threads 지원) |
+| Spring Boot | 3.5.9 | 프레임워크 |
+| Spring Security + JWT | - | 인증/인가 |
+| Spring WebSocket (STOMP) | - | 실시간 통신 |
+| JPA + MyBatis | 3.0.5 | 하이브리드 ORM |
+| Spring AOP | - | 횡단 관심사 분리 |
+| Apache POI | 5.2.5 | Excel 처리 |
+
+### Frontend
+| 기술 | 버전 | 용도 |
+|------|------|------|
+| React | 19 | UI 라이브러리 |
+| TypeScript | 5.9 | 타입 안정성 |
+| Vite | 7.2 | 빌드 도구 |
+| Material-UI (MUI) | 7.3 | UI 컴포넌트 |
+| Zustand | 5.0 | 상태 관리 |
+| @hello-pangea/dnd | 18.0 | Drag & Drop |
+
+### Infrastructure
+| 기술 | 용도 |
+|------|------|
+| AWS EC2 | 애플리케이션 서버 |
+| AWS RDS | MariaDB 데이터베이스 |
+| AWS ECR | Docker 이미지 레지스트리 |
+| GitHub Actions | CI/CD 파이프라인 |
+| Docker & Docker Compose | 컨테이너화 |
+| Nginx | 리버스 프록시 |
+
+---
+
+## 📁 프로젝트 구조
 
 ```
 bizsync-project/
-├── backend/          # Spring Boot 백엔드 (Java 21)
-├── frontend/         # React 프론트엔드 (TypeScript)
-├── docker-compose.yml # Docker Compose 설정
-└── create.sql        # 데이터베이스 스키마
+├── backend/                    # Spring Boot 백엔드
+│   ├── src/main/java/
+│   │   └── com/bizsync/backend/
+│   │       ├── common/         # 설정, 필터, 예외, AOP
+│   │       ├── controller/     # REST API 컨트롤러
+│   │       ├── domain/         # 엔티티, 리포지토리
+│   │       ├── dto/            # 요청/응답 DTO
+│   │       ├── mapper/         # MyBatis 매퍼
+│   │       └── service/        # 비즈니스 로직
+│   └── Dockerfile
+├── frontend/                   # React 프론트엔드
+│   ├── src/
+│   │   ├── api/               # API 클라이언트
+│   │   ├── components/        # 재사용 컴포넌트
+│   │   ├── hooks/             # 커스텀 훅
+│   │   ├── pages/             # 페이지 컴포넌트
+│   │   ├── stores/            # Zustand 스토어
+│   │   └── types/             # TypeScript 타입
+│   └── Dockerfile
+├── .github/workflows/         # GitHub Actions CI/CD
+│   └── deploy.yml
+├── docker-compose.yml         # 프로덕션 Docker Compose
+├── docker-compose.local.yml   # 로컬 개발용
+└── nginx.conf                 # Nginx 설정
 ```
+
+---
 
 ## 🚀 빠른 시작
 
@@ -28,7 +139,7 @@ bizsync-project/
 
 - **Java 21** (백엔드)
 - **Node.js 18+** 및 **npm** (프론트엔드)
-- **Docker** 및 **Docker Compose** (선택사항)
+- **Docker** 및 **Docker Compose**
 - **MariaDB 10.11+** 또는 **MySQL 8.0+**
 
 ### 로컬 개발 환경 설정
@@ -36,177 +147,139 @@ bizsync-project/
 #### 1. 저장소 클론
 
 ```bash
-git clone <repository-url>
+git clone https://github.com/parkote9212/bizsync-project.git
 cd bizsync-project
 ```
 
-#### 2. 데이터베이스 설정
+#### 2. 환경 변수 설정
 
 ```bash
-# MariaDB/MySQL에 데이터베이스 생성
-mysql -u root -p < create.sql
+cp .env.example .env
+# .env 파일 편집
 ```
 
-#### 3. 백엔드 실행
+#### 3. Docker Compose로 실행 (권장)
 
+```bash
+docker compose -f docker-compose.local.yml up -d
+```
+
+#### 4. 개별 실행 (개발 모드)
+
+**백엔드:**
 ```bash
 cd backend
-
-# 환경 변수 설정 (application-dev.yml 또는 .env)
-# 데이터베이스 연결 정보, JWT 시크릿 등 설정
-
-# Gradle로 실행
 ./gradlew bootRun
-
-# 또는 IDE에서 BackendApplication.java 실행
 ```
 
-백엔드는 기본적으로 `http://localhost:8080`에서 실행됩니다.
-
-#### 4. 프론트엔드 실행
-
+**프론트엔드:**
 ```bash
 cd frontend
-
-# 의존성 설치
 npm install
-
-# 개발 서버 실행
 npm run dev
 ```
 
-프론트엔드는 기본적으로 `http://localhost:5173`에서 실행됩니다.
-
-### Docker Compose로 실행
-
-```bash
-# .env 파일 생성 및 설정
-cp .env.example .env
-# .env 파일 편집 (데이터베이스 연결 정보, JWT 시크릿 등)
-
-# 컨테이너 빌드 및 실행
-docker compose up -d
-
-# 로그 확인
-docker compose logs -f
-```
-
-## 📁 프로젝트 구조
-
-### Backend
-
-- **Spring Boot 3.5.9** 기반 RESTful API
-- **Spring Security** + **JWT** 인증
-- **WebSocket (STOMP)** 실시간 통신
-- **JPA** + **MyBatis** 하이브리드 ORM
-- **MariaDB** 데이터베이스
-
-자세한 내용은 [backend/README.md](./backend/README.md)를 참조하세요.
-
-### Frontend
-
-- **React 19** + **TypeScript**
-- **Vite** 빌드 도구
-- **Material-UI (MUI)** UI 컴포넌트
-- **React Router DOM 7** 라우팅
-- **Zustand** 상태 관리
-- **WebSocket (STOMP)** 실시간 통신
-
-자세한 내용은 [frontend/README.md](./frontend/README.md)를 참조하세요.
+---
 
 ## 🔧 환경 변수
 
-프로젝트 루트의 `.env.example` 파일을 참조하여 `.env` 파일을 생성하세요.
+| 변수명 | 설명 | 예시 |
+|--------|------|------|
+| `SPRING_DATASOURCE_URL` | DB 연결 URL | `jdbc:mariadb://localhost:3306/bizsync` |
+| `SPRING_DATASOURCE_USERNAME` | DB 사용자명 | `root` |
+| `SPRING_DATASOURCE_PASSWORD` | DB 비밀번호 | `password` |
+| `JWT_SECRET` | JWT 서명 키 (256비트 이상) | `your-secret-key...` |
+| `APP_CORS_ALLOWED_ORIGINS` | CORS 허용 도메인 | `http://localhost:5173` |
+| `ADMIN_EMAIL` | 초기 관리자 이메일 | `admin@bizsync.com` |
+| `ADMIN_PASSWORD` | 초기 관리자 비밀번호 | `Admin123!@#` |
 
-주요 환경 변수:
+---
 
-- `SPRING_DATASOURCE_URL`: 데이터베이스 연결 URL
-- `SPRING_DATASOURCE_USERNAME`: 데이터베이스 사용자명
-- `SPRING_DATASOURCE_PASSWORD`: 데이터베이스 비밀번호
-- `JWT_SECRET`: JWT 토큰 서명 키
-- `JWT_EXPIRATION_MS`: Access Token 만료 시간 (기본: 3600000ms = 1시간)
-- `JWT_REFRESH_EXPIRATION_MS`: Refresh Token 만료 시간 (기본: 604800000ms = 7일)
-- `APP_CORS_ALLOWED_ORIGINS`: CORS 허용 도메인 (쉼표로 구분)
-- `VITE_API_BASE_URL`: 프론트엔드에서 사용할 API Base URL
-- `VITE_WS_URL`: 프론트엔드에서 사용할 WebSocket URL
+## 🚢 CI/CD 배포
 
-## 📚 API 문서
+### GitHub Actions 자동 배포
 
-백엔드 서버 실행 후 Swagger UI에서 API 문서를 확인할 수 있습니다:
+`main` 브랜치에 푸시하면 자동으로 배포됩니다:
 
-```
-http://localhost:8080/swagger-ui.html
-```
+1. **Build**: 프론트엔드/백엔드 빌드 및 테스트
+2. **Push**: Docker 이미지를 AWS ECR에 푸시
+3. **Deploy**: EC2에서 최신 이미지로 컨테이너 재시작
 
-## 🚢 배포
-
-AWS EC2 + RDS를 사용한 배포 가이드는 [DEPLOY.md](./DEPLOY.md)를 참조하세요.
-
-## 🧪 테스트
-
-### 백엔드 테스트
+### 수동 배포
 
 ```bash
-cd backend
-./gradlew test
+# EC2 접속
+ssh -i your-key.pem ec2-user@54.180.155.0
+
+# 최신 이미지 풀 및 재시작
+cd /home/ec2-user/bizsync
+docker compose pull
+docker compose up -d
 ```
 
-### 프론트엔드 테스트
+---
 
-```bash
-cd frontend
-npm run test
-```
+## 📚 주요 API 엔드포인트
+
+| 카테고리 | Method | URL | 설명 |
+|----------|--------|-----|------|
+| 인증 | POST | `/api/auth/login` | 로그인 |
+| 인증 | POST | `/api/auth/signup` | 회원가입 |
+| 프로젝트 | GET | `/api/projects` | 프로젝트 목록 |
+| 칸반 | GET | `/api/projects/{id}/board` | 보드 조회 |
+| 결재 | POST | `/api/approvals` | 결재 기안 |
+
+---
 
 ## 📝 주요 기능
 
 ### 인증 및 권한
-
 - JWT 기반 인증 (Access Token + Refresh Token)
 - 역할 기반 접근 제어 (ADMIN, MEMBER)
-- 프로젝트별 권한 관리 (LEADER, MEMBER)
-
-### 프로젝트 관리
-
-- 프로젝트 CRUD
-- 프로젝트 멤버 초대 및 관리
-- 프로젝트 상태 관리 (IN_PROGRESS, COMPLETED, CANCELLED)
+- 프로젝트별 권한 관리 (PL, MEMBER)
+- Spring AOP 기반 권한 체크 (`@RequireProjectLeader`)
 
 ### 칸반 보드
-
-- 컬럼 및 업무 생성/수정/삭제
-- Drag & Drop으로 업무 이동
-- 실시간 보드 동기화 (WebSocket)
-- 업무 담당자 지정 및 마감일 설정
+- Drag & Drop 업무 이동
+- WebSocket 실시간 동기화
+- 낙관적 업데이트 (Optimistic UI)
+- 컬럼 생성/삭제 (PL 권한)
 
 ### 결재 시스템
+- 다단계 결재 라인
+- 예산 결재 시 프로젝트 예산 차감
+- 비관적 락으로 동시성 제어
 
-- 결재 문서 생성 및 관리
-- 다단계 결재 라인 설정
-- 결재 상태 추적 (PENDING, APPROVED, REJECTED)
-- Excel 내보내기 기능
+---
 
-### 채팅
+## 🧪 테스트
 
-- 실시간 메시징
-- 프로젝트별 채팅방
+```bash
+# 백엔드 테스트
+cd backend && ./gradlew test
 
-## 🤝 기여
+# 프론트엔드 린트
+cd frontend && npm run lint
+```
 
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
+---
+
+## 📄 문서
+
+- [Backend README](./backend/README.md)
+- [Frontend README](./frontend/README.md)
+- [Notion 개발 문서](https://www.notion.so/2e9800a6a897803fa490f6a061179510)
+
+---
+
+## 👤 개발자
+
+**G.C.Park** - 풀스택 개발
+
+- GitHub: [@parkote9212](https://github.com/parkote9212)
+
+---
 
 ## 📄 라이선스
 
-이 프로젝트는 비공개 프로젝트입니다.
-
-## 👥 팀
-
-BizSync 개발팀
-
-## 📞 문의
-
-프로젝트 관련 문의사항이 있으시면 이슈를 등록해주세요.
+이 프로젝트는 포트폴리오 목적으로 제작되었습니다.
