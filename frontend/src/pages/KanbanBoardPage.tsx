@@ -21,7 +21,8 @@ import {
   Paper,
   Snackbar,
   Stack,
-  Typography
+  Typography,
+  useTheme
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
@@ -37,6 +38,7 @@ import { projectApi } from "../api/project";
 
 const KanbanBoardPage = () => {
   const { projectId } = useParams();
+  const theme = useTheme();
 
   const {
     boardData,
@@ -287,7 +289,7 @@ const KanbanBoardPage = () => {
       sx={{
         height: "100vh",
         p: 2,
-        backgroundColor: "#f4f5f7",
+        backgroundColor: theme.palette.background.default,
         overflowX: "auto",
       }}
     >
@@ -299,12 +301,19 @@ const KanbanBoardPage = () => {
         spacing={{ xs: 2, sm: 0 }}
         mb={3}
       >
-        <Box>
+        <Paper
+          elevation={0}
+          sx={{
+            p: 2,
+            backgroundColor: theme.palette.background.paper,
+            borderRadius: 2,
+          }}
+        >
           <Typography
             variant="h5"
             fontWeight="bold"
             sx={{
-              color: "#172b4d",
+              color: theme.palette.text.primary,
               fontSize: { xs: "1.25rem", sm: "1.5rem" },
             }}
           >
@@ -323,7 +332,7 @@ const KanbanBoardPage = () => {
               사용 예산 : {boardData.usedBudget != null ? Number(boardData.usedBudget).toLocaleString() : "0"}원
             </Typography>
           </Box>
-        </Box>
+        </Paper>
 
         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
           {/* 엑셀 업로드 버튼 */}
@@ -337,6 +346,14 @@ const KanbanBoardPage = () => {
             sx={{
               fontWeight: "bold",
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              backgroundColor: theme.palette.mode === "dark" 
+                ? theme.palette.background.paper 
+                : "transparent",
+              "&:hover": {
+                backgroundColor: theme.palette.mode === "dark"
+                  ? theme.palette.action.hover
+                  : undefined,
+              },
             }}
           >
             {uploading ? "업로드 중..." : "엑셀 업로드"}
@@ -353,6 +370,14 @@ const KanbanBoardPage = () => {
             sx={{
               fontWeight: "bold",
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              backgroundColor: theme.palette.mode === "dark" 
+                ? theme.palette.background.paper 
+                : "transparent",
+              "&:hover": {
+                backgroundColor: theme.palette.mode === "dark"
+                  ? theme.palette.action.hover
+                  : undefined,
+              },
             }}
           >
             {downloading ? "다운로드 중..." : "엑셀 다운로드"}
@@ -387,6 +412,14 @@ const KanbanBoardPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    backgroundColor: theme.palette.mode === "dark" 
+                      ? theme.palette.background.paper 
+                      : "transparent",
+                    "&:hover": {
+                      backgroundColor: theme.palette.mode === "dark"
+                        ? theme.palette.action.hover
+                        : undefined,
+                    },
                   }}
                 >
                   {completingProject ? "처리 중..." : "재진행"}
@@ -402,6 +435,14 @@ const KanbanBoardPage = () => {
                   sx={{
                     fontWeight: "bold",
                     fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                    backgroundColor: theme.palette.mode === "dark" 
+                      ? theme.palette.background.paper 
+                      : "transparent",
+                    "&:hover": {
+                      backgroundColor: theme.palette.mode === "dark"
+                        ? theme.palette.action.hover
+                        : undefined,
+                    },
                   }}
                 >
                   {completingProject ? "처리 중..." : "프로젝트 완료"}
@@ -434,6 +475,14 @@ const KanbanBoardPage = () => {
             sx={{
               fontWeight: "bold",
               fontSize: { xs: "0.75rem", sm: "0.875rem" },
+              backgroundColor: theme.palette.mode === "dark" 
+                ? theme.palette.background.paper 
+                : "transparent",
+              "&:hover": {
+                backgroundColor: theme.palette.mode === "dark"
+                  ? theme.palette.action.hover
+                  : undefined,
+              },
             }}
           >
             설정
@@ -460,7 +509,9 @@ const KanbanBoardPage = () => {
                 minWidth: 300,
                 width: 300,
                 p: 1.5,
-                backgroundColor: "#ebecf0",
+                backgroundColor: theme.palette.mode === "dark" 
+                  ? theme.palette.background.paper 
+                  : "#ebecf0",
                 borderRadius: 2,
                 maxHeight: "85vh",
                 display: "flex",
@@ -561,7 +612,11 @@ const KanbanBoardPage = () => {
                                   ? "rotate(2deg)"
                                   : "none",
                                 boxShadow: snapshot.isDragging ? 4 : 1,
-                                "&:hover": { bgcolor: "#f8f9fa" },
+                                "&:hover": { 
+                                  bgcolor: theme.palette.mode === "dark"
+                                    ? theme.palette.action.hover
+                                    : "#f8f9fa"
+                                },
                               }}
                             >
                               <CardContent sx={{ p: "12px !important" }}>
@@ -616,8 +671,12 @@ const KanbanBoardPage = () => {
                   fullWidth
                   sx={{
                     justifyContent: "flex-start",
-                    color: "#5e6c84",
-                    "&:hover": { bgcolor: "rgba(9, 30, 66, 0.08)" },
+                    color: theme.palette.text.secondary,
+                    "&:hover": { 
+                      bgcolor: theme.palette.mode === "dark"
+                        ? theme.palette.action.hover
+                        : "rgba(9, 30, 66, 0.08)"
+                    },
                   }}
                   onClick={() => openCreateDialog(column.columnId)}
                 >
@@ -635,9 +694,15 @@ const KanbanBoardPage = () => {
               fullWidth
               sx={{
                 justifyContent: "flex-start",
-                backgroundColor: "rgba(255,255,255,0.24)",
-                color: "black",
-                "&:hover": { backgroundColor: "rgba(255,255,255,0.32)" },
+                backgroundColor: theme.palette.mode === "dark"
+                  ? theme.palette.action.hover
+                  : "rgba(255,255,255,0.24)",
+                color: theme.palette.text.primary,
+                "&:hover": { 
+                  backgroundColor: theme.palette.mode === "dark"
+                    ? theme.palette.action.selected
+                    : "rgba(255,255,255,0.32)"
+                },
                 py: 1.5,
               }}
               onClick={() => setIsColumnCreateOpen(true)}
