@@ -2,7 +2,16 @@ version: '3.8'
 
 services:
   backend:
-    build: ./backend
+    # ============================================
+    # CI/CD: ECR에서 이미지 Pull (자동 배포)
+    # ============================================
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/bizsync-backend:${IMAGE_TAG:-latest}
+    
+    # ============================================
+    # 수동 배포: EC2에서 직접 빌드 (주석 해제 후 사용)
+    # ============================================
+    # build: ./backend
+    
     container_name: bizsync-backend
     ports:
       - "8080:8080"
@@ -33,12 +42,20 @@ services:
       start_period: 40s
 
   frontend:
-    build:
-      context: ./frontend
-      args:
-        # 빌드 시 환경 변수 전달 (실제 배포 시 도메인으로 변경)
-        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080/api}
-        - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8080/ws}
+    # ============================================
+    # CI/CD: ECR에서 이미지 Pull (자동 배포)
+    # ============================================
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/bizsync-frontend:${IMAGE_TAG:-latest}
+    
+    # ============================================
+    # 수동 배포: EC2에서 직접 빌드 (주석 해제 후 사용)
+    # ============================================
+    # build:
+    #   context: ./frontend
+    #   args:
+    #     - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080/api}
+    #     - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8080/ws}
+    
     container_name: bizsync-frontend
     ports:
       - "80:80"
@@ -49,7 +66,9 @@ services:
     networks:
       - bizsync-network
 
+  # ============================================
   # 로컬 개발용 DB (선택사항 - RDS 사용 시 주석 처리)
+  # ============================================
   # db:
   #   image: mariadb:10.11
   #   container_name: bizsync-db

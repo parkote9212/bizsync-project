@@ -1,0 +1,53 @@
+# ============================================
+# 수동 배포용 Docker Compose (EC2에서 직접 빌드)
+# 사용법: docker compose -f docker-compose.local.yml up -d --build
+# ============================================
+
+version: '3.8'
+
+services:
+  backend:
+    build: ./backend
+    container_name: bizsync-backend
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_DRIVER=org.mariadb.jdbc.Driver
+      - SPRING_DATASOURCE_URL=${SPRING_DATASOURCE_URL}
+      - SPRING_DATASOURCE_USERNAME=${SPRING_DATASOURCE_USERNAME}
+      - SPRING_DATASOURCE_PASSWORD=${SPRING_DATASOURCE_PASSWORD}
+      - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION_MS=${JWT_EXPIRATION_MS:-3600000}
+      - JWT_REFRESH_EXPIRATION_MS=${JWT_REFRESH_EXPIRATION_MS:-604800000}
+      - APP_CORS_ALLOWED_ORIGINS=${APP_CORS_ALLOWED_ORIGINS:-http://localhost:5173,http://localhost:3000}
+      - SPRING_PROFILES_ACTIVE=prod
+      - SERVER_PORT=8080
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/actuator/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  frontend:
+    build:
+      context: ./frontend
+      args:
+        - VITE_API_BASE_URL=${VITE_API_BASE_URL:-http://localhost:8080/api}
+        - VITE_WS_URL=${VITE_WS_URL:-ws://localhost:8080/ws}
+    container_name: bizsync-frontend
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+
+networks:
+  bizsync-network:
+    driver: bridge
