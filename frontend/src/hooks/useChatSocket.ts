@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
 import { useChatStore } from "../stores/chatStore";
 import client from "../api/client";
@@ -23,6 +23,39 @@ export const useChatSocket = (roomId: number | null) => {
     setConnected,
     isConnected
   } = useChatStore();
+
+  /**
+   * 온라인 멤버 목록 조회 및 업데이트
+   */
+  const fetchOnlineMembers = useCallback(async (roomId: number) => {
+    try {
+      const response = await client.get(`/chat/room/${roomId}/members`);
+      const roomMembers: { members: ChatMember[] } = response.data;
+      setOnlineMembers(roomId, roomMembers.members);
+    } catch (error) {
+      console.error("Failed to fetch chat room members:", error);
+    }
+  }, [setOnlineMembers]);
+
+  /**
+   * 온라인 사용자 ID 목록으로 멤버 상태 업데이트
+   */
+  const updateOnlineMembers = useCallback(async (roomId: number, onlineUserIds: number[]) => {
+    try {
+      const response = await client.get(`/chat/room/${roomId}/members`);
+      const roomMembers: { members: ChatMember[] } = response.data;
+      
+      // 온라인 상태 업데이트
+      const membersWithStatus = roomMembers.members.map((member) => ({
+        ...member,
+        isOnline: onlineUserIds.includes(member.userId),
+      }));
+      
+      setOnlineMembers(roomId, membersWithStatus);
+    } catch (error) {
+      console.error("Failed to update online members:", error);
+    }
+  }, [setOnlineMembers]);
 
   useEffect(() => {
     if (!roomId) {
@@ -121,40 +154,7 @@ export const useChatSocket = (roomId: number | null) => {
       }
       setConnected(false);
     };
-  }, [roomId, addMessage, setOnlineMembers, setConnected]);
-
-  /**
-   * 온라인 멤버 목록 조회 및 업데이트
-   */
-  const fetchOnlineMembers = async (roomId: number) => {
-    try {
-      const response = await client.get(`/chat/room/${roomId}/members`);
-      const roomMembers: { members: ChatMember[] } = response.data;
-      setOnlineMembers(roomId, roomMembers.members);
-    } catch (error) {
-      console.error("Failed to fetch chat room members:", error);
-    }
-  };
-
-  /**
-   * 온라인 사용자 ID 목록으로 멤버 상태 업데이트
-   */
-  const updateOnlineMembers = async (roomId: number, onlineUserIds: number[]) => {
-    try {
-      const response = await client.get(`/chat/room/${roomId}/members`);
-      const roomMembers: { members: ChatMember[] } = response.data;
-      
-      // 온라인 상태 업데이트
-      const membersWithStatus = roomMembers.members.map((member) => ({
-        ...member,
-        isOnline: onlineUserIds.includes(member.userId),
-      }));
-      
-      setOnlineMembers(roomId, membersWithStatus);
-    } catch (error) {
-      console.error("Failed to update online members:", error);
-    }
-  };
+  }, [roomId, addMessage, setOnlineMembers, setConnected, fetchOnlineMembers, updateOnlineMembers]);
 
   /**
    * 메시지 전송

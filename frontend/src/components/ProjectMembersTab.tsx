@@ -13,7 +13,7 @@ import {
   TableRow,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import client from "../api/client";
 import Toast from "./Toast";
 import ConfirmDialog from "./ConfirmDialog";
@@ -65,13 +65,7 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
     onConfirm: () => {},
   });
 
-  useEffect(() => {
-    if (projectId) {
-      fetchMembers();
-    }
-  }, [projectId]);
-
-  const fetchMembers = async () => {
+  const fetchMembers = useCallback(async () => {
     try {
       setLoading(true);
       const response = await client.get(`/projects/${projectId}/members`);
@@ -81,7 +75,13 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
+
+  useEffect(() => {
+    if (projectId) {
+      fetchMembers();
+    }
+  }, [projectId, fetchMembers]);
 
   const handleRoleChange = async (memberId: number, newRole: "PL" | "MEMBER") => {
     setConfirmDialog({

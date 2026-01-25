@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import {
   Box,
   Paper,
@@ -102,15 +102,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ roomId, onClose }) => {
     }
   }, [roomId, setMessages, setLoading]);
 
+  // 스크롤을 맨 아래로 이동
+  const scrollToBottom = useCallback(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, []);
+
   // 새 메시지가 추가되면 스크롤을 맨 아래로
+  const currentMessages = messages.get(roomId);
   useEffect(() => {
     scrollToBottom();
-  }, [messages.get(roomId)]);
-
-  // 스크롤을 맨 아래로 이동
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
+  }, [currentMessages, scrollToBottom]);
 
   // 이전 메시지 로드 (스크롤 위로 올릴 때)
   const loadMoreMessages = async () => {

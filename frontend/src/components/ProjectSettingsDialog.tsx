@@ -11,7 +11,7 @@ import {
   TextField,
   Typography,
 } from "@mui/material";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import client from "../api/client";
 import ProjectMembersTab from "./ProjectMembersTab";
 import Toast from "./Toast";
@@ -72,14 +72,7 @@ const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
   const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
-  // 프로젝트 정보 로드
-  useEffect(() => {
-    if (open && projectId) {
-      fetchProjectInfo();
-    }
-  }, [open, projectId]);
-
-  const fetchProjectInfo = async () => {
+  const fetchProjectInfo = useCallback(async () => {
     try {
       const response = await client.get(`/projects/${projectId}/board`);
       const project = response.data.project;
@@ -93,7 +86,14 @@ const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
     } catch (error) {
       console.error("프로젝트 정보 로드 실패:", error);
     }
-  };
+  }, [projectId]);
+
+  // 프로젝트 정보 로드
+  useEffect(() => {
+    if (open && projectId) {
+      fetchProjectInfo();
+    }
+  }, [open, projectId, fetchProjectInfo]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;

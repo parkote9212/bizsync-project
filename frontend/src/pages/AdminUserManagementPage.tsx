@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
   Box,
   Button,
@@ -72,15 +72,7 @@ const AdminUserManagementPage = () => {
   const [statistics, setStatistics] = useState<AdminUserStatistics | null>(null);
 
   // 데이터 로드 섹션
-  useEffect(() => {
-    if (user.role !== "ADMIN") {
-      return;
-    }
-    fetchUsers();
-    fetchStatistics();
-  }, [page, statusFilter, roleFilter, positionFilter, keyword, user.role]);
-
-  const fetchUsers = async () => {
+  const fetchUsers = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -107,7 +99,15 @@ const AdminUserManagementPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [page, statusFilter, roleFilter, positionFilter, keyword]);
+
+  useEffect(() => {
+    if (user.role !== "ADMIN") {
+      return;
+    }
+    fetchUsers();
+    fetchStatistics();
+  }, [page, statusFilter, roleFilter, positionFilter, keyword, user.role, fetchUsers]);
 
   const fetchStatistics = async () => {
     try {

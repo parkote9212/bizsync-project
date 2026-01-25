@@ -82,18 +82,25 @@ export const ApprovalCreateForm: React.FC<ApprovalCreateFormProps> = ({
 
   // 내가 속한 프로젝트 목록 로드
   useEffect(() => {
-    if (open) {
-      const fetchMyProjects = async () => {
-        try {
-          const projects = await projectApi.getProjects();
-          setMyProjects(projects);
-        } catch (error) {
-          console.error("프로젝트 목록 조회 실패:", error);
-          setMyProjects([]);
-        }
-      };
-      fetchMyProjects();
-    } else {
+    if (!open) {
+      return;
+    }
+
+    const fetchMyProjects = async () => {
+      try {
+        const projects = await projectApi.getProjects();
+        setMyProjects(projects);
+      } catch (error) {
+        console.error("프로젝트 목록 조회 실패:", error);
+        setMyProjects([]);
+      }
+    };
+    fetchMyProjects();
+  }, [open]);
+
+  // 다이얼로그가 닫힐 때 상태 초기화
+  useEffect(() => {
+    if (!open) {
       setMyProjects([]);
       setSelectedProject(null);
       setProjectSearchKeyword("");
@@ -108,7 +115,6 @@ export const ApprovalCreateForm: React.FC<ApprovalCreateFormProps> = ({
     }
 
     if (!projectSearchKeyword || projectSearchKeyword.length < 1) {
-      setProjectSearchOptions([]);
       return;
     }
 

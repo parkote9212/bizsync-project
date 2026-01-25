@@ -54,7 +54,7 @@ export const isAuthenticated = (): boolean => {
     // 토큰이 만료되었으면 제거
     clearTokens();
     return false;
-  } catch (error) {
+  } catch {
     // 토큰 파싱 실패 시 제거
     clearTokens();
     return false;
@@ -75,7 +75,7 @@ const parseJwt = (token: string): any => {
         .join('')
     );
     return JSON.parse(jsonPayload);
-  } catch (error) {
+  } catch {
     throw new Error('Invalid token');
   }
 };

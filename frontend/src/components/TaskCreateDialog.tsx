@@ -61,35 +61,43 @@ const TaskCreateDialog: React.FC<TaskCreateDialogProps> = ({
 
   // 프로젝트 멤버 목록 로드
   useEffect(() => {
-    if (open && projectId) {
-      const fetchProjectMembers = async () => {
-        try {
-          const response = await client.get(`/projects/${projectId}/members`);
-          const members = response.data || [];
-          // ProjectMemberResponseDTO를 UserSearchResult 형식으로 변환
-          const memberList: UserSearchResult[] = members.map((member: any) => ({
-            userId: member.userId,
-            name: member.name,
-            email: member.email,
-            department: member.department || "",
-            position: member.position || "",
-          }));
-          setProjectMembers(memberList);
-        } catch (error) {
-          console.error("프로젝트 멤버 목록 조회 실패:", error);
-          setProjectMembers([]);
-        }
-      };
-      fetchProjectMembers();
-    } else {
-      setProjectMembers([]);
+    if (!open || !projectId) {
+      return;
     }
+
+    const fetchProjectMembers = async () => {
+      try {
+        const response = await client.get(`/projects/${projectId}/members`);
+        const members = response.data || [];
+        // ProjectMemberResponseDTO를 UserSearchResult 형식으로 변환
+        const memberList: UserSearchResult[] = members.map((member: any) => ({
+          userId: member.userId,
+          name: member.name,
+          email: member.email,
+          department: member.department || "",
+          position: member.position || "",
+        }));
+        setProjectMembers(memberList);
+      } catch (error) {
+        console.error("프로젝트 멤버 목록 조회 실패:", error);
+        setProjectMembers([]);
+      }
+    };
+    fetchProjectMembers();
   }, [open, projectId]);
+
+  // 다이얼로그가 닫힐 때 상태 초기화
+  useEffect(() => {
+    if (!open) {
+      setProjectMembers([]);
+      setSearchKeyword("");
+      setSearchOptions([]);
+    }
+  }, [open]);
 
   // 검색어에 따라 프로젝트 멤버 필터링
   useEffect(() => {
     if (!searchKeyword || searchKeyword.length < 2) {
-      setSearchOptions([]);
       return;
     }
 

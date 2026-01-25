@@ -6,7 +6,7 @@ import {
   Tab,
   Tabs,
 } from "@mui/material";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { approvalApi } from "../api/approval";
 import ConfirmDialog from "../components/ConfirmDialog";
 import Toast from "../components/Toast";
@@ -67,18 +67,7 @@ const ApprovalPage = () => {
     loadingKey: "cancelApproval",
   });
 
-  // 데이터 로드 섹션
-  useEffect(() => {
-    if (tabValue === 0) {
-      fetchMyDrafts();
-    } else if (tabValue === 1) {
-      fetchMyPending();
-    } else {
-      fetchMyCompleted();
-    }
-  }, [tabValue]);
-
-  const fetchMyDrafts = async () => {
+  const fetchMyDrafts = useCallback(async () => {
     try {
       setLoading(true);
       const data = await approvalApi.getMyDrafts(0, 20);
@@ -89,9 +78,9 @@ const ApprovalPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const fetchMyPending = async () => {
+  const fetchMyPending = useCallback(async () => {
     try {
       setLoading(true);
       const data = await approvalApi.getMyPending(0, 20);
@@ -102,9 +91,9 @@ const ApprovalPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
 
-  const fetchMyCompleted = async () => {
+  const fetchMyCompleted = useCallback(async () => {
     try {
       setLoading(true);
       const data = await approvalApi.getMyCompleted(0, 20);
@@ -115,7 +104,18 @@ const ApprovalPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [showToast]);
+
+  // 데이터 로드 섹션
+  useEffect(() => {
+    if (tabValue === 0) {
+      fetchMyDrafts();
+    } else if (tabValue === 1) {
+      fetchMyPending();
+    } else {
+      fetchMyCompleted();
+    }
+  }, [tabValue, fetchMyDrafts, fetchMyPending, fetchMyCompleted]);
 
   // 이벤트 핸들러 섹션
   const handleCreateApproval = async (data: {
