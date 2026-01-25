@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Client } from "@stomp/stompjs";
 
 // 1. 주고받을 메시지 타입 정의 (DTO와 일치시킴)
@@ -8,17 +8,17 @@ interface ChatMessage {
   content: string;
 }
 
-const ChatTest: React.FC = () => {
+const ChatTest = () => {
   const [connected, setConnected] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
+  // useState 초기화 함수로 랜덤 닉네임 생성 (한 번만 실행)
+  const [myName] = useState(() => "테스터" + Math.floor(Math.random() * 100));
 
   // 2. STOMP 클라이언트 객체를 Ref로 관리 (재렌더링 방지)
   const clientRef = useRef<Client | null>(null);
 
   const roomId = 1; // 테스트용 방 번호
-  // 랜덤 닉네임 생성은 렌더 중 불순 함수 호출을 피하기 위해 useRef로 한 번만 생성
-  const myNameRef = useRef("테스터" + Math.floor(Math.random() * 100));
 
   useEffect(() => {
     // 3. 클라이언트 생성 및 설정 (순수 WebSocket, brokerURL)
@@ -71,7 +71,7 @@ const ChatTest: React.FC = () => {
     if (clientRef.current && clientRef.current.connected && input.trim()) {
       const chatMessage: ChatMessage = {
         roomId: roomId,
-        sender: myNameRef.current,
+        sender: myName,
         content: input,
       };
 
@@ -111,7 +111,7 @@ const ChatTest: React.FC = () => {
           {connected ? "CONNECTED (Online)" : "DISCONNECTED"}
         </span>
         <br />
-        My Name: <strong>{myNameRef.current}</strong>
+        My Name: <strong>{myName}</strong>
       </div>
 
       {/* 채팅 내역 영역 */}
