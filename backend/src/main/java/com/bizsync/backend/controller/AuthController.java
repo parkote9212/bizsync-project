@@ -18,9 +18,9 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 인증 관련 REST API 컨트롤러
- * 
+ *
  * <p>회원가입, 로그인, 토큰 갱신, 비밀번호 변경 등의 API를 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @RestController
@@ -32,7 +32,7 @@ public class AuthController {
 
     /**
      * 회원가입을 처리합니다.
-     * 
+     *
      * @param dto 회원가입 요청 DTO
      * @return 생성된 사용자 ID
      */
@@ -45,7 +45,7 @@ public class AuthController {
 
     /**
      * 사용자 로그인을 처리합니다.
-     * 
+     *
      * @param dto 로그인 요청 DTO
      * @return JWT 토큰 응답
      */
@@ -57,7 +57,7 @@ public class AuthController {
 
     /**
      * 리프레시 토큰을 사용하여 새로운 토큰을 발급합니다.
-     * 
+     *
      * @param request 리프레시 토큰 요청
      * @return 새로운 JWT 토큰 응답
      */
@@ -69,7 +69,7 @@ public class AuthController {
 
     /**
      * 비밀번호를 변경합니다.
-     * 
+     *
      * @param dto 비밀번호 변경 요청 DTO
      * @return 성공 응답
      */

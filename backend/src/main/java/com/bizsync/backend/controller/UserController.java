@@ -15,9 +15,9 @@ import java.util.List;
 
 /**
  * 사용자 관련 REST API 컨트롤러
- * 
+ *
  * <p>사용자 목록 조회 및 검색 API를 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @RestController
@@ -29,7 +29,7 @@ public class UserController {
 
     /**
      * 전체 사용자 목록을 조회합니다.
-     * 
+     *
      * @return 사용자 목록
      */
     @GetMapping
@@ -44,7 +44,7 @@ public class UserController {
 
     /**
      * 키워드로 사용자를 검색합니다.
-     * 
+     *
      * @param keyword 검색 키워드 (이름 또는 이메일)
      * @return 검색된 사용자 목록
      */

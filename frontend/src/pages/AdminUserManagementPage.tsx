@@ -1,11 +1,10 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import {
   Box,
   Button,
   Card,
   CardContent,
   Chip,
-  Container,
   Dialog,
   DialogActions,
   DialogContent,
@@ -38,6 +37,7 @@ import {
   LockReset as LockResetIcon,
   Search as SearchIcon,
 } from "@mui/icons-material";
+import Tooltip from "@mui/material/Tooltip";
 import client from "../api/client";
 import type { AdminUser, AccountStatus, UserRole, AdminUserStatistics } from "../types/admin";
 import { useUserStore } from "../stores/userStore";
@@ -48,15 +48,16 @@ const AdminUserManagementPage = () => {
   const [loading, setLoading] = useState(false);
   const [page, setPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
-  const [totalElements, setTotalElements] = useState(0);
   const [statusFilter, setStatusFilter] = useState<AccountStatus | "">("");
   const [roleFilter, setRoleFilter] = useState<UserRole | "">("");
+  const [positionFilter, setPositionFilter] = useState<string>("");
   const [keyword, setKeyword] = useState("");
   const [selectedUser, setSelectedUser] = useState<AdminUser | null>(null);
   const [actionDialogOpen, setActionDialogOpen] = useState(false);
   const [actionType, setActionType] = useState<string>("");
   const [newPassword, setNewPassword] = useState("");
   const [newRole, setNewRole] = useState<UserRole>("MEMBER");
+  const [newPosition, setNewPosition] = useState<string>("");
   const [snackbar, setSnackbar] = useState({ open: false, message: "", severity: "success" as "success" | "error" });
   const [statistics, setStatistics] = useState<AdminUserStatistics | null>(null);
 
@@ -66,7 +67,7 @@ const AdminUserManagementPage = () => {
     }
     fetchUsers();
     fetchStatistics();
-  }, [page, statusFilter, roleFilter, keyword, user.role]);
+  }, [page, statusFilter, roleFilter, positionFilter, keyword, user.role]);
 
   const fetchUsers = async () => {
     try {
@@ -76,6 +77,7 @@ const AdminUserManagementPage = () => {
       params.append("size", "20");
       if (statusFilter) params.append("status", statusFilter);
       if (roleFilter) params.append("role", roleFilter);
+      if (positionFilter) params.append("position", positionFilter);
       if (keyword) params.append("keyword", keyword);
 
       const response = await client.get<{
@@ -88,7 +90,6 @@ const AdminUserManagementPage = () => {
       const data = response.data;
       setUsers(data.content || []);
       setTotalPages(data.totalPages || 0);
-      setTotalElements(data.totalElements || 0);
     } catch (error) {
       console.error("사용자 목록 조회 실패:", error);
       setSnackbar({ open: true, message: "사용자 목록을 불러오는데 실패했습니다.", severity: "error" });
@@ -140,12 +141,19 @@ const AdminUserManagementPage = () => {
             role: newRole,
           });
           break;
+        case "changePosition":
+          const positionValue = newPosition && newPosition.trim() !== "" ? newPosition : null;
+          await client.patch(`/admin/users/${selectedUser.userId}/position`, {
+            position: positionValue,
+          });
+          break;
       }
 
       setActionDialogOpen(false);
       setSelectedUser(null);
       setNewPassword("");
       setNewRole("MEMBER");
+      setNewPosition("");
       fetchUsers();
       fetchStatistics();
       setSnackbar({ open: true, message: "작업이 완료되었습니다.", severity: "success" });
@@ -206,14 +214,14 @@ const AdminUserManagementPage = () => {
 
   if (user.role !== "ADMIN") {
     return (
-      <Container maxWidth="lg">
+      <Box sx={{ width: "100%", px: { xs: 2, sm: 3, md: 4 } }}>
         <Alert severity="error">관리자 권한이 필요합니다.</Alert>
-      </Container>
+      </Box>
     );
   }
 
   return (
-    <Container maxWidth="xl">
+    <Box sx={{ width: "100%", px: { xs: 2, sm: 3, md: 4 } }}>
       <Box sx={{ mb: 4 }}>
         <Typography variant="h4" fontWeight="bold" gutterBottom>
           사용자 관리
@@ -221,7 +229,7 @@ const AdminUserManagementPage = () => {
 
         {statistics && (
           <Grid container spacing={2} sx={{ mb: 3 }}>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="textSecondary" gutterBottom>
@@ -231,7 +239,7 @@ const AdminUserManagementPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="textSecondary" gutterBottom>
@@ -243,7 +251,7 @@ const AdminUserManagementPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="textSecondary" gutterBottom>
@@ -255,7 +263,7 @@ const AdminUserManagementPage = () => {
                 </CardContent>
               </Card>
             </Grid>
-            <Grid item xs={12} sm={6} md={3}>
+            <Grid size={{ xs: 12, sm: 6, md: 3 }}>
               <Card>
                 <CardContent>
                   <Typography color="textSecondary" gutterBottom>
@@ -272,7 +280,7 @@ const AdminUserManagementPage = () => {
 
         <Paper sx={{ p: 2, mb: 2 }}>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
+            <Grid size={{ xs: 12, sm: 3 }}>
               <TextField
                 fullWidth
                 size="small"
@@ -284,7 +292,7 @@ const AdminUserManagementPage = () => {
                 }}
               />
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid size={{ xs: 12, sm: 2 }}>
               <Select
                 fullWidth
                 size="small"
@@ -299,7 +307,7 @@ const AdminUserManagementPage = () => {
                 <MenuItem value="DELETED">삭제</MenuItem>
               </Select>
             </Grid>
-            <Grid item xs={12} sm={3}>
+            <Grid size={{ xs: 12, sm: 2 }}>
               <Select
                 fullWidth
                 size="small"
@@ -313,7 +321,25 @@ const AdminUserManagementPage = () => {
                 <MenuItem value="MEMBER">멤버</MenuItem>
               </Select>
             </Grid>
-            <Grid item xs={12} sm={2}>
+            <Grid size={{ xs: 12, sm: 2 }}>
+              <Select
+                fullWidth
+                size="small"
+                value={positionFilter}
+                onChange={(e) => setPositionFilter(e.target.value)}
+                displayEmpty
+              >
+                <MenuItem value="">전체 직급</MenuItem>
+                <MenuItem value="STAFF">사원</MenuItem>
+                <MenuItem value="SENIOR">대리</MenuItem>
+                <MenuItem value="ASSISTANT_MANAGER">과장</MenuItem>
+                <MenuItem value="DEPUTY_GENERAL_MANAGER">차장</MenuItem>
+                <MenuItem value="GENERAL_MANAGER">부장</MenuItem>
+                <MenuItem value="DIRECTOR">이사</MenuItem>
+                <MenuItem value="EXECUTIVE">임원</MenuItem>
+              </Select>
+            </Grid>
+            <Grid size={{ xs: 12, sm: 2 }}>
               <Button
                 fullWidth
                 variant="contained"
@@ -335,6 +361,7 @@ const AdminUserManagementPage = () => {
                 <TableCell>이메일</TableCell>
                 <TableCell>이름</TableCell>
                 <TableCell>부서</TableCell>
+                <TableCell>직급</TableCell>
                 <TableCell>권한</TableCell>
                 <TableCell>상태</TableCell>
                 <TableCell>가입일</TableCell>
@@ -344,13 +371,13 @@ const AdminUserManagementPage = () => {
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     로딩 중...
                   </TableCell>
                 </TableRow>
               ) : users.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={7} align="center">
+                  <TableCell colSpan={8} align="center">
                     사용자가 없습니다.
                   </TableCell>
                 </TableRow>
@@ -360,6 +387,7 @@ const AdminUserManagementPage = () => {
                     <TableCell>{user.email}</TableCell>
                     <TableCell>{user.name}</TableCell>
                     <TableCell>{user.department || "-"}</TableCell>
+                    <TableCell>{user.position || "-"}</TableCell>
                     <TableCell>{getRoleLabel(user.role)}</TableCell>
                     <TableCell>
                       <Chip
@@ -370,73 +398,101 @@ const AdminUserManagementPage = () => {
                     </TableCell>
                     <TableCell>{new Date(user.createdAt).toLocaleDateString()}</TableCell>
                     <TableCell align="center">
-                      <Stack direction="row" spacing={1} justifyContent="center">
+                      <Stack direction="row" spacing={1} justifyContent="center" flexWrap="wrap">
                         {user.status === "PENDING" && (
                           <>
-                            <IconButton
-                              size="small"
-                              color="success"
-                              onClick={() => openActionDialog(user, "approve")}
-                            >
-                              <CheckCircleIcon />
-                            </IconButton>
-                            <IconButton
-                              size="small"
-                              color="error"
-                              onClick={() => openActionDialog(user, "reject")}
-                            >
-                              <CancelIcon />
-                            </IconButton>
+                            <Tooltip title="승인">
+                              <IconButton
+                                size="small"
+                                color="success"
+                                onClick={() => openActionDialog(user, "approve")}
+                              >
+                                <CheckCircleIcon />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="거부">
+                              <IconButton
+                                size="small"
+                                color="error"
+                                onClick={() => openActionDialog(user, "reject")}
+                              >
+                                <CancelIcon />
+                              </IconButton>
+                            </Tooltip>
                           </>
                         )}
                         {user.status === "ACTIVE" && (
-                          <IconButton
-                            size="small"
-                            color="warning"
-                            onClick={() => openActionDialog(user, "suspend")}
-                          >
-                            <BlockIcon />
-                          </IconButton>
+                          <Tooltip title="정지">
+                            <IconButton
+                              size="small"
+                              color="warning"
+                              onClick={() => openActionDialog(user, "suspend")}
+                            >
+                              <BlockIcon />
+                            </IconButton>
+                          </Tooltip>
                         )}
                         {user.status === "SUSPENDED" && (
+                          <Tooltip title="활성화">
+                            <IconButton
+                              size="small"
+                              color="success"
+                              onClick={() => openActionDialog(user, "activate")}
+                            >
+                              <PlayArrowIcon />
+                            </IconButton>
+                          </Tooltip>
+                        )}
+                        <Tooltip title="권한 변경">
                           <IconButton
                             size="small"
-                            color="success"
-                            onClick={() => openActionDialog(user, "activate")}
+                            color="primary"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setNewRole(user.role);
+                              setActionType("changeRole");
+                              setActionDialogOpen(true);
+                            }}
                           >
-                            <PlayArrowIcon />
+                            <EditIcon />
                           </IconButton>
-                        )}
-                        <IconButton
-                          size="small"
-                          color="primary"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setNewRole(user.role);
-                            setActionType("changeRole");
-                            setActionDialogOpen(true);
-                          }}
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="secondary"
-                          onClick={() => {
-                            setSelectedUser(user);
-                            setActionType("resetPassword");
-                            setActionDialogOpen(true);
-                          }}
-                        >
-                          <LockResetIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => openActionDialog(user, "delete")}
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        </Tooltip>
+                        <Tooltip title="직급 변경">
+                          <IconButton
+                            size="small"
+                            color="info"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setNewPosition(user.position || "");
+                              setActionType("changePosition");
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="비밀번호 재설정">
+                          <IconButton
+                            size="small"
+                            color="secondary"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setActionType("resetPassword");
+                              setActionDialogOpen(true);
+                            }}
+                          >
+                            <LockResetIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="삭제">
+                          <IconButton
+                            size="small"
+                            color="error"
+                            onClick={() => openActionDialog(user, "delete")}
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </Stack>
                     </TableCell>
                   </TableRow>
@@ -466,6 +522,7 @@ const AdminUserManagementPage = () => {
             {actionType === "delete" && "사용자 삭제"}
             {actionType === "resetPassword" && "비밀번호 재설정"}
             {actionType === "changeRole" && "권한 변경"}
+            {actionType === "changePosition" && "직급 변경"}
           </DialogTitle>
           <DialogContent>
             {selectedUser && (
@@ -496,6 +553,24 @@ const AdminUserManagementPage = () => {
                     <MenuItem value="ADMIN">관리자</MenuItem>
                   </Select>
                 )}
+                {actionType === "changePosition" && (
+                  <Select
+                    fullWidth
+                    value={newPosition}
+                    onChange={(e) => setNewPosition(e.target.value)}
+                    margin="dense"
+                    displayEmpty
+                  >
+                    <MenuItem value="">직급 없음</MenuItem>
+                    <MenuItem value="STAFF">사원</MenuItem>
+                    <MenuItem value="SENIOR">대리</MenuItem>
+                    <MenuItem value="ASSISTANT_MANAGER">과장</MenuItem>
+                    <MenuItem value="DEPUTY_GENERAL_MANAGER">차장</MenuItem>
+                    <MenuItem value="GENERAL_MANAGER">부장</MenuItem>
+                    <MenuItem value="DIRECTOR">이사</MenuItem>
+                    <MenuItem value="EXECUTIVE">임원</MenuItem>
+                  </Select>
+                )}
                 {(actionType === "delete" || actionType === "reject") && (
                   <Alert severity="warning" sx={{ mt: 2 }}>
                     이 작업은 되돌릴 수 없습니다. 정말 진행하시겠습니까?
@@ -523,7 +598,7 @@ const AdminUserManagementPage = () => {
           </Alert>
         </Snackbar>
       </Box>
-    </Container>
+    </Box>
   );
 };
 

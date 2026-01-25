@@ -4,10 +4,12 @@ import com.bizsync.backend.common.exception.BusinessException;
 import com.bizsync.backend.common.exception.ErrorCode;
 import com.bizsync.backend.common.util.SecurityUtil;
 import com.bizsync.backend.domain.entity.AccountStatus;
+import com.bizsync.backend.domain.entity.Position;
 import com.bizsync.backend.domain.entity.Role;
 import com.bizsync.backend.domain.entity.User;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.request.PasswordResetRequestDTO;
+import com.bizsync.backend.dto.request.UserPositionUpdateRequestDTO;
 import com.bizsync.backend.dto.request.UserRoleUpdateRequestDTO;
 import com.bizsync.backend.dto.response.AdminUserStatisticsDTO;
 import lombok.RequiredArgsConstructor;
@@ -20,9 +22,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 관리자용 사용자 관리 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * <p>사용자 목록 조회, 승인/거부, 정지/활성화, 권한 변경, 비밀번호 재설정 등의 기능을 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @Slf4j
@@ -36,7 +38,7 @@ public class AdminUserService {
 
     /**
      * 자기 자신인지 확인하고 예외를 발생시킵니다.
-     * 
+     *
      * @param userId 확인할 사용자 ID
      * @throws BusinessException 자기 자신을 수정하려는 경우
      */
@@ -49,21 +51,22 @@ public class AdminUserService {
 
     /**
      * 사용자 목록을 조회합니다 (필터링 및 검색 지원).
-     * 
-     * @param status 계정 상태 필터 (null이면 전체)
-     * @param role 사용자 권한 필터 (null이면 전체)
-     * @param keyword 검색 키워드 (이름, 이메일 검색)
+     *
+     * @param status   계정 상태 필터 (null이면 전체)
+     * @param role     사용자 권한 필터 (null이면 전체)
+     * @param position 사용자 직급 필터 (null이면 전체)
+     * @param keyword  검색 키워드 (이름, 이메일 검색)
      * @param pageable 페이지 정보
      * @return 사용자 목록 (페이징)
      */
     @Transactional(readOnly = true)
-    public Page<User> getUserList(AccountStatus status, Role role, String keyword, Pageable pageable) {
-        return userRepository.findByStatusAndRoleAndKeyword(status, role, keyword, pageable);
+    public Page<User> getUserList(AccountStatus status, Role role, Position position, String keyword, Pageable pageable) {
+        return userRepository.findByStatusAndRoleAndPositionAndKeyword(status, role, position, keyword, pageable);
     }
 
     /**
      * 사용자 상세 정보를 조회합니다.
-     * 
+     *
      * @param userId 조회할 사용자 ID
      * @return 사용자 엔티티
      */
@@ -74,7 +77,7 @@ public class AdminUserService {
 
     /**
      * 사용자 계정을 승인합니다.
-     * 
+     *
      * @param userId 승인할 사용자 ID
      * @throws BusinessException 자기 자신을 수정하려는 경우 또는 이미 활성화된 계정인 경우
      */
@@ -91,7 +94,7 @@ public class AdminUserService {
 
     /**
      * 사용자 계정을 거부합니다.
-     * 
+     *
      * @param userId 거부할 사용자 ID
      * @throws BusinessException 자기 자신을 수정하려는 경우
      */
@@ -105,7 +108,7 @@ public class AdminUserService {
 
     /**
      * 사용자 계정을 정지합니다.
-     * 
+     *
      * @param userId 정지할 사용자 ID
      * @throws BusinessException 자기 자신을 수정하려는 경우
      */
@@ -119,7 +122,7 @@ public class AdminUserService {
 
     /**
      * 사용자 계정을 활성화합니다.
-     * 
+     *
      * @param userId 활성화할 사용자 ID
      * @throws BusinessException 자기 자신을 수정하려는 경우
      */
@@ -133,9 +136,9 @@ public class AdminUserService {
 
     /**
      * 사용자 권한을 변경합니다.
-     * 
+     *
      * @param userId 사용자 ID
-     * @param dto 권한 변경 요청 DTO
+     * @param dto    권한 변경 요청 DTO
      * @throws BusinessException 자기 자신을 수정하려는 경우
      */
     public void changeUserRole(Long userId, UserRoleUpdateRequestDTO dto) {
@@ -147,10 +150,22 @@ public class AdminUserService {
     }
 
     /**
-     * 사용자 비밀번호를 재설정합니다.
-     * 
+     * 사용자 직급을 변경합니다.
+     *
      * @param userId 사용자 ID
-     * @param dto 비밀번호 재설정 요청 DTO
+     * @param dto    직급 변경 요청 DTO
+     */
+    public void changeUserPosition(Long userId, UserPositionUpdateRequestDTO dto) {
+        User user = userRepository.findByIdOrThrow(userId);
+        user.changePosition(dto.position());
+        log.info("사용자 직급 변경: userId={}, newPosition={}", userId, dto.position());
+    }
+
+    /**
+     * 사용자 비밀번호를 재설정합니다.
+     *
+     * @param userId 사용자 ID
+     * @param dto    비밀번호 재설정 요청 DTO
      */
     public void resetPassword(Long userId, PasswordResetRequestDTO dto) {
         User user = userRepository.findByIdOrThrow(userId);
@@ -160,8 +175,8 @@ public class AdminUserService {
     }
 
     /**
-     * 사용자를 삭제합니다.
-     * 
+     * 사용자를 삭제합니다 (소프트 삭제 - 상태를 DELETED로 변경).
+     *
      * @param userId 삭제할 사용자 ID
      * @throws BusinessException 자기 자신을 삭제하려는 경우
      */
@@ -169,13 +184,13 @@ public class AdminUserService {
         validateNotSelf(userId);
 
         User user = userRepository.findByIdOrThrow(userId);
-        userRepository.delete(user);
-        log.info("사용자 삭제: userId={}, email={}", userId, user.getEmail());
+        user.reject(); // 상태를 DELETED로 변경 (소프트 삭제)
+        log.info("사용자 삭제 (소프트 삭제): userId={}, email={}", userId, user.getEmail());
     }
 
     /**
      * 사용자 통계 정보를 조회합니다.
-     * 
+     *
      * @return 사용자 통계 DTO
      */
     @Transactional(readOnly = true)

@@ -12,6 +12,8 @@ import {
   TextField,
 } from "@mui/material";
 import React, { useState } from "react";
+import Toast from "./Toast";
+import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
 interface ColumnCreateDialogProps {
   open: boolean;
@@ -29,6 +31,8 @@ const ColumnCreateDialog: React.FC<ColumnCreateDialogProps> = ({
     description: "",
     columnType: "",
   });
+  const [nameError, setNameError] = useState("");
+  const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement> | any) => {
     const { name, value } = e.target;
@@ -40,10 +44,11 @@ const ColumnCreateDialog: React.FC<ColumnCreateDialogProps> = ({
 
   const handleSubmit = () => {
     if (!form.name.trim()) {
-      alert("컬럼명은 필수입니다.");
+      setNameError("컬럼명은 필수입니다.");
       return;
     }
 
+    setNameError("");
     // 빈 값은 전송하지 않음
     const data: any = { name: form.name };
     if (form.description) data.description = form.description;
@@ -51,6 +56,7 @@ const ColumnCreateDialog: React.FC<ColumnCreateDialogProps> = ({
 
     onSubmit(data);
     setForm({ name: "", description: "", columnType: "" });
+    setToast(createToastState("컬럼이 생성되었습니다.", "success"));
     onClose();
   };
 
@@ -68,11 +74,16 @@ const ColumnCreateDialog: React.FC<ColumnCreateDialogProps> = ({
             label="컬럼명"
             name="name"
             value={form.name}
-            onChange={handleChange}
+            onChange={(e) => {
+              handleChange(e);
+              if (nameError) setNameError("");
+            }}
             fullWidth
             required
             autoFocus
             placeholder="예: 할 일, 진행 중, 완료"
+            error={!!nameError}
+            helperText={nameError}
           />
           <TextField
             label="설명"
@@ -108,6 +119,12 @@ const ColumnCreateDialog: React.FC<ColumnCreateDialogProps> = ({
           생성하기
         </Button>
       </DialogActions>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={() => closeToast(setToast)}
+      />
     </Dialog>
   );
 };

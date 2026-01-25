@@ -12,10 +12,10 @@ import org.springframework.web.bind.annotation.RestController;
 
 /**
  * 관리자 대시보드 REST API 컨트롤러
- * 
+ *
  * <p>관리자 대시보드 통계 정보 조회 API를 제공합니다.
  * ADMIN 권한이 필요합니다.
- * 
+ *
  * @author BizSync Team
  */
 @RestController
@@ -28,7 +28,7 @@ public class AdminDashboardController {
 
     /**
      * 관리자 대시보드 통계 정보를 조회합니다.
-     * 
+     *
      * @return 대시보드 통계 정보
      */
     @GetMapping

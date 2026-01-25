@@ -9,9 +9,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * 알림 발송 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * <p>결재 승인/반려 알림, 결재 요청 알림 등의 WebSocket 기반 실시간 알림을 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @Slf4j

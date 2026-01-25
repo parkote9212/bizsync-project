@@ -15,9 +15,9 @@ import java.util.List;
 
 /**
  * 채팅 관련 REST API 컨트롤러
- * 
+ *
  * <p>채팅 메시지 전송 및 내역 조회 API를 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @RestController
@@ -29,7 +29,7 @@ public class ChatController {
 
     /**
      * WebSocket을 통해 채팅 메시지를 전송합니다.
-     * 
+     *
      * @param message 채팅 메시지 DTO
      */
     @MessageMapping("/chat/message")
@@ -40,7 +40,7 @@ public class ChatController {
 
     /**
      * 특정 채팅방의 메시지 내역을 조회합니다.
-     * 
+     *
      * @param roomId 채팅방 ID
      * @return 채팅 메시지 목록
      */

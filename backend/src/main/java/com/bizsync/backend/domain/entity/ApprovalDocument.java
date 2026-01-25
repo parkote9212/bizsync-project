@@ -42,7 +42,8 @@ public class ApprovalDocument extends BaseEntity {
     // 문서 전체 상태 (진행중/완료/반려)
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private ApprovalStatus status;
+    @Builder.Default
+    private ApprovalStatus status = ApprovalStatus.PENDING;
 
     @Column(precision = 19, scale = 2)
     private BigDecimal amount;

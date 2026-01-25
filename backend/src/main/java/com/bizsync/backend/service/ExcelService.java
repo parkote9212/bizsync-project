@@ -27,9 +27,9 @@ import java.util.List;
 
 /**
  * 엑셀 파일 처리 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * <p>엑셀 파일을 통한 업무 대량 등록 및 업무 목록 엑셀 다운로드 기능을 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @Service
@@ -46,7 +46,7 @@ public class ExcelService {
 
     /**
      * 엑셀 파일을 읽어서 업무(Task)를 대량 등록합니다.
-     * 
+     *
      * <p>엑셀 형식:
      * <ul>
      *   <li>컬럼명: 칸반 컬럼 이름</li>
@@ -55,9 +55,9 @@ public class ExcelService {
      *   <li>마감일(yyyy-MM-dd): 마감일</li>
      *   <li>상세내용: 업무 상세 내용</li>
      * </ul>
-     * 
+     *
      * @param projectId 프로젝트 ID
-     * @param file 엑셀 파일
+     * @param file      엑셀 파일
      * @return 등록된 업무 수
      * @throws IOException 파일 읽기 오류
      */
@@ -133,9 +133,9 @@ public class ExcelService {
 
     /**
      * 프로젝트의 모든 업무를 엑셀 파일로 다운로드합니다.
-     * 
+     *
      * <p>컬럼 순서와 업무 순서대로 정렬하여 엑셀 파일을 생성합니다.
-     * 
+     *
      * @param projectId 프로젝트 ID
      * @return 엑셀 파일 바이트 배열
      * @throws IOException 파일 생성 오류

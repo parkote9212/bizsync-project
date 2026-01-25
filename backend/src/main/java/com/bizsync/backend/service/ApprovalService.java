@@ -19,6 +19,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -26,9 +27,9 @@ import java.util.stream.Collectors;
 
 /**
  * 결재 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * <p>결재 문서 생성, 승인/반려 처리, 취소, 조회 등의 기능을 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @Service
@@ -44,9 +45,9 @@ public class ApprovalService {
 
     /**
      * 결재 문서를 생성하고 결재선을 설정합니다.
-     * 
+     *
      * @param drafterId 기안자 ID
-     * @param dto 결재 생성 요청 DTO
+     * @param dto       결재 생성 요청 DTO
      * @return 생성된 결재 문서 ID
      * @throws ResourceNotFoundException 결재자가 존재하지 않는 경우
      */
@@ -120,13 +121,13 @@ public class ApprovalService {
 
     /**
      * 결재 문서를 취소합니다.
-     * 
+     *
      * <p>기안자만 취소할 수 있으며, 이미 승인되거나 반려된 결재는 취소할 수 없습니다.
-     * 
-     * @param userId 사용자 ID (기안자 여부 확인용)
+     *
+     * @param userId     사용자 ID (기안자 여부 확인용)
      * @param documentId 취소할 결재 문서 ID
      * @throws ForbiddenException 기안자가 아닌 경우
-     * @throws BusinessException 이미 승인/반려/취소된 결재인 경우
+     * @throws BusinessException  이미 승인/반려/취소된 결재인 경우
      */
     public void cancelApproval(Long userId, Long documentId) {
         ApprovalDocument document = approvalDocumentRepository.findByIdOrThrow(documentId);
@@ -164,15 +165,15 @@ public class ApprovalService {
 
     /**
      * 결재를 승인하거나 반려 처리합니다.
-     * 
+     *
      * <p>이전 결재자가 모두 승인한 경우에만 처리할 수 있으며,
      * 모든 결재자가 승인하면 문서가 최종 승인됩니다.
-     * 
+     *
      * @param approverId 결재자 ID
      * @param documentId 결재 문서 ID
-     * @param dto 결재 처리 요청 DTO (승인/반려 상태 및 코멘트)
+     * @param dto        결재 처리 요청 DTO (승인/반려 상태 및 코멘트)
      * @throws ForbiddenException 결재 권한이 없는 경우
-     * @throws BusinessException 이미 처리된 결재이거나 이전 결재자가 미승인인 경우
+     * @throws BusinessException  이미 처리된 결재이거나 이전 결재자가 미승인인 경우
      */
     public void processApproval(Long approverId, Long documentId, ApprovalProcessRequestDTO dto) {
         ApprovalDocument document = approvalDocumentRepository.findByIdOrThrow(documentId);
@@ -240,10 +241,10 @@ public class ApprovalService {
 
     /**
      * 결재 문서 상세 정보를 조회합니다.
-     * 
+     *
      * <p>기안자 또는 결재자만 조회할 수 있습니다.
-     * 
-     * @param userId 사용자 ID (권한 확인용)
+     *
+     * @param userId     사용자 ID (권한 확인용)
      * @param documentId 조회할 결재 문서 ID
      * @return 결재 상세 정보 DTO
      * @throws ForbiddenException 기안자도 결재자도 아닌 경우
@@ -264,8 +265,8 @@ public class ApprovalService {
 
     /**
      * 사용자가 기안한 결재 문서 목록을 조회합니다.
-     * 
-     * @param userId 사용자 ID
+     *
+     * @param userId   사용자 ID
      * @param pageable 페이지 정보
      * @return 기안한 결재 문서 목록 (페이징)
      */
@@ -277,8 +278,8 @@ public class ApprovalService {
 
     /**
      * 사용자에게 대기 중인 결재 목록을 조회합니다.
-     * 
-     * @param userId 사용자 ID
+     *
+     * @param userId   사용자 ID
      * @param pageable 페이지 정보
      * @return 대기 중인 결재 목록 (페이징)
      */
@@ -290,8 +291,8 @@ public class ApprovalService {
 
     /**
      * 사용자가 처리한 결재 목록을 조회합니다 (승인/반려 완료).
-     * 
-     * @param userId 사용자 ID
+     *
+     * @param userId   사용자 ID
      * @param pageable 페이지 정보
      * @return 처리 완료된 결재 목록 (페이징)
      */

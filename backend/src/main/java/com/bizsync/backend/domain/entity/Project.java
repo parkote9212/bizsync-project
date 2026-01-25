@@ -37,19 +37,20 @@ public class Project extends BaseEntity {
     private BigDecimal totalBudget;
 
     @Column(name = "used_budget", precision = 19, scale = 2)
-    private BigDecimal usedBudget;
+    @Builder.Default
+    private BigDecimal usedBudget = BigDecimal.ZERO;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'IN_PROGRESS'")
+    @Column(name = "status", nullable = false, length = 20, columnDefinition = "VARCHAR(20) DEFAULT 'PLANNING'")
     @Builder.Default
-    private ProjectStatus status = ProjectStatus.IN_PROGRESS;
+    private ProjectStatus status = ProjectStatus.PLANNING;
 
     @PrePersist
     public void prePersist() {
         if (this.usedBudget == null)
             this.usedBudget = BigDecimal.ZERO;
         if (this.status == null)
-            this.status = ProjectStatus.IN_PROGRESS;
+            this.status = ProjectStatus.PLANNING;
     }
 
     public void spendBudget(BigDecimal amount) {
@@ -66,6 +67,15 @@ public class Project extends BaseEntity {
      */
     public void complete() {
         this.status = ProjectStatus.COMPLETED;
+    }
+
+    /**
+     * 프로젝트를 시작 (기획중에서 진행중으로 변경)
+     */
+    public void start() {
+        if (this.status == ProjectStatus.PLANNING) {
+            this.status = ProjectStatus.IN_PROGRESS;
+        }
     }
 
     /**
@@ -89,6 +99,13 @@ public class Project extends BaseEntity {
      */
     public boolean isCompleted() {
         return this.status == ProjectStatus.COMPLETED;
+    }
+
+    /**
+     * 프로젝트를 취소 상태로 변경 (소프트 삭제)
+     */
+    public void cancel() {
+        this.status = ProjectStatus.CANCELLED;
     }
 
     /**

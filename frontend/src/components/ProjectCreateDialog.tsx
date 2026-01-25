@@ -9,6 +9,8 @@ import {
   Stack,
 } from "@mui/material";
 import client from "../api/client";
+import Toast from "./Toast";
+import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
 interface ProjectCreateDialogProps {
   open: boolean;
@@ -28,6 +30,8 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
     endDate: "",
     totalBudget: 0,
   });
+  const [errors, setErrors] = useState<{ name?: string; startDate?: string; endDate?: string }>({});
+  const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -38,15 +42,28 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
   };
 
   const handleSubmit = async () => {
-    if (!form.name || !form.startDate || !form.endDate) {
-      alert("프로젝트 이름과 기간은 필수입니다.");
+    // 입력 검증
+    const newErrors: { name?: string; startDate?: string; endDate?: string } = {};
+    if (!form.name || form.name.trim() === "") {
+      newErrors.name = "프로젝트 이름은 필수입니다.";
+    }
+    if (!form.startDate) {
+      newErrors.startDate = "시작일은 필수입니다.";
+    }
+    if (!form.endDate) {
+      newErrors.endDate = "종료일은 필수입니다.";
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
+    setErrors({});
+
     try {
       await client.post("/projects", form);
-
-      alert("프로젝트가 생성되었습니다.!");
+      setToast(createToastState("프로젝트가 생성되었습니다.", "success"));
       onCreate();
       onClose();
 
@@ -57,9 +74,10 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
         endDate: "",
         totalBudget: 0,
       });
-    } catch (error: unknown) {
+    } catch (error: any) {
       console.error("프로젝트 생성 실패", error);
-      alert("생성 중 오류가 발생했습니다.");
+      const errorMessage = error.response?.data?.message || "생성 중 오류가 발생했습니다.";
+      setToast(createToastState(errorMessage, "error"));
     }
   };
 
@@ -76,6 +94,8 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
             fullWidth
             required
             autoFocus
+            error={!!errors.name}
+            helperText={errors.name}
           />
           <TextField
             label="설명"
@@ -95,6 +115,8 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
               onChange={handleChange}
               fullWidth
               required
+              error={!!errors.startDate}
+              helperText={errors.startDate}
               slotProps={{ inputLabel: { shrink: true } }}
             />
             <TextField
@@ -105,6 +127,8 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
               onChange={handleChange}
               fullWidth
               required
+              error={!!errors.endDate}
+              helperText={errors.endDate}
               slotProps={{ inputLabel: { shrink: true } }}
             />
           </Stack>
@@ -126,6 +150,12 @@ const ProjectCreateDialog: React.FC<ProjectCreateDialogProps> = ({
           생성하기
         </Button>
       </DialogActions>
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={() => closeToast(setToast)}
+      />
     </Dialog>
   );
 };

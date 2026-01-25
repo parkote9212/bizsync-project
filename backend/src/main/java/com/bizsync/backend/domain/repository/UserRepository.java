@@ -3,6 +3,7 @@ package com.bizsync.backend.domain.repository;
 import com.bizsync.backend.common.exception.ErrorCode;
 import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.AccountStatus;
+import com.bizsync.backend.domain.entity.Position;
 import com.bizsync.backend.domain.entity.Role;
 import com.bizsync.backend.domain.entity.User;
 import org.springframework.data.domain.Page;
@@ -29,10 +30,12 @@ public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u WHERE " +
             "(:status IS NULL OR u.status = :status) AND " +
             "(:role IS NULL OR u.role = :role) AND " +
+            "(:position IS NULL OR u.position = :position) AND " +
             "(:keyword IS NULL OR u.name LIKE %:keyword% OR u.email LIKE %:keyword%)")
-    Page<User> findByStatusAndRoleAndKeyword(
+    Page<User> findByStatusAndRoleAndPositionAndKeyword(
             @Param("status") AccountStatus status,
             @Param("role") Role role,
+            @Param("position") Position position,
             @Param("keyword") String keyword,
             Pageable pageable
     );
@@ -40,6 +43,8 @@ public interface UserRepository extends JpaRepository<User, Long> {
     long countByRole(Role role);
 
     long countByStatus(AccountStatus status);
+
+    long countByPosition(Position position);
 
     default User findByIdOrThrow(Long userId) {
         return findById(userId)

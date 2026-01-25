@@ -21,9 +21,9 @@ import java.util.List;
 
 /**
  * 프로젝트 멤버 관리 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * <p>프로젝트 멤버 초대, 권한 변경, 삭제, 조회 등의 기능을 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @Service
@@ -37,11 +37,11 @@ public class ProjectMemberService {
 
     /**
      * 프로젝트에 멤버를 초대합니다.
-     * 
+     *
      * <p>프로젝트 리더만 초대할 수 있으며, 이미 멤버인 경우 예외가 발생합니다.
-     * 
+     *
      * @param projectId 프로젝트 ID
-     * @param email 초대할 사용자 이메일
+     * @param email     초대할 사용자 이메일
      * @throws DuplicateException 이미 프로젝트 멤버인 경우
      */
     @RequireProjectLeader
@@ -71,12 +71,12 @@ public class ProjectMemberService {
 
     /**
      * 프로젝트 멤버의 권한을 변경합니다.
-     * 
+     *
      * <p>프로젝트 리더만 변경할 수 있으며, 자기 자신의 권한은 변경할 수 없습니다.
-     * 
+     *
      * @param projectId 프로젝트 ID
-     * @param memberId 변경할 멤버 ID
-     * @param newRole 새로운 권한 (PL, MEMBER 등)
+     * @param memberId  변경할 멤버 ID
+     * @param newRole   새로운 권한 (PL, MEMBER 등)
      * @throws BusinessException 자기 자신의 권한을 변경하려는 경우
      */
     @RequireProjectLeader
@@ -97,11 +97,11 @@ public class ProjectMemberService {
 
     /**
      * 프로젝트에서 멤버를 제거합니다.
-     * 
+     *
      * <p>프로젝트 리더만 제거할 수 있으며, 자기 자신은 제거할 수 없습니다.
-     * 
+     *
      * @param projectId 프로젝트 ID
-     * @param memberId 제거할 멤버 ID
+     * @param memberId  제거할 멤버 ID
      * @throws BusinessException 자기 자신을 제거하려는 경우
      */
     @RequireProjectLeader
@@ -121,9 +121,9 @@ public class ProjectMemberService {
 
     /**
      * 프로젝트 멤버 목록을 조회합니다.
-     * 
+     *
      * <p>프로젝트 멤버만 조회할 수 있습니다.
-     * 
+     *
      * @param projectId 프로젝트 ID
      * @return 프로젝트 멤버 목록
      */

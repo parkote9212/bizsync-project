@@ -25,6 +25,8 @@ interface Project {
   startDate: string;
   endDate: string;
   status: ProjectStatus;
+  totalBudget?: number;
+  usedBudget?: number;
 }
 
 // 프로젝트 상태별 표시 설정
@@ -130,9 +132,17 @@ const ProjectListPage = () => {
                 <Typography color="text.secondary" gutterBottom>
                   {project.description || "설명이 없습니다."}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 0.5 }}>
                   기간 : {project.startDate} ~ {project.endDate}
                 </Typography>
+                <Box sx={{ mt: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    총 예산 : {project.totalBudget != null ? Number(project.totalBudget).toLocaleString() : "0"}원
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    사용 예산 : {project.usedBudget != null ? Number(project.usedBudget).toLocaleString() : "0"}원
+                  </Typography>
+                </Box>
               </CardContent>
               <CardActions>
                 <Button

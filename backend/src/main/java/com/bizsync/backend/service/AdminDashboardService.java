@@ -1,9 +1,13 @@
 package com.bizsync.backend.service;
 
 import com.bizsync.backend.domain.entity.AccountStatus;
+import com.bizsync.backend.domain.entity.Position;
 import com.bizsync.backend.domain.entity.ProjectStatus;
 import com.bizsync.backend.domain.entity.Role;
-import com.bizsync.backend.domain.repository.*;
+import com.bizsync.backend.domain.repository.ApprovalDocumentRepository;
+import com.bizsync.backend.domain.repository.ProjectRepository;
+import com.bizsync.backend.domain.repository.TaskRepository;
+import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.response.AdminDashboardStatisticsDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -11,9 +15,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 관리자 대시보드 통계 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * <p>사용자, 프로젝트, 업무, 결재 등의 통계 정보를 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @Service
@@ -25,11 +29,10 @@ public class AdminDashboardService {
     private final ProjectRepository projectRepository;
     private final TaskRepository taskRepository;
     private final ApprovalDocumentRepository approvalDocumentRepository;
-    private final ProjectMemberRepository projectMemberRepository;
 
     /**
      * 관리자 대시보드 통계 정보를 조회합니다.
-     * 
+     *
      * @return 대시보드 통계 DTO (사용자, 프로젝트, 업무, 결재 통계 포함)
      */
     public AdminDashboardStatisticsDTO getDashboardStatistics() {
@@ -52,6 +55,15 @@ public class AdminDashboardService {
         long totalTasks = taskRepository.count();
         long totalApprovals = approvalDocumentRepository.count();
 
+        // 직급별 통계
+        long staffUsers = userRepository.countByPosition(Position.STAFF);
+        long seniorUsers = userRepository.countByPosition(Position.SENIOR);
+        long assistantManagerUsers = userRepository.countByPosition(Position.ASSISTANT_MANAGER);
+        long deputyGeneralManagerUsers = userRepository.countByPosition(Position.DEPUTY_GENERAL_MANAGER);
+        long generalManagerUsers = userRepository.countByPosition(Position.GENERAL_MANAGER);
+        long directorUsers = userRepository.countByPosition(Position.DIRECTOR);
+        long executiveUsers = userRepository.countByPosition(Position.EXECUTIVE);
+
         return AdminDashboardStatisticsDTO.from(
                 totalUsers,
                 pendingUsers,
@@ -68,7 +80,14 @@ public class AdminDashboardService {
                 onHoldProjects,
                 cancelledProjects,
                 totalTasks,
-                totalApprovals
+                totalApprovals,
+                staffUsers,
+                seniorUsers,
+                assistantManagerUsers,
+                deputyGeneralManagerUsers,
+                generalManagerUsers,
+                directorUsers,
+                executiveUsers
         );
     }
 }

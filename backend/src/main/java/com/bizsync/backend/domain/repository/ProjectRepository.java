@@ -17,7 +17,7 @@ import java.util.Optional;
 public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     /**
-     *  비관적 락(Pessimistic Lock)을 사용한 프로젝트 조회
+     * 비관적 락(Pessimistic Lock)을 사용한 프로젝트 조회
      *
      * @param id 프로젝트 ID
      * @return 락이 걸린 프로젝트 엔티티

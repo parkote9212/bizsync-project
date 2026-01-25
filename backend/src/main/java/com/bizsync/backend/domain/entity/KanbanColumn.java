@@ -28,7 +28,8 @@ public class KanbanColumn extends BaseEntity {
     private String description; // 컬럼 설명
 
     @Column(nullable = false)
-    private Integer sequence; // 순서 (1, 2, 3...)
+    @Builder.Default
+    private Integer sequence = 0; // 순서 (1, 2, 3...)
 
     @Enumerated(EnumType.STRING)
     @Column(name = "column_type", nullable = false, length = 20)

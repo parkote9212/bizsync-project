@@ -81,8 +81,9 @@ const Layout = () => {
     { text: "사용자 관리", icon: <PeopleIcon />, path: "/admin/users" },
   ];
 
+  // 관리자는 관리자 메뉴만, 일반 사용자는 일반 메뉴만 표시
   const allMenuItems = user.role === "ADMIN" 
-    ? [...menuItems, ...adminMenuItems]
+    ? adminMenuItems
     : menuItems;
 
   const getPageTitle = () => {

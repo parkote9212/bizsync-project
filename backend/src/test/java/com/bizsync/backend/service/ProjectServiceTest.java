@@ -41,7 +41,6 @@ class ProjectServiceTest {
     @Test
     @DisplayName("프로젝트 생성 시 프로젝트 저장 & 생성자가 멤버로 등록되어야 함")
     @WithMockUser(username = "1", roles = {"MEMBER"})
-    @SuppressWarnings("null")
     void createProject_success() {
         // given
         Long userId = 1L;

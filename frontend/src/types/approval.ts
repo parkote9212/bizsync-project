@@ -1,3 +1,5 @@
+import type { UserSearchResult, PageResponse } from "./user";
+
 // 결재 상태
 export const ApprovalStatus = {
   TEMP: "TEMP",
@@ -49,15 +51,6 @@ export interface ApprovalDetail {
   approvalLines: ApprovalLine[];
 }
 
-// 사용자 검색 결과
-export interface UserSearchResult {
-  userId: number;
-  name: string;
-  email: string;
-  department: string;
-  position: string;
-}
-
 // 결재 작성 폼 데이터
 export interface ApprovalFormData {
   title: string;
@@ -85,11 +78,3 @@ export interface ApprovalCreateRequest {
   approverIds: number[];
 }
 
-// 페이지네이션 응답
-export interface PageResponse<T> {
-  content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-}

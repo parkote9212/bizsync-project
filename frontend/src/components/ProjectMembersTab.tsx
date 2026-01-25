@@ -15,6 +15,9 @@ import {
 } from "@mui/material";
 import React, { useEffect, useState } from "react";
 import client from "../api/client";
+import Toast from "./Toast";
+import ConfirmDialog from "./ConfirmDialog";
+import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
 interface Member {
   userId: number;
@@ -32,6 +35,18 @@ interface ProjectMembersTabProps {
 const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
   const [members, setMembers] = useState<Member[]>([]);
   const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
+  const [confirmDialog, setConfirmDialog] = useState<{
+    open: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    open: false,
+    title: "",
+    message: "",
+    onConfirm: () => {},
+  });
 
   useEffect(() => {
     if (projectId) {
@@ -52,35 +67,45 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
   };
 
   const handleRoleChange = async (memberId: number, newRole: "PL" | "MEMBER") => {
-    if (!confirm("멤버의 권한을 변경하시겠습니까?")) {
-      return;
-    }
-
-    try {
-      await client.patch(`/projects/${projectId}/members/${memberId}/role`, {
-        role: newRole,
-      });
-      alert("권한이 변경되었습니다.");
-      fetchMembers();
-    } catch (error: any) {
-      console.error("권한 변경 실패:", error);
-      alert(error.response?.data?.message || "권한 변경에 실패했습니다.");
-    }
+    setConfirmDialog({
+      open: true,
+      title: "권한 변경",
+      message: "멤버의 권한을 변경하시겠습니까?",
+      onConfirm: async () => {
+        try {
+          await client.patch(`/projects/${projectId}/members/${memberId}/role`, {
+            role: newRole,
+          });
+          setToast(createToastState("권한이 변경되었습니다.", "success"));
+          fetchMembers();
+        } catch (error: any) {
+          console.error("권한 변경 실패:", error);
+          const errorMessage = error.response?.data?.message || "권한 변경에 실패했습니다.";
+          setToast(createToastState(errorMessage, "error"));
+        }
+        setConfirmDialog({ ...confirmDialog, open: false });
+      },
+    });
   };
 
   const handleRemoveMember = async (memberId: number, memberName: string) => {
-    if (!confirm(`${memberName}님을 프로젝트에서 제외하시겠습니까?`)) {
-      return;
-    }
-
-    try {
-      await client.delete(`/projects/${projectId}/members/${memberId}`);
-      alert("멤버가 제외되었습니다.");
-      fetchMembers();
-    } catch (error: any) {
-      console.error("멤버 제외 실패:", error);
-      alert(error.response?.data?.message || "멤버 제외에 실패했습니다.");
-    }
+    setConfirmDialog({
+      open: true,
+      title: "멤버 제외",
+      message: `${memberName}님을 프로젝트에서 제외하시겠습니까?`,
+      onConfirm: async () => {
+        try {
+          await client.delete(`/projects/${projectId}/members/${memberId}`);
+          setToast(createToastState("멤버가 제외되었습니다.", "success"));
+          fetchMembers();
+        } catch (error: any) {
+          console.error("멤버 제외 실패:", error);
+          const errorMessage = error.response?.data?.message || "멤버 제외에 실패했습니다.";
+          setToast(createToastState(errorMessage, "error"));
+        }
+        setConfirmDialog({ ...confirmDialog, open: false });
+      },
+    });
   };
 
   return (
@@ -149,6 +174,21 @@ const ProjectMembersTab: React.FC<ProjectMembersTabProps> = ({ projectId }) => {
           </TableBody>
         </Table>
       </TableContainer>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={() => closeToast(setToast)}
+      />
+
+      <ConfirmDialog
+        open={confirmDialog.open}
+        title={confirmDialog.title}
+        message={confirmDialog.message}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog({ ...confirmDialog, open: false })}
+      />
     </Box>
   );
 };

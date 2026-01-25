@@ -28,10 +28,12 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import DeleteIcon from "@mui/icons-material/Delete";
 import DownloadIcon from "@mui/icons-material/Download";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
+import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 import ReplayIcon from "@mui/icons-material/Replay";
 import SettingsIcon from "@mui/icons-material/Settings";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import client from "../api/client";
+import { projectApi } from "../api/project";
 
 const KanbanBoardPage = () => {
   const { projectId } = useParams();
@@ -91,6 +93,26 @@ const KanbanBoardPage = () => {
     } catch (error) {
       console.error("프로젝트 완료 실패:", error);
       setSnackbarMessage("프로젝트 완료에 실패했습니다.");
+      setSnackbarSeverity("error");
+      setSnackbarOpen(true);
+    } finally {
+      setCompletingProject(false);
+    }
+  };
+
+  // 프로젝트 진행 처리 (기획중 -> 진행중)
+  const handleStartProject = async () => {
+    if (!projectId) return;
+    try {
+      setCompletingProject(true);
+      await projectApi.startProject(projectId);
+      setSnackbarMessage("프로젝트가 진행되었습니다.");
+      setSnackbarSeverity("success");
+      setSnackbarOpen(true);
+      refreshBoard(); // 보드 새로고침
+    } catch (error) {
+      console.error("프로젝트 진행 실패:", error);
+      setSnackbarMessage("프로젝트 진행에 실패했습니다.");
       setSnackbarSeverity("error");
       setSnackbarOpen(true);
     } finally {
@@ -277,16 +299,31 @@ const KanbanBoardPage = () => {
         spacing={{ xs: 2, sm: 0 }}
         mb={3}
       >
-        <Typography
-          variant="h5"
-          fontWeight="bold"
-          sx={{
-            color: "#172b4d",
-            fontSize: { xs: "1.25rem", sm: "1.5rem" },
-          }}
-        >
-          {boardData.name}
-        </Typography>
+        <Box>
+          <Typography
+            variant="h5"
+            fontWeight="bold"
+            sx={{
+              color: "#172b4d",
+              fontSize: { xs: "1.25rem", sm: "1.5rem" },
+            }}
+          >
+            {boardData.name}
+          </Typography>
+          {(boardData.startDate || boardData.endDate) && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              기간 : {boardData.startDate || "-"} ~ {boardData.endDate || "-"}
+            </Typography>
+          )}
+          <Box sx={{ mt: 0.5 }}>
+            <Typography variant="body2" color="text.secondary">
+              총 예산 : {boardData.totalBudget != null ? Number(boardData.totalBudget).toLocaleString() : "0"}원
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              사용 예산 : {boardData.usedBudget != null ? Number(boardData.usedBudget).toLocaleString() : "0"}원
+            </Typography>
+          </Box>
+        </Box>
 
         <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap", gap: 1 }}>
           {/* 엑셀 업로드 버튼 */}
@@ -321,10 +358,25 @@ const KanbanBoardPage = () => {
             {downloading ? "다운로드 중..." : "엑셀 다운로드"}
           </Button>
 
-          {/* 프로젝트 완료/재진행 버튼 (PL만) */}
+          {/* 프로젝트 진행/완료/재진행 버튼 (PL만) */}
           {boardData?.myRole === "PL" && (
             <>
-              {boardData?.status === "COMPLETED" ? (
+              {boardData?.status === "PLANNING" ? (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  size="small"
+                  startIcon={completingProject ? <CircularProgress size={16} /> : <PlayArrowIcon />}
+                  onClick={handleStartProject}
+                  disabled={completingProject}
+                  sx={{
+                    fontWeight: "bold",
+                    fontSize: { xs: "0.75rem", sm: "0.875rem" },
+                  }}
+                >
+                  {completingProject ? "처리 중..." : "프로젝트 진행"}
+                </Button>
+              ) : boardData?.status === "COMPLETED" ? (
                 <Button
                   variant="outlined"
                   color="success"

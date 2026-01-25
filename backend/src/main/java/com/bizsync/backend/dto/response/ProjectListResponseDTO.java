@@ -2,6 +2,7 @@ package com.bizsync.backend.dto.response;
 
 import com.bizsync.backend.domain.entity.Project;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 public record ProjectListResponseDTO(
@@ -10,7 +11,9 @@ public record ProjectListResponseDTO(
         String description,
         LocalDate startDate,
         LocalDate endDate,
-        String status
+        String status,
+        BigDecimal totalBudget,
+        BigDecimal usedBudget
 ) {
     /**
      * Project 엔티티에서 DTO로 변환
@@ -22,7 +25,9 @@ public record ProjectListResponseDTO(
                 project.getDescription(),
                 project.getStartDate(),
                 project.getEndDate(),
-                project.getStatus().name()
+                project.getStatus().name(),
+                project.getTotalBudget(),
+                project.getUsedBudget()
         );
     }
 }

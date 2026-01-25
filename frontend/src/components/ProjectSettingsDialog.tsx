@@ -14,6 +14,9 @@ import {
 import React, { useEffect, useState } from "react";
 import client from "../api/client";
 import ProjectMembersTab from "./ProjectMembersTab";
+import Toast from "./Toast";
+import ConfirmDialog from "./ConfirmDialog";
+import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
 interface ProjectSettingsDialogProps {
   open: boolean;
@@ -45,6 +48,9 @@ const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
     endDate: "",
     totalBudget: 0,
   });
+  const [nameError, setNameError] = useState("");
+  const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
 
   // 프로젝트 정보 로드
   useEffect(() => {
@@ -79,39 +85,39 @@ const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
 
   const handleSave = async () => {
     if (!projectData.name.trim()) {
-      alert("프로젝트 이름은 필수입니다.");
+      setNameError("프로젝트 이름은 필수입니다.");
       return;
     }
 
+    setNameError("");
     try {
       setLoading(true);
       await client.put(`/projects/${projectId}`, projectData);
-      alert("프로젝트가 수정되었습니다.");
+      setToast(createToastState("프로젝트가 수정되었습니다.", "success"));
       onUpdate();
       onClose();
     } catch (error: any) {
       console.error("프로젝트 수정 실패:", error);
-      alert(error.response?.data?.message || "프로젝트 수정에 실패했습니다.");
+      const errorMessage = error.response?.data?.message || "프로젝트 수정에 실패했습니다.";
+      setToast(createToastState(errorMessage, "error"));
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async () => {
-    if (!confirm("프로젝트를 삭제하시겠습니까?\n모든 데이터가 영구적으로 삭제됩니다.")) {
-      return;
-    }
-
     try {
       setLoading(true);
       await client.delete(`/projects/${projectId}`);
-      alert("프로젝트가 삭제되었습니다.");
+      setToast(createToastState("프로젝트가 취소되었습니다.", "success"));
       window.location.href = "/projects"; // 프로젝트 목록으로 이동
     } catch (error: any) {
-      console.error("프로젝트 삭제 실패:", error);
-      alert(error.response?.data?.message || "프로젝트 삭제에 실패했습니다.");
+      console.error("프로젝트 취소 실패:", error);
+      const errorMessage = error.response?.data?.message || "프로젝트 취소에 실패했습니다.";
+      setToast(createToastState(errorMessage, "error"));
     } finally {
       setLoading(false);
+      setDeleteConfirmOpen(false);
     }
   };
 
@@ -131,9 +137,14 @@ const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
               label="프로젝트 이름"
               name="name"
               value={projectData.name}
-              onChange={handleChange}
+              onChange={(e) => {
+                handleChange(e);
+                if (nameError) setNameError("");
+              }}
               fullWidth
               required
+              error={!!nameError}
+              helperText={nameError}
             />
             <TextField
               label="설명"
@@ -186,10 +197,10 @@ const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
               variant="outlined"
               color="error"
               fullWidth
-              onClick={handleDelete}
+              onClick={() => setDeleteConfirmOpen(true)}
               disabled={loading}
             >
-              프로젝트 삭제
+              프로젝트 취소
             </Button>
           </Box>
         )}
@@ -204,6 +215,24 @@ const ProjectSettingsDialog: React.FC<ProjectSettingsDialogProps> = ({
           </Button>
         )}
       </DialogActions>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={() => closeToast(setToast)}
+      />
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="프로젝트 취소"
+        message="프로젝트를 취소하시겠습니까?\n프로젝트 상태가 취소로 변경되며, 통계에 반영됩니다."
+        confirmText="취소"
+        cancelText="닫기"
+        severity="error"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
     </Dialog>
   );
 };

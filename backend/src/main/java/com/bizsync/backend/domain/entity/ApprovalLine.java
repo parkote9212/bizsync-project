@@ -33,7 +33,8 @@ public class ApprovalLine extends BaseTimeEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
-    private ApprovalStatus status;
+    @Builder.Default
+    private ApprovalStatus status = ApprovalStatus.PENDING;
 
     private LocalDateTime approvedAt;
 

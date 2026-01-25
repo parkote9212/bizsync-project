@@ -9,10 +9,12 @@ import ApprovalPage from "./pages/ApprovalPage";
 import OrganizationPage from "./pages/OrganizationPage";
 import AdminDashboardPage from "./pages/AdminDashboardPage";
 import AdminUserManagementPage from "./pages/AdminUserManagementPage";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 function App() {
   return (
-    <BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
       <Routes>
         {/* 기본 경로 접속 시 대시보드로 리다이렉트 (로그인 후) */}
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
@@ -46,6 +48,7 @@ function App() {
         </Route>
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }
 

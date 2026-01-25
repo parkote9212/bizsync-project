@@ -89,6 +89,13 @@ public class User extends BaseTimeEntity {
         this.role = newRole;
     }
 
+    /**
+     * 직급 변경
+     */
+    public void changePosition(Position newPosition) {
+        this.position = newPosition;
+    }
+
     public void resetPassword(String newEncodedPassword) {
         this.password = newEncodedPassword;
     }

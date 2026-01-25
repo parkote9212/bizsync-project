@@ -24,6 +24,10 @@ export interface BoardData {
   columns: KanbanColumn[];
   status?: string; // 프로젝트 상태
   myRole?: string; // 현재 사용자의 프로젝트 내 역할 (PL, MEMBER)
+  totalBudget?: number;
+  usedBudget?: number;
+  startDate?: string;
+  endDate?: string;
 }
 
 export interface Project {

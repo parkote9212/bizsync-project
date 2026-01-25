@@ -43,4 +43,11 @@ export interface AdminDashboardStatistics {
   cancelledProjects: number;
   totalTasks: number;
   totalApprovals: number;
+  staffUsers: number;
+  seniorUsers: number;
+  assistantManagerUsers: number;
+  deputyGeneralManagerUsers: number;
+  generalManagerUsers: number;
+  directorUsers: number;
+  executiveUsers: number;
 }

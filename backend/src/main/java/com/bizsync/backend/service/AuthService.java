@@ -20,9 +20,9 @@ import org.springframework.transaction.annotation.Transactional;
 
 /**
  * 인증 및 사용자 인증 관련 비즈니스 로직을 처리하는 서비스
- * 
+ *
  * <p>회원가입, 로그인, 토큰 갱신, 비밀번호 변경 등의 기능을 제공합니다.
- * 
+ *
  * @author BizSync Team
  */
 @Slf4j
@@ -37,7 +37,7 @@ public class AuthService {
 
     /**
      * 새로운 사용자를 등록합니다.
-     * 
+     *
      * @param dto 회원가입 요청 DTO
      * @return 생성된 사용자 ID
      * @throws DuplicateException 이메일 또는 사원번호가 중복된 경우
@@ -60,7 +60,7 @@ public class AuthService {
 
     /**
      * 사용자 로그인을 처리하고 JWT 토큰을 발급합니다.
-     * 
+     *
      * @param dto 로그인 요청 DTO
      * @return JWT 토큰 응답 (액세스 토큰, 리프레시 토큰, 사용자 정보)
      * @throws BusinessException 비밀번호 불일치 또는 계정 상태 문제인 경우
@@ -105,7 +105,7 @@ public class AuthService {
 
     /**
      * 리프레시 토큰을 사용하여 새로운 액세스 토큰과 리프레시 토큰을 발급합니다.
-     * 
+     *
      * @param refreshToken 리프레시 토큰
      * @return 새로운 JWT 토큰 응답
      * @throws BusinessException 토큰이 유효하지 않거나 리프레시 토큰이 아닌 경우
@@ -143,7 +143,7 @@ public class AuthService {
 
     /**
      * 현재 로그인한 사용자의 비밀번호를 변경합니다.
-     * 
+     *
      * @param dto 비밀번호 변경 요청 DTO
      * @throws BusinessException 현재 비밀번호가 일치하지 않거나 새 비밀번호가 현재와 동일한 경우
      */

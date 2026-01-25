@@ -17,6 +17,8 @@ import { useNavigate } from "react-router-dom";
 import { useUserStore } from "../stores/userStore";
 import { useNotificationStore } from "../stores/notificationStore";
 import { useProjectStore } from "../stores/projectStore";
+import Toast from "../components/Toast";
+import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
 const LoginPage = () => {
   const navigate = useNavigate();
@@ -35,6 +37,7 @@ const LoginPage = () => {
   const [signupDepartment, setSignupDepartment] = useState("");
   const [signupError, setSignupError] = useState("");
   const [signupSuccess, setSignupSuccess] = useState(false);
+  const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,8 +83,13 @@ const LoginPage = () => {
         department: department || null,
       });
 
-      alert("로그인 성공!");
-      navigate("/dashboard");
+      setToast(createToastState("로그인 성공!", "success"));
+      // 관리자는 관리자 대시보드로, 일반 사용자는 일반 대시보드로 이동
+      if (role === "ADMIN") {
+        navigate("/admin/dashboard");
+      } else {
+        navigate("/dashboard");
+      }
     } catch (err: unknown) {
       console.error(err);
       setError("로그인에 실패했습니다. 아이디와 비밀번호를 확인해주세요.");
@@ -111,7 +119,7 @@ const LoginPage = () => {
         setSignupEmpNo("");
         setSignupDepartment("");
         setSignupSuccess(false);
-        alert("회원가입 성공! 로그인해주세요.");
+        setToast(createToastState("회원가입 성공! 관리자 승인을 기다려주세요.", "success"));
       }, 1500);
     } catch (err: any) {
       console.error(err);
@@ -236,7 +244,7 @@ const LoginPage = () => {
         <DialogContent>
           {signupSuccess && (
             <Alert severity="success" sx={{ mb: 2 }}>
-              회원가입 성공!
+              회원가입 성공! 관리자 승인을 기다려주세요.
             </Alert>
           )}
           {signupError && (
@@ -307,6 +315,13 @@ const LoginPage = () => {
           </Box>
         </DialogContent>
       </Dialog>
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={() => closeToast(setToast)}
+      />
     </Box>
   );
 };

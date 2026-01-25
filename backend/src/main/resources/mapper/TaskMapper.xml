@@ -4,26 +4,26 @@
 
 <mapper namespace="com.bizsync.backend.mapper.TaskMapper">
 
-    <resultMap id="TaskResultMap" type="com.bizsync.backend.domain.entity.Task">
+    <resultMap id="TaskResultMap" type="Task">
         <id property="taskId" column="task_id"/>
         <result property="title" column="title"/>
         <result property="content" column="content"/>
         <result property="deadline" column="deadline"/>
         <result property="sequence" column="sequence"/>
 
-        <association property="column" javaType="com.bizsync.backend.domain.entity.KanbanColumn">
+        <association property="column" javaType="KanbanColumn">
             <id property="columnId" column="column_id"/>
             <result property="name" column="column_name"/>
             <result property="sequence" column="column_sequence"/>
             <result property="columnType" column="column_type"/>
             <result property="description" column="column_description"/>
 
-            <association property="project" javaType="com.bizsync.backend.domain.entity.Project">
+            <association property="project" javaType="Project">
                 <id property="projectId" column="project_id"/>
             </association>
         </association>
 
-        <association property="worker" javaType="com.bizsync.backend.domain.entity.User">
+        <association property="worker" javaType="User">
             <id property="userId" column="worker_id"/>
             <result property="name" column="worker_name"/>
             <result property="email" column="worker_email"/>

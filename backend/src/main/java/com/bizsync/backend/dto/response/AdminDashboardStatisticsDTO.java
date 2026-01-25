@@ -16,7 +16,14 @@ public record AdminDashboardStatisticsDTO(
         long onHoldProjects,
         long cancelledProjects,
         long totalTasks,
-        long totalApprovals
+        long totalApprovals,
+        long staffUsers,
+        long seniorUsers,
+        long assistantManagerUsers,
+        long deputyGeneralManagerUsers,
+        long generalManagerUsers,
+        long directorUsers,
+        long executiveUsers
 ) {
     /**
      * 통계 값들로부터 AdminDashboardStatisticsDTO 생성
@@ -37,7 +44,14 @@ public record AdminDashboardStatisticsDTO(
             long onHoldProjects,
             long cancelledProjects,
             long totalTasks,
-            long totalApprovals
+            long totalApprovals,
+            long staffUsers,
+            long seniorUsers,
+            long assistantManagerUsers,
+            long deputyGeneralManagerUsers,
+            long generalManagerUsers,
+            long directorUsers,
+            long executiveUsers
     ) {
         return new AdminDashboardStatisticsDTO(
                 totalUsers,
@@ -55,7 +69,14 @@ public record AdminDashboardStatisticsDTO(
                 onHoldProjects,
                 cancelledProjects,
                 totalTasks,
-                totalApprovals
+                totalApprovals,
+                staffUsers,
+                seniorUsers,
+                assistantManagerUsers,
+                deputyGeneralManagerUsers,
+                generalManagerUsers,
+                directorUsers,
+                executiveUsers
         );
     }
 }

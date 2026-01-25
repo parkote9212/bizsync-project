@@ -13,6 +13,9 @@ import {
 } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
 import client from "../api/client";
+import ConfirmDialog from "./ConfirmDialog";
+import Toast from "./Toast";
+import { createToastState, closeToast, type ToastState } from "../utils/toast";
 
 interface TaskDetailDialogProps {
   taskId: number | null;
@@ -39,6 +42,8 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
 }) => {
   const [task, setTask] = useState<TaskDetail | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [toast, setToast] = useState<ToastState>({ open: false, message: "", severity: "success" });
 
   const [editForm, setEditForm] = useState({
     title: "",
@@ -94,7 +99,7 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
         deadline: editForm.deadline,
         workerId: editForm.workerId ? Number(editForm.workerId) : null,
       });
-      alert("수정되었습니다.");
+      setToast(createToastState("수정되었습니다.", "success"));
       setIsEditing(false);
       const data = await fetchTaskDetail();
       if (data) {
@@ -108,19 +113,24 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
         });
       }
       await onUpdate();
-    } catch (error) {
+    } catch (error: any) {
       console.error("수정 실패", error);
+      const errorMessage = error.response?.data?.message || "수정 중 오류가 발생했습니다.";
+      setToast(createToastState(errorMessage, "error"));
     }
   };
 
   const handleDelete = async () => {
-    if (!taskId || !window.confirm("정말 이 업무를 삭제하시겠습니까?")) return;
+    if (!taskId) return;
     try {
       await client.delete(`/tasks/${taskId}`);
+      setToast(createToastState("업무가 삭제되었습니다.", "success"));
       await onUpdate();
       onClose();
-    } catch (error) {
+    } catch (error: any) {
       console.error("삭제 실패", error);
+      const errorMessage = error.response?.data?.message || "삭제 중 오류가 발생했습니다.";
+      setToast(createToastState(errorMessage, "error"));
     }
   };
 
@@ -209,7 +219,7 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
             <Button
               startIcon={<DeleteIcon />}
               color="error"
-              onClick={handleDelete}
+              onClick={() => setDeleteConfirmOpen(true)}
             >
               삭제
             </Button>
@@ -224,6 +234,24 @@ const TaskDetailDialog: React.FC<TaskDetailDialogProps> = ({
           </DialogActions>
         </>
       )}
+
+      <ConfirmDialog
+        open={deleteConfirmOpen}
+        title="업무 삭제"
+        message="정말 이 업무를 삭제하시겠습니까?"
+        confirmText="삭제"
+        cancelText="취소"
+        severity="error"
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteConfirmOpen(false)}
+      />
+
+      <Toast
+        open={toast.open}
+        message={toast.message}
+        severity={toast.severity}
+        onClose={() => closeToast(setToast)}
+      />
     </Dialog>
   );
 };
