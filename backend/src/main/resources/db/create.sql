@@ -31,7 +31,7 @@ CREATE TABLE IF NOT EXISTS project
     end_date     DATE,
     total_budget DECIMAL(19, 2),
     used_budget  DECIMAL(19, 2)        DEFAULT 0.00,
-    status       VARCHAR(20)  NOT NULL DEFAULT 'IN_PROGRESS',
+    status       VARCHAR(20)  NOT NULL DEFAULT 'PLANNING',
     created_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
     updated_at   DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     created_by   BIGINT,
@@ -151,12 +151,15 @@ CREATE TABLE IF NOT EXISTS approval_line
 -- 채팅 메시지 테이블
 CREATE TABLE IF NOT EXISTS chat_message
 (
-    id      BIGINT AUTO_INCREMENT PRIMARY KEY,
-    room_id BIGINT       NOT NULL,
-    sender  VARCHAR(255) NOT NULL,
-    content TEXT         NOT NULL,
-    sent_at DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    id           BIGINT AUTO_INCREMENT PRIMARY KEY,
+    room_id      BIGINT       NOT NULL,
+    sender_id    BIGINT       NOT NULL,
+    content      TEXT         NOT NULL,
+    message_type VARCHAR(20)  NOT NULL DEFAULT 'TEXT',
+    sent_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (sender_id) REFERENCES users (user_id) ON DELETE CASCADE,
     INDEX idx_room_id (room_id),
+    INDEX idx_sender_id (sender_id),
     INDEX idx_sent_at (sent_at)
 ) ENGINE = InnoDB
   DEFAULT CHARSET = utf8mb4
