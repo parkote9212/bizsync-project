@@ -12,7 +12,7 @@ env:
 
 jobs:
   # ============================================
-  # Backend CI (Spring Boot)
+  # Backend CI (Spring Boot + MariaDB)
   # ============================================
   backend:
     name: Backend Build & Test
@@ -20,6 +20,23 @@ jobs:
     defaults:
       run:
         working-directory: ./backend
+
+    services:
+      # 테스트용 MariaDB 컨테이너
+      mariadb:
+        image: mariadb:10.11
+        env:
+          MYSQL_ROOT_PASSWORD: rootpassword
+          MYSQL_DATABASE: bizsync_test
+          MYSQL_USER: testuser
+          MYSQL_PASSWORD: testpassword
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="healthcheck.sh --connect --innodb_initialized"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
 
     steps:
       - name: Checkout code
@@ -49,7 +66,13 @@ jobs:
 
       - name: Run tests
         run: ./gradlew test --no-daemon
-        continue-on-error: true  # 테스트 실패해도 일단 진행 (추후 제거)
+        env:
+          SPRING_PROFILES_ACTIVE: test
+          SPRING_DATASOURCE_URL: jdbc:mariadb://localhost:3306/bizsync_test
+          SPRING_DATASOURCE_USERNAME: testuser
+          SPRING_DATASOURCE_PASSWORD: testpassword
+          JWT_SECRET: test-jwt-secret-key-for-ci-testing-must-be-long-enough
+          ADMIN_PASSWORD: admintest123
 
       - name: Upload test results
         uses: actions/upload-artifact@v4
@@ -85,11 +108,9 @@ jobs:
 
       - name: Run ESLint
         run: npm run lint
-        continue-on-error: true  # 린트 에러 있어도 일단 진행 (추후 제거)
 
       - name: Type check
         run: npx tsc --noEmit
-        continue-on-error: true  # 타입 에러 있어도 일단 진행 (추후 제거)
 
       - name: Build
         run: npm run build

@@ -4,7 +4,6 @@ import {
   Button,
   Chip,
   CircularProgress,
-  Paper,
   Table,
   TableBody,
   TableCell,

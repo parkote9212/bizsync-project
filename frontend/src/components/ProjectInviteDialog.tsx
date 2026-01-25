@@ -44,7 +44,7 @@ const ProjectInviteDialog: React.FC<ProjectInviteDialogProps> = ({
   projectId,
 }) => {
   const [selectedUser, setSelectedUser] = useState<UserSearchResult | null>(null);
-  const { showToast, toastState, closeToast } = useToast();
+  const { toastState, closeToast } = useToast();
   const { searchOptions, searchLoading, handleSearchUsers, clearSearch } = useUserSearch();
   const { execute: inviteMember, isLoading } = useMutation({
     showToastOnSuccess: true,

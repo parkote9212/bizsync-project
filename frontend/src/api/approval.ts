@@ -4,8 +4,8 @@ import type {
   ApprovalDetail,
   ApprovalCreateRequest,
   ApprovalProcessRequest,
-  PageResponse,
 } from "../types/approval";
+import type { PageResponse } from "../types/user";
 
 /**
  * 결재 관련 API

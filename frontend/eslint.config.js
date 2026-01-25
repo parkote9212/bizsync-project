@@ -19,5 +19,14 @@ export default defineConfig([
       ecmaVersion: 2020,
       globals: globals.browser,
     },
+    rules: {
+      // 사용하지 않는 변수는 warn으로 (배포 후 정리)
+      '@typescript-eslint/no-unused-vars': ['warn', { 
+        argsIgnorePattern: '^_',
+        varsIgnorePattern: '^_',
+      }],
+      // any 타입 허용 (점진적 개선)
+      '@typescript-eslint/no-explicit-any': 'warn',
+    },
   },
 ])

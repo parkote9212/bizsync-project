@@ -1,4 +1,4 @@
-import React from "react";
+import type React from "react";
 import { Snackbar, Alert } from "@mui/material";
 import type { ToastSeverity } from "../utils/toast";
 

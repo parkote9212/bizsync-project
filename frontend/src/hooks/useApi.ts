@@ -1,5 +1,4 @@
 import { useState, useCallback } from "react";
-import type { ToastSeverity } from "../utils/toast";
 import { useToast } from "./useToast";
 import { useLoading } from "./useLoading";
 
@@ -57,9 +56,6 @@ interface UseApiOptions {
  */
 export const useApi = <T = any>(options: UseApiOptions = {}) => {
   const {
-    showToastOnError = true,
-    showToastOnSuccess = false,
-    successMessage,
     loadingKey = "default",
   } = options;
 
@@ -72,7 +68,13 @@ export const useApi = <T = any>(options: UseApiOptions = {}) => {
     apiCall: () => Promise<R>,
     customOptions?: Partial<UseApiOptions>
   ): Promise<R | null> => {
-    const opts = { ...options, ...customOptions };
+    const opts = { 
+      showToastOnError: true,
+      showToastOnSuccess: false,
+      successMessage: undefined,
+      ...options, 
+      ...customOptions 
+    };
     const key = customOptions?.loadingKey || loadingKey;
 
     try {

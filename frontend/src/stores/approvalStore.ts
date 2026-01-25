@@ -3,8 +3,8 @@ import type {
   ApprovalSummary,
   ApprovalStatus,
   ApprovalType,
-  PageResponse,
 } from "../types/approval";
+import type { PageResponse } from "../types/user";
 
 // Approval Store 인터페이스
 interface ApprovalStore {

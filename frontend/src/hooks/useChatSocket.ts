@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react";
 import { Client } from "@stomp/stompjs";
 import { useChatStore } from "../stores/chatStore";
-import { useUserStore } from "../stores/userStore";
 import client from "../api/client";
 import type { ChatMessage, ChatMember } from "../types/chat";
 
@@ -22,9 +21,8 @@ export const useChatSocket = (roomId: number | null) => {
     addMessage, 
     setOnlineMembers, 
     setConnected,
-    isConnected 
+    isConnected
   } = useChatStore();
-  const user = useUserStore((state) => state.user);
 
   useEffect(() => {
     if (!roomId) {

@@ -394,7 +394,6 @@ const ApprovalPage = () => {
         loading={detailLoading}
         data={detailData}
         tabValue={tabValue}
-        currentUserName={user.name}
         currentUserId={user.userId}
         onClose={() => {
           setDetailDialogOpen(false);

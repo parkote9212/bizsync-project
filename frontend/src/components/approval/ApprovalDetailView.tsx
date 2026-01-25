@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -28,7 +28,6 @@ interface ApprovalDetailViewProps {
   onApprove?: () => void;
   onReject?: () => void;
   onCancel?: () => void;
-  currentUserName?: string | null;
   currentUserId?: number | null;
 }
 
@@ -58,70 +57,8 @@ export const ApprovalDetailView: React.FC<ApprovalDetailViewProps> = ({
   onApprove,
   onReject,
   onCancel,
-  currentUserName,
-  currentUserId,
+  currentUserId: _currentUserId, // ApprovalPage에서 전달하지만 현재 사용하지 않음 (권한 체크는 ApprovalPage에서 수행)
 }) => {
-  // data가 있을 때만 canApprove 계산 (useMemo 사용)
-  const canApprove = useMemo(() => {
-    if (!data || !currentUserId) {
-      console.log('canApprove: data 또는 currentUserId 없음', { 
-        hasData: !!data, 
-        currentUserId 
-      });
-      return false;
-    }
-
-    // 타입 안전한 비교: 명시적으로 Number로 변환
-    const normalizedUserId = Number(currentUserId);
-    
-    // 현재 사용자의 결재선 찾기 (타입 안전한 비교)
-    const userLine = data.approvalLines.find((line) => {
-      const normalizedApproverId = Number(line.approverId);
-      return normalizedApproverId === normalizedUserId;
-    });
-
-    console.log('canApprove 계산:', {
-      currentUserId: normalizedUserId,
-      userLine: userLine ? {
-        sequence: userLine.sequence,
-        approverName: userLine.approverName,
-        status: userLine.status
-      } : null,
-      approvalLines: data.approvalLines.map(line => ({
-        approverId: line.approverId,
-        approverName: line.approverName,
-        sequence: line.sequence,
-        status: line.status
-      }))
-    });
-
-    if (!userLine) {
-      console.log('canApprove: userLine을 찾을 수 없음');
-      return false;
-    }
-
-    // 현재 사용자의 결재선이 PENDING 상태가 아니면 false
-    if (userLine.status !== ApprovalStatus.PENDING) {
-      console.log('canApprove: userLine 상태가 PENDING이 아님', userLine.status);
-      return false;
-    }
-
-    // 현재 사용자의 sequence보다 작은 모든 결재선이 APPROVED 상태인지 확인
-    const previousLines = data.approvalLines.filter(
-      (line) => line.sequence < userLine.sequence
-    );
-
-    // 이전 결재선이 모두 APPROVED 상태여야 함 (이전 결재선이 없으면 첫 번째 결재자이므로 true)
-    const result = previousLines.length === 0 || 
-      previousLines.every((line) => line.status === ApprovalStatus.APPROVED);
-    
-    console.log('canApprove 결과:', result, {
-      previousLinesCount: previousLines.length,
-      previousLinesStatus: previousLines.map(l => ({ sequence: l.sequence, status: l.status }))
-    });
-    
-    return result;
-  }, [data, currentUserId]);
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
       <DialogTitle>{data?.title || "결재 상세"}</DialogTitle>

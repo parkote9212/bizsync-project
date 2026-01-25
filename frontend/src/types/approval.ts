@@ -1,4 +1,4 @@
-import type { UserSearchResult, PageResponse } from "./user";
+import type { UserSearchResult } from "./user";
 
 // 결재 상태
 export const ApprovalStatus = {

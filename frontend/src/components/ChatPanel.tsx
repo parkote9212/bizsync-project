@@ -16,7 +16,7 @@ import { useChatStore } from "../stores/chatStore";
 import { useChatSocket } from "../hooks/useChatSocket";
 import { useUserStore } from "../stores/userStore";
 import client from "../api/client";
-import type { ChatMessage, ChatMember, ChatHistoryResponse } from "../types/chat";
+import type { ChatHistoryResponse } from "../types/chat";
 /**
  * 날짜를 상대 시간 문자열로 변환 (예: "2분 전", "1시간 전")
  */
@@ -64,9 +64,7 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({ roomId, onClose }) => {
   const { 
     messages, 
     onlineMembers, 
-    isConnected,
     setMessages,
-    appendMessages,
     setLoading,
     isLoading 
   } = useChatStore();

@@ -1,5 +1,5 @@
 import { create } from "zustand";
-import { persist } from "zustand/middleware";
+import { persist, createJSONStorage } from "zustand/middleware";
 
 // 사용자 정보 타입
 export interface UserInfo {
@@ -28,6 +28,7 @@ const initialUser: UserInfo = {
   department: null,
 };
 
+
 // User Store 생성 (persist 미들웨어로 localStorage 동기화)
 export const useUserStore = create<UserStore>()(
   persist(
@@ -48,13 +49,12 @@ export const useUserStore = create<UserStore>()(
     }),
     {
       name: "user-storage", // localStorage 키 이름
+      storage: createJSONStorage(() => localStorage),
       // localStorage에서 복원 시 userId를 number로 변환
-      deserialize: (str) => {
-        const parsed = JSON.parse(str);
-        if (parsed?.state?.user?.userId !== undefined && parsed?.state?.user?.userId !== null) {
-          parsed.state.user.userId = Number(parsed.state.user.userId);
+      onRehydrateStorage: () => (state) => {
+        if (state?.user?.userId !== undefined && state.user.userId !== null) {
+          state.user.userId = Number(state.user.userId);
         }
-        return parsed;
       },
     }
   )
