@@ -1,15 +1,12 @@
 package com.bizsync.backend.controller;
 
 import com.bizsync.backend.common.util.SecurityUtil;
-import com.bizsync.backend.domain.entity.ApprovalStatus;
 import com.bizsync.backend.domain.entity.ColumnType;
-import com.bizsync.backend.domain.entity.ProjectStatus;
-import com.bizsync.backend.domain.repository.ApprovalLineRepository;
-import com.bizsync.backend.domain.repository.ProjectMemberRepository;
 import com.bizsync.backend.domain.repository.TaskRepository;
 import com.bizsync.backend.dto.response.ApiResponse;
 import com.bizsync.backend.dto.response.DashboardStatsDTO;
 import com.bizsync.backend.dto.response.DashboardTaskDTO;
+import com.bizsync.backend.service.DashboardService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -32,9 +29,8 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 public class DashboardController {
 
-    private final ProjectMemberRepository projectMemberRepository;
+    private final DashboardService dashboardService;
     private final TaskRepository taskRepository;
-    private final ApprovalLineRepository approvalLineRepository;
 
     /**
      * 사용자 대시보드 통계 정보를 조회합니다.
@@ -44,19 +40,7 @@ public class DashboardController {
     @GetMapping("/stats")
     public ResponseEntity<ApiResponse<DashboardStatsDTO>> getDashboardStats() {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
-
-        long projectCount = projectMemberRepository.countByUser_UserIdAndProject_Status(userId,
-                ProjectStatus.IN_PROGRESS);
-
-        long taskCount = taskRepository.countByWorkerIdAndColumnTypeNot(userId, ColumnType.DONE);
-
-        long pendingApprovalCount = approvalLineRepository.countByApprover_UserIdAndStatus(
-                userId,
-                ApprovalStatus.PENDING);
-
-        return ResponseEntity.ok(ApiResponse.success(
-                DashboardStatsDTO.from(projectCount, taskCount, pendingApprovalCount)
-        ));
+        return ResponseEntity.ok(ApiResponse.success(dashboardService.getDashboardStats(userId)));
     }
 
     /**

@@ -14,6 +14,8 @@ import com.bizsync.backend.domain.repository.ProjectRepository;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.response.ProjectMemberResponseDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -45,6 +47,7 @@ public class ProjectMemberService {
      * @throws DuplicateException 이미 프로젝트 멤버인 경우
      */
     @RequireProjectMember
+    @CacheEvict(value = "projectMembers", key = "#projectId")
     public void inviteMember(Long projectId, String email) {
         // 1. 프로젝트 확인
         Project project = projectRepository.findByIdOrThrow(projectId);
@@ -80,6 +83,7 @@ public class ProjectMemberService {
      * @throws BusinessException 자기 자신의 권한을 변경하려는 경우
      */
     @RequireProjectLeader
+    @CacheEvict(value = "projectMembers", key = "#projectId")
     public void updateMemberRole(Long projectId, Long memberId, String newRole) {
         Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
 
@@ -105,6 +109,7 @@ public class ProjectMemberService {
      * @throws BusinessException 자기 자신을 제거하려는 경우
      */
     @RequireProjectLeader
+    @CacheEvict(value = "projectMembers", key = "#projectId")
     public void removeMember(Long projectId, Long memberId) {
         Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
 
@@ -128,6 +133,7 @@ public class ProjectMemberService {
      * @return 프로젝트 멤버 목록
      */
     @RequireProjectMember
+    @Cacheable(value = "projectMembers", key = "#projectId")
     @Transactional(readOnly = true)
     public List<ProjectMemberResponseDTO> getProjectMembers(Long projectId) {
         return projectMemberRepository.findAllByProject_ProjectId(projectId).stream()

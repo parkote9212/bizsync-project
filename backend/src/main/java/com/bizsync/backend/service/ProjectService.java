@@ -54,6 +54,7 @@ public class ProjectService {
      * @param dto    프로젝트 생성 요청 DTO
      * @return 생성된 프로젝트 ID
      */
+    @CacheEvict(value = "projects", key = "'all'", condition = "#result != null")
     public Long createProject(Long userId, ProjectCreateRequestDTO dto) {
 
         User user = userRepository.findByIdOrThrow(userId);
