@@ -70,6 +70,24 @@ services:
       - bizsync-network
 
   # ============================================
+  # Redis (캐싱 & 분산 락)
+  # ============================================
+  redis:
+    image: redis:7.4-alpine
+    container_name: bizsync-redis
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ============================================
   # 로컬 개발용 DB (선택사항 - RDS 사용 시 주석 처리)
   # ============================================
   # db:

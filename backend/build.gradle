@@ -41,7 +41,14 @@ dependencies {
 
     // Apach POI (EXEL)
     implementation 'org.apache.poi:poi:5.2.5'
-    implementation 'org.apache.poi:poi-ooxml:5.2.5'
+    implementation 'org.apache.poi:poi-ooxml:5.4.0'
+
+    // Redis & Redisson
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+    implementation 'org.redisson:redisson-spring-boot-starter:4.1.0'
+
+    // Jackson for LocalDateTime serialization
+    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
     compileOnly 'org.projectlombok:lombok'
     annotationProcessor 'org.projectlombok:lombok'
@@ -53,6 +60,7 @@ dependencies {
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
     testImplementation 'org.mybatis.spring.boot:mybatis-spring-boot-starter-test:3.0.5'
     testImplementation 'org.springframework.security:spring-security-test'
+    testRuntimeOnly 'com.h2database:h2'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 

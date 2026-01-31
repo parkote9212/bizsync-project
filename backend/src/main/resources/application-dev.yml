@@ -7,6 +7,30 @@ spring:
     url: ${SPRING_DATASOURCE_URL:jdbc:mariadb://localhost:3306/bizsync}
     username: ${SPRING_DATASOURCE_USERNAME:root}
     password: ${SPRING_DATASOURCE_PASSWORD:1234}
+
+  # Redis 설정
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      lettuce:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
+          max-wait: -1ms
+        shutdown-timeout: 100ms
+
+  # 캐시 설정
+  cache:
+    type: redis
+    redis:
+      time-to-live: 600000  # 10분 (밀리초)
+      cache-null-values: false
+      use-key-prefix: true
+      key-prefix: "bizsync:"
+
   jpa:
     hibernate:
       ddl-auto: update
