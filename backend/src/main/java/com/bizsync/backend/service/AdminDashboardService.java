@@ -10,6 +10,7 @@ import com.bizsync.backend.domain.repository.TaskRepository;
 import com.bizsync.backend.domain.repository.UserRepository;
 import com.bizsync.backend.dto.response.AdminDashboardStatisticsDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -35,6 +36,7 @@ public class AdminDashboardService {
      *
      * @return 대시보드 통계 DTO (사용자, 프로젝트, 업무, 결재 통계 포함)
      */
+    @Cacheable(value = "adminDashboardStats", key = "'global'")
     public AdminDashboardStatisticsDTO getDashboardStatistics() {
         long totalUsers = userRepository.count();
         long pendingUsers = userRepository.countByStatus(AccountStatus.PENDING);

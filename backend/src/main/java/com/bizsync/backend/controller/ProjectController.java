@@ -1,6 +1,7 @@
 package com.bizsync.backend.controller;
 
 import com.bizsync.backend.common.util.SecurityUtil;
+import com.bizsync.backend.domain.entity.Project;
 import com.bizsync.backend.dto.request.MemberInviteRequestDTO;
 import com.bizsync.backend.dto.request.ProjectCreateRequestDTO;
 import com.bizsync.backend.dto.request.ProjectUpdateRequestDTO;
@@ -10,6 +11,7 @@ import com.bizsync.backend.dto.response.ProjectMemberResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
 import com.bizsync.backend.service.ProjectMemberService;
 import com.bizsync.backend.service.ProjectService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -70,6 +72,16 @@ public class ProjectController {
     public ResponseEntity<ApiResponse<List<ProjectListResponseDTO>>> getProjectList() {
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
         return ResponseEntity.ok(ApiResponse.success(projectService.getMyProjects(userId)));
+    }
+
+    /**
+     * 프로젝트 단건 조회
+     */
+    @GetMapping("/{id}")
+    @Operation(summary = "프로젝트 단건 조회", description = "프로젝트 ID로 상세 정보 조회 (Redis 캐싱)")
+    public ResponseEntity<ApiResponse<Project>> getProject(@PathVariable Long id) {
+        Project project = projectService.findById(id);
+        return ResponseEntity.ok(ApiResponse.success(project));
     }
 
     /**

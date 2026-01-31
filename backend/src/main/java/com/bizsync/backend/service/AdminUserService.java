@@ -14,6 +14,7 @@ import com.bizsync.backend.dto.request.UserRoleUpdateRequestDTO;
 import com.bizsync.backend.dto.response.AdminUserStatisticsDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -141,6 +142,7 @@ public class AdminUserService {
      * @param dto    권한 변경 요청 DTO
      * @throws BusinessException 자기 자신을 수정하려는 경우
      */
+    @CacheEvict(value = "userPermissions", key = "#userId")
     public void changeUserRole(Long userId, UserRoleUpdateRequestDTO dto) {
         validateNotSelf(userId);
 

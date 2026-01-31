@@ -1,5 +1,7 @@
 package com.bizsync.backend.domain.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.bizsync.backend.common.exception.BusinessException;
 import com.bizsync.backend.common.exception.ErrorCode;
 import jakarta.persistence.*;
@@ -11,6 +13,7 @@ import java.time.LocalDate;
 @Entity
 @Table(name = "project")
 @Getter
+@JsonIgnoreProperties(ignoreUnknown = true)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor
 @Builder
@@ -89,14 +92,18 @@ public class Project extends BaseEntity {
 
     /**
      * 프로젝트가 진행중인지 확인
+     * (캐시 직렬화 제외 - status에서 파생)
      */
+    @JsonIgnore
     public boolean isInProgress() {
         return this.status == ProjectStatus.IN_PROGRESS;
     }
 
     /**
      * 프로젝트가 완료되었는지 확인
+     * (캐시 직렬화 제외 - status에서 파생되므로 중복 방지)
      */
+    @JsonIgnore
     public boolean isCompleted() {
         return this.status == ProjectStatus.COMPLETED;
     }

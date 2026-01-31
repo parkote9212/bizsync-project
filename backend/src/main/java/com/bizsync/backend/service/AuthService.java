@@ -14,6 +14,8 @@ import com.bizsync.backend.dto.request.SignumRequestDTO;
 import com.bizsync.backend.dto.response.JwtTokenResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +58,19 @@ public class AuthService {
         log.info("새로운 사용자 가입: userId={}, email={}", savedUser.getUserId(), savedUser.getEmail());
 
         return savedUser.getUserId();
+    }
+
+    /**
+     * ID로 사용자를 조회합니다.
+     * 권한 확인 등에 활용되며, userPermissions 캐시를 사용합니다.
+     *
+     * @param userId 사용자 ID
+     * @return 사용자
+     */
+    @Cacheable(value = "userPermissions", key = "#userId")
+    @Transactional(readOnly = true)
+    public User findById(Long userId) {
+        return userRepository.findByIdOrThrow(userId);
     }
 
     /**

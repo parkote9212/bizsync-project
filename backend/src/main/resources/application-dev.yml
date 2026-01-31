@@ -45,6 +45,7 @@ logging:
   level:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # 파라미터 표시
+    org.springframework.cache: TRACE  # 캐시 로깅
 
 servlet:
   encoding:
@@ -59,18 +60,15 @@ mybatis:
 
 app:
   jwt:
-    # Use JWT_SECRET env var if provided, otherwise fall back to a safe development default
     secret: ${JWT_SECRET:your-secret-key-must-be-at-least-256-bits-long-for-HS256-algorithm-security}
-    # expiration in milliseconds; fallback to 3600000 (1 hour)
     expiration-ms: ${JWT_EXPIRATION_MS:3600000}
-    # refresh token expiration in milliseconds; fallback to 604800000 (7 days)
-    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7일 (밀리초)
+    refresh-expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}  # 7일
   cors:
     allowed-origins: ${APP_CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
 
 admin:
   email: ${ADMIN_EMAIL:admin@bizsync.com}
-  password: ${ADMIN_PASSWORD:Admin123!@#}
+  password: ${ADMIN_PASSWORD:Admin123}
 
 management:
   endpoints:
@@ -85,6 +83,5 @@ management:
       export:
         enabled: true
 
-# Additional dev-only settings can go here
 server:
   port: ${SERVER_PORT:8080}

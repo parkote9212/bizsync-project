@@ -11,6 +11,7 @@ import org.redisson.config.Config;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.cache.annotation.EnableCaching;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Profile;
@@ -102,8 +103,10 @@ public class RedisConfig {
 
     /**
      * CacheManager (Spring Cache 추상화)
+     * spring.cache.type=none 이면 이 빈은 생성되지 않고 NoOpCacheManager 사용
      */
     @Bean
+    @ConditionalOnProperty(name = "spring.cache.type", havingValue = "redis")
     public CacheManager cacheManager(RedisConnectionFactory connectionFactory) {
         ObjectMapper objectMapper = new ObjectMapper();
         objectMapper.registerModule(new JavaTimeModule());
@@ -130,6 +133,13 @@ public class RedisConfig {
 
         // 사용자 권한: 10분
         cacheConfigurations.put("userPermissions", defaultConfig.entryTtl(Duration.ofMinutes(10)));
+
+        // 프로젝트 멤버: 5분
+        cacheConfigurations.put("projectMembers", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+
+        // 대시보드 통계: 5분
+        cacheConfigurations.put("dashboardStats", defaultConfig.entryTtl(Duration.ofMinutes(5)));
+        cacheConfigurations.put("adminDashboardStats", defaultConfig.entryTtl(Duration.ofMinutes(5)));
 
         // 부서 조직도: 30분
         cacheConfigurations.put("departments", defaultConfig.entryTtl(Duration.ofMinutes(30)));
