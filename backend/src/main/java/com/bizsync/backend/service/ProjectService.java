@@ -17,6 +17,9 @@ import com.bizsync.backend.dto.response.ProjectListResponseDTO;
 import com.bizsync.backend.dto.response.kanban.ProjectBoardDTO;
 import com.bizsync.backend.mapper.ProjectMapper;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.CachePut;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -112,6 +115,18 @@ public class ProjectService {
     }
 
     /**
+     * ID로 프로젝트를 조회합니다.
+     *
+     * @param id 프로젝트 ID
+     * @return 프로젝트
+     */
+    @Cacheable(value = "projects", key = "#id")
+    @Transactional(readOnly = true)
+    public Project findById(Long id) {
+        return projectRepository.findByIdOrThrow(id);
+    }
+
+    /**
      * 프로젝트를 완료 상태로 변경합니다.
      *
      * <p>
@@ -166,6 +181,7 @@ public class ProjectService {
      * @param dto       프로젝트 수정 요청 DTO
      */
     @RequireProjectLeader
+    @CacheEvict(value = "projects", key = "#projectId")
     @Transactional
     public void updateProject(Long projectId, ProjectUpdateRequestDTO dto) {
         Project project = projectRepository.findByIdOrThrow(projectId);
@@ -182,6 +198,7 @@ public class ProjectService {
      * @param projectId 프로젝트 ID
      */
     @RequireProjectLeader
+    @CacheEvict(value = "projects", key = "#projectId")
     @Transactional
     public void deleteProject(Long projectId) {
         Project project = projectRepository.findByIdOrThrow(projectId);
