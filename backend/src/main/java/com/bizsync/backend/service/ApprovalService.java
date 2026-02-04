@@ -344,7 +344,8 @@ public class ApprovalService {
     }
 
     private void deductBudget(ApprovalDocument document) {
-        Project project = projectRepository.findByIdForUpdateOrThrow(document.getProject().getProjectId());
+        // 비관적 락 제거: 분산 락이 이미 전체 결재 프로세스를 보호하므로 불필요
+        Project project = projectRepository.findByIdOrThrow(document.getProject().getProjectId());
 
         try {
             project.spendBudget(document.getAmount());
