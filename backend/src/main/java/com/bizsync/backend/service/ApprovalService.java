@@ -11,6 +11,9 @@ import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalSummaryDTO;
 import com.bizsync.backend.dto.response.ApprovalDetailDTO;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.redisson.api.RLock;
+import org.redisson.api.RedissonClient;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -19,6 +22,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -29,6 +33,7 @@ import java.util.stream.Collectors;
  *
  * @author BizSync Team
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 @Transactional
@@ -40,6 +45,7 @@ public class ApprovalService {
     private final NotificationService notificationService;
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final RedissonClient redissonClient;
 
     /**
      * 결재 문서를 생성하고 결재선을 설정합니다.
@@ -173,23 +179,52 @@ public class ApprovalService {
      * <p>이전 결재자가 모두 승인한 경우에만 처리할 수 있으며,
      * 모든 결재자가 승인하면 문서가 최종 승인됩니다.
      *
+     * <p>Redis 분산 락을 사용하여 동시성 이슈를 방지합니다.
+     * 같은 결재 문서에 대한 동시 처리 요청이 들어오면 먼저 락을 획득한 요청만 처리되고,
+     * 나머지는 최대 5초 대기 후 타임아웃 예외를 발생시킵니다.
+     *
      * @param approverId 결재자 ID
      * @param documentId 결재 문서 ID
      * @param dto        결재 처리 요청 DTO (승인/반려 상태 및 코멘트)
      * @throws ForbiddenException 결재 권한이 없는 경우
-     * @throws BusinessException  이미 처리된 결재이거나 이전 결재자가 미승인인 경우
+     * @throws BusinessException  이미 처리된 결재이거나 이전 결재자가 미승인인 경우, 또는 락 획득 실패
      */
     public void processApproval(Long approverId, Long documentId, ApprovalProcessRequestDTO dto) {
-        ApprovalDocument document = approvalDocumentRepository.findByIdOrThrow(documentId);
-        ApprovalLine myLine = getApprovalLine(document, approverId);
+        String lockKey = "approval:lock:" + documentId;
+        RLock lock = redissonClient.getLock(lockKey);
 
-        validateApprovalLineStatus(myLine);
-        validatePreviousApprovals(documentId, myLine);
+        try {
+            // 최대 5초 대기, 10초 후 자동 해제
+            boolean acquired = lock.tryLock(5, 10, TimeUnit.SECONDS);
 
-        if (dto.status() == ApprovalStatus.APPROVED) {
-            processApprovalAction(document, myLine, dto.comment());
-        } else if (dto.status() == ApprovalStatus.REJECTED) {
-            processRejectionAction(document, myLine, dto.comment());
+            if (!acquired) {
+                log.warn("Failed to acquire lock for approval documentId: {}", documentId);
+                throw new BusinessException(ErrorCode.APPROVAL_LOCK_TIMEOUT);
+            }
+
+            log.info("Acquired lock for approval documentId: {}", documentId);
+
+            ApprovalDocument document = approvalDocumentRepository.findByIdOrThrow(documentId);
+            ApprovalLine myLine = getApprovalLine(document, approverId);
+
+            validateApprovalLineStatus(myLine);
+            validatePreviousApprovals(documentId, myLine);
+
+            if (dto.status() == ApprovalStatus.APPROVED) {
+                processApprovalAction(document, myLine, dto.comment());
+            } else if (dto.status() == ApprovalStatus.REJECTED) {
+                processRejectionAction(document, myLine, dto.comment());
+            }
+
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            log.error("Lock acquisition interrupted for documentId: {}", documentId, e);
+            throw new BusinessException(ErrorCode.APPROVAL_LOCK_INTERRUPTED);
+        } finally {
+            if (lock.isHeldByCurrentThread()) {
+                lock.unlock();
+                log.info("Released lock for approval documentId: {}", documentId);
+            }
         }
     }
 

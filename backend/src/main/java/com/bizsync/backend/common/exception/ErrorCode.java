@@ -56,6 +56,8 @@ public enum ErrorCode {
     APPROVAL_REJECT_COMMENT_REQUIRED(HttpStatus.BAD_REQUEST, "반려 사유는 필수입니다."),
     APPROVAL_EXPENSE_PROJECT_REQUIRED(HttpStatus.BAD_REQUEST, "비용 결재는 프로젝트 ID가 필수입니다."),
     APPROVAL_EXPENSE_AMOUNT_REQUIRED(HttpStatus.BAD_REQUEST, "비용 결재는 유효한 금액이 필수입니다."),
+    APPROVAL_LOCK_TIMEOUT(HttpStatus.CONFLICT, "다른 사용자가 결재를 처리 중입니다. 잠시 후 다시 시도해주세요."),
+    APPROVAL_LOCK_INTERRUPTED(HttpStatus.INTERNAL_SERVER_ERROR, "결재 처리 중 오류가 발생했습니다."),
 
     // Auth
     UNAUTHENTICATED(HttpStatus.UNAUTHORIZED, "인증된 사용자가 없습니다."),
