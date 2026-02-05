@@ -61,7 +61,7 @@ servlet:
 
 mybatis:
   mapper-locations: classpath:mapper/**/*.xml
-  type-aliases-package: com.bizsync.backend.domain.entity,com.bizsync.backend.domain,com.bizsync.backend.dto.response,com.bizsync.backend.dto.response.kanban
+  type-aliases-package: com.bizsync.backend.domain,com.bizsync.backend.global.common.dto
   configuration:
     map-underscore-to-camel-case: true
 

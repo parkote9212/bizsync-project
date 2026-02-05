@@ -25,12 +25,14 @@
 
 BizSync는 팀 협업을 위한 통합 프로젝트 관리 솔루션으로, 다음 기능을 제공합니다:
 
-- **프로젝트 관리**: 프로젝트 생성, 멤버 초대, 권한 관리
-- **칸반 보드**: 실시간 업무 관리 및 Drag & Drop 기능
-- **결재 시스템**: 다단계 결재 라인, 예산 관리
-- **실시간 채팅**: WebSocket 기반 프로젝트별 채팅방
-- **대시보드**: 프로젝트 현황 및 통계
-- **관리자 페이지**: 사용자 승인, 계정 관리
+- **프로젝트 관리**: 프로젝트 생성/수정/조회, 멤버 초대, 프로젝트 권한(PL 등) 관리
+- **칸반 보드**: Drag & Drop 업무 이동, WebSocket(STOMP) 기반 실시간 동기화
+- **결재 시스템**: 다단계 결재 라인, 예산 결재(프로젝트 예산 차감), Redis/Redisson 분산 락으로 동시성 제어
+- **알림**: 결재/프로젝트 이벤트 기반 실시간 알림(WebSocket)
+- **실시간 채팅**: WebSocket 기반 프로젝트별 채팅방 + 접속 상태(presence) 관리
+- **대시보드**: 개인/관리자 통계 제공, Redis 캐시 기반 응답 최적화
+- **배치**: Spring Batch + 스케줄러로 프로젝트 아카이빙 자동화
+- **운영/문서화**: Actuator 헬스체크/메트릭, SpringDoc(OpenAPI) 기반 Swagger UI
 
 ---
 
@@ -53,6 +55,12 @@ BizSync는 팀 협업을 위한 통합 프로젝트 관리 솔루션으로, 다�
 │   │     ECR     │    │       └──────▶│ │  Backend    │ │   │    │
 │   │  (Registry) │───▶│               │ │ (Spring)    │ │   │    │
 │   └─────────────┘    │               │ └──────┬──────┘ │   │    │
+│                      │               │        │        │   │    │
+│                      │               │  ┌─────▼─────┐  │   │    │
+│                      │               │  │   Redis   │  │   │    │
+│                      │               │  │ (Cache/   │  │   │    │
+│                      │               │  │  Lock)    │  │   │    │
+│                      │               │  └───────────┘  │   │    │
 │                      │               └────────┼────────┘   │    │
 │                      └────────────────────────┼────────────┘    │
 │                                               │                  │
@@ -64,6 +72,11 @@ BizSync는 팀 협업을 위한 통합 프로젝트 관리 솔루션으로, 다�
 └─────────────────────────────────────────────────────────────────┘
 ```
 
+- **요청 흐름**: 브라우저 → Nginx → Frontend 정적 서빙 / Backend API(`/api`) 라우팅
+- **실시간 통신**: Frontend ↔ Backend WebSocket(STOMP, `/ws`)
+- **Redis**: 캐시(프로젝트/권한/대시보드) + 분산 락(결재 동시성 제어)
+- **배치**: Spring Batch + 스케줄러(`@Scheduled`)로 프로젝트 아카이빙 실행
+
 ---
 
 ## 🛠️ 기술 스택
@@ -73,21 +86,31 @@ BizSync는 팀 협업을 위한 통합 프로젝트 관리 솔루션으로, 다�
 |------|------|------|
 | Java | 21 | 언어 (Virtual Threads 지원) |
 | Spring Boot | 3.5.9 | 프레임워크 |
-| Spring Security + JWT | - | 인증/인가 |
+| Spring Security + JWT | - | 인증/인가 (Access/Refresh) |
 | Spring WebSocket (STOMP) | - | 실시간 통신 |
-| JPA + MyBatis | 3.0.5 | 하이브리드 ORM |
+| Spring Data JPA | - | ORM (단순 CRUD) |
+| MyBatis | 3.0.5 | 복잡한 조회/조인 최적화 |
+| Spring Batch | - | 배치 작업 (프로젝트 아카이빙 등) |
+| Redis + Redisson | 4.1.0 | 캐시/분산 락 |
 | Spring AOP | - | 횡단 관심사 분리 |
-| Apache POI | 5.2.5 | Excel 처리 |
+| Spring Actuator | - | 헬스체크/메트릭 |
+| SpringDoc OpenAPI | 2.8.3 | Swagger UI / API 문서 |
+| JJWT | 0.12.3 | JWT 생성/검증 |
+| Apache POI | 5.4.0 | Excel 처리 |
 
 ### Frontend
 | 기술 | 버전 | 용도 |
 |------|------|------|
-| React | 19 | UI 라이브러리 |
-| TypeScript | 5.9 | 타입 안정성 |
-| Vite | 7.2 | 빌드 도구 |
-| Material-UI (MUI) | 7.3 | UI 컴포넌트 |
-| Zustand | 5.0 | 상태 관리 |
-| @hello-pangea/dnd | 18.0 | Drag & Drop |
+| React | 19.2.0 | UI 라이브러리 |
+| TypeScript | 5.9.3 | 타입 안정성 |
+| Vite | 7.2.4 | 빌드 도구 |
+| Material-UI (MUI) | 7.3.7 | UI 컴포넌트 |
+| React Router | 7.12.0 | 라우팅 |
+| Axios | 1.13.2 | HTTP 클라이언트 |
+| @stomp/stompjs | 7.2.1 | WebSocket(STOMP) 클라이언트 |
+| Zustand | 5.0.10 | 상태 관리 |
+| Recharts | 3.7.0 | 차트 |
+| @hello-pangea/dnd | 18.0.1 | Drag & Drop |
 
 ### Infrastructure
 | 기술 | 용도 |
@@ -108,12 +131,9 @@ bizsync-project/
 ├── backend/                    # Spring Boot 백엔드
 │   ├── src/main/java/
 │   │   └── com/bizsync/backend/
-│   │       ├── common/         # 설정, 필터, 예외, AOP
-│   │       ├── controller/     # REST API 컨트롤러
-│   │       ├── domain/         # 엔티티, 리포지토리
-│   │       ├── dto/            # 요청/응답 DTO
-│   │       ├── mapper/         # MyBatis 매퍼
-│   │       └── service/        # 비즈니스 로직
+│   │       ├── domain/         # 도메인 모듈(DDD): approval/project/user/notification/dashboard
+│   │       ├── global/         # 전역 설정/공통 모듈(config/common/security)
+│   │       └── batch/          # 배치 작업(job/scheduler)
 │   └── Dockerfile
 ├── frontend/                   # React 프론트엔드
 │   ├── src/
@@ -248,7 +268,7 @@ docker compose up -d
 ### 결재 시스템
 - 다단계 결재 라인
 - 예산 결재 시 프로젝트 예산 차감
-- 비관적 락으로 동시성 제어
+- Redis/Redisson 분산 락으로 동시성 제어 (동시 승인/반려 경쟁 상태 방지)
 
 ---
 

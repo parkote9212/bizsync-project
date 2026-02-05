@@ -30,7 +30,12 @@ BizSync의 백엔드 서버입니다. Spring Boot 기반의 RESTful API와 WebSo
 | **Spring Data JPA**          | -      | ORM (단순 CRUD)                  |
 | **MyBatis**                  | 3.0.5  | 복잡한 조인 쿼리 최적화                  |
 | **Spring AOP**               | -      | 프로젝트 권한 체크 분리                  |
-| **Apache POI**               | 5.2.5  | Excel 업로드/다운로드                 |
+| **Spring Batch**             | -      | 배치 작업 (프로젝트 아카이빙 등)             |
+| **Redis + Redisson**         | 4.1.0  | 캐시/분산 락                         |
+| **Spring Actuator**          | -      | 헬스체크/메트릭                        |
+| **SpringDoc OpenAPI**        | 2.8.3  | Swagger UI / API 문서             |
+| **JJWT**                     | 0.12.3 | JWT 생성/검증                       |
+| **Apache POI**               | 5.4.0  | Excel 업로드/다운로드                 |
 | **MariaDB**                  | 10.11+ | 관계형 데이터베이스                     |
 
 ---
@@ -40,32 +45,19 @@ BizSync의 백엔드 서버입니다. Spring Boot 기반의 RESTful API와 WebSo
 ```
 src/main/java/com/bizsync/backend/
 ├── BackendApplication.java
-├── common/
-│   ├── annotation/           # @RequireProjectLeader, @RequireProjectMember
-│   ├── config/               # Security, WebSocket, Swagger, CORS
-│   ├── exception/            # GlobalExceptionHandler, ErrorCode
-│   ├── filter/               # JwtAuthenticationFilter
-│   └── util/                 # JwtProvider, SecurityUtil
-├── controller/
-│   ├── AdminController.java  # 관리자 페이지 API
-│   ├── ApprovalController.java
-│   ├── AuthController.java
-│   ├── ChatController.java
-│   ├── KanbanController.java
-│   ├── ProjectController.java
-│   └── UserController.java
 ├── domain/
-│   ├── entity/               # User, Project, Task, KanbanColumn 등
-│   └── repository/           # JPA Repository
-├── dto/
-│   ├── request/              # 요청 DTO (Record)
-│   └── response/             # 응답 DTO (Record)
-├── mapper/                   # MyBatis Mapper
-└── service/
-    ├── AuthService.java
-    ├── KanbanService.java
-    ├── ProjectSecurityService.java  # AOP 권한 체크
-    └── ...
+│   ├── approval/             # 결재 도메인 (controller/service/entity/repository/dto)
+│   ├── project/              # 프로젝트 도메인 (controller/service/entity/repository/dto/mapper)
+│   ├── user/                 # 사용자 도메인 (controller/service/entity/repository/dto)
+│   ├── notification/         # 알림 도메인 (model/service/dto)
+│   └── dashboard/            # 대시보드 도메인 (controller/service/dto)
+├── global/
+│   ├── config/               # Security/Redis/Swagger/WebSocket/JPA Auditing 등
+│   ├── common/               # aop/exception/util/annotation/entity/dto
+│   └── security/             # jwt/filter
+└── batch/
+    ├── job/                  # 배치 Job 설정
+    └── scheduler/            # 스케줄러
 ```
 
 ---
@@ -97,17 +89,18 @@ spring:
     username: root
     password: your_password
 
-jwt:
-  secret: your-256-bit-secret-key-here
-  expiration-ms: 3600000       # 1시간
-  refresh-expiration-ms: 604800000  # 7일
-
 app:
+  jwt:
+    secret: your-256-bit-secret-key-here
+    expiration-ms: 3600000       # 1시간
+    refresh-expiration-ms: 604800000  # 7일
+
   cors:
     allowed-origins: http://localhost:5173
-  admin:
-    email: admin@bizsync.com
-    password: Admin123!@#
+
+admin:
+  email: admin@bizsync.com
+  password: Admin123!@#
 ```
 
 #### 3. 실행
@@ -130,6 +123,11 @@ POST /api/auth/refresh   → Access Token 갱신
 POST /api/auth/signup    → 회원가입 (PENDING 상태로 생성)
 ```
 
+### 캐시/분산 락 (Redis + Redisson)
+
+- **캐시**: 프로젝트 목록/권한/대시보드 통계 등 응답 캐싱
+- **분산 락**: 결재 처리 시 동시 승인/반려 경쟁 상태 방지 (`RedissonClient` 기반)
+
 ### 프로젝트 권한 AOP
 
 ```java
@@ -149,7 +147,12 @@ public void deleteColumn(Long projectId, Long columnId) {
 /topic/notifications/{userId}    → 개인 알림
 ```
 
-### 동시성 제어 (비관적 락)
+### 배치 (Spring Batch)
+
+- **프로젝트 아카이빙 배치**: 완료 후 일정 기간 경과한 프로젝트를 ARCHIVED로 전환
+- **스케줄러**: 매일 새벽 실행 (`@Scheduled`)
+
+### 동시성 제어 (DB 락)
 
 ```java
 @Lock(LockModeType.PESSIMISTIC_WRITE)
