@@ -5,6 +5,8 @@ import com.bizsync.backend.common.exception.ErrorCode;
 import com.bizsync.backend.common.exception.ForbiddenException;
 import com.bizsync.backend.common.exception.ResourceNotFoundException;
 import com.bizsync.backend.domain.entity.*;
+import com.bizsync.backend.domain.notification.ApprovalNotification;
+import com.bizsync.backend.domain.notification.Notification;
 import com.bizsync.backend.domain.repository.*;
 import com.bizsync.backend.dto.request.ApprovalCreateRequestDTO;
 import com.bizsync.backend.dto.request.ApprovalProcessRequestDTO;
@@ -270,8 +272,9 @@ public class ApprovalService {
     /**
      * 결재 완료 시 기안자와 모든 결재자에게 대량 알림 발송
      * 
-     * <p>Virtual Threads를 사용하여 병렬로 알림을 발송합니다.
-     * 기존 단건 발송 방식 대비 대량 알림 발송 시 성능이 크게 향상됩니다.
+     * <p>Java 21 Pattern Matching과 Virtual Threads를 활용합니다.
+     * ApprovalNotification Record를 사용하여 타입 안전성을 보장하고,
+     * Virtual Threads로 병렬 알림 발송을 수행합니다.
      * 
      * @param document 승인 완료된 결재 문서
      */
@@ -291,15 +294,15 @@ public class ApprovalService {
             allRecipients.add(0, drafterId);  // 기안자를 맨 앞에 추가
         }
         
-        // 알림 메시지 생성
-        String message = String.format(
-                "%s님이 상신한 '%s'이(가) 최종 승인되었습니다.",
-                document.getDrafter().getName(),
-                document.getTitle()
+        // ApprovalNotification Record 생성 (Java 21)
+        Notification notification = ApprovalNotification.approved(
+            document.getDocumentId(),
+            document.getDrafter().getName(),
+            document.getTitle()
         );
         
-        // 대량 알림 발송 (Virtual Threads)
-        notificationService.sendBulkNotification(allRecipients, message, document.getDocumentId());
+        // 대량 알림 발송 (Pattern Matching + Virtual Threads)
+        notificationService.sendBulk(allRecipients, notification);
     }
 
     private void processRejectionAction(ApprovalDocument document, ApprovalLine line, String comment) {

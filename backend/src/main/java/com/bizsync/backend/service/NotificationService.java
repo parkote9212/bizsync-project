@@ -2,6 +2,10 @@ package com.bizsync.backend.service;
 
 import com.bizsync.backend.common.aop.PerformanceLogging;
 import com.bizsync.backend.domain.entity.ApprovalDocument;
+import com.bizsync.backend.domain.notification.ApprovalNotification;
+import com.bizsync.backend.domain.notification.CommentNotification;
+import com.bizsync.backend.domain.notification.Notification;
+import com.bizsync.backend.domain.notification.ProjectNotification;
 import com.bizsync.backend.dto.response.NotificationDTO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -16,7 +20,16 @@ import java.util.concurrent.Executors;
 /**
  * 알림 발송 관련 비즈니스 로직을 처리하는 서비스
  *
- * <p>결재 승인/반려 알림, 결재 요청 알림 등의 WebSocket 기반 실시간 알림을 제공합니다.
+ * <p>Java 21의 Pattern Matching과 Sealed Interface를 활용하여
+ * 타입 안전하고 확장 가능한 알림 시스템을 제공합니다.
+ *
+ * <p>주요 기능:
+ * <ul>
+ *   <li>결재 승인/반려 알림</li>
+ *   <li>프로젝트 생성/완료 알림</li>
+ *   <li>댓글 알림</li>
+ *   <li>Virtual Threads 기반 대량 알림 발송</li>
+ * </ul>
  *
  * @author BizSync Team
  */
@@ -28,43 +41,108 @@ public class NotificationService {
     private final SimpMessagingTemplate messagingTemplate;
 
     /**
-     * 특정 유저에게 알림 발송
+     * 알림 발송 (Java 21 Pattern Matching 사용)
+     * 
+     * <p>Sealed Interface와 Pattern Matching을 사용하여
+     * 컴파일 타임에 모든 알림 타입 처리를 보장합니다.
      *
-     * @param userId   수신자 ID
-     * @param message  알림 내용
-     * @param targetId 관련 문서/업무 ID
+     * @param userId       수신자 ID
+     * @param notification 알림 객체 (ApprovalNotification, ProjectNotification, CommentNotification)
      */
-    public void sendToUser(Long userId, String message, Long targetId) {
-        // 알림 객체 생성
-        NotificationDTO notification = NotificationDTO.from("APPROVAL", message, targetId);
+    public void send(Long userId, Notification notification) {
+        // Pattern Matching for Switch (Java 21)
+        String message = switch (notification) {
+            case ApprovalNotification(
+                Long documentId,
+                String action,
+                String drafterName,
+                String documentTitle
+            ) -> formatApprovalMessage(action, drafterName, documentTitle);
+            
+            case ProjectNotification(
+                Long projectId,
+                String event,
+                String projectName
+            ) -> formatProjectMessage(event, projectName);
+            
+            case CommentNotification(
+                Long commentId,
+                String commenterName,
+                String content
+            ) -> formatCommentMessage(commenterName, content);
+        };
 
-        // 개인 채널로 발송 (/sub/notification/1)
+        // NotificationDTO 생성 및 발송
+        NotificationDTO dto = NotificationDTO.from(
+            notification.type(),
+            message,
+            notification.targetId()
+        );
+
         String destination = "/sub/notification/" + userId;
+        messagingTemplate.convertAndSend(destination, dto);
 
-        messagingTemplate.convertAndSend(destination, notification);
+        log.info("알림 발송 [To: User {}] Type: {}, Message: {}", 
+                userId, notification.type(), message);
+    }
 
-        log.info("알림 발송 [To: User {}] : {}", userId, message);
+    /**
+     * 결재 알림 메시지 포맷팅
+     */
+    private String formatApprovalMessage(String action, String drafterName, String documentTitle) {
+        return switch (action) {
+            case "APPROVED" -> String.format(
+                "%s님이 상신한 '%s'이(가) 최종 승인되었습니다.",
+                drafterName, documentTitle
+            );
+            case "REJECTED" -> String.format(
+                "%s님이 상신한 '%s'이(가) 반려되었습니다.",
+                drafterName, documentTitle
+            );
+            case "REQUESTED" -> String.format(
+                "%s님이 상신한 '%s' 결재 요청이 있습니다.",
+                drafterName, documentTitle
+            );
+            default -> throw new IllegalArgumentException("Unknown approval action: " + action);
+        };
+    }
+
+    /**
+     * 프로젝트 알림 메시지 포맷팅
+     */
+    private String formatProjectMessage(String event, String projectName) {
+        return switch (event) {
+            case "CREATED" -> String.format("새 프로젝트 '%s'이(가) 생성되었습니다.", projectName);
+            case "COMPLETED" -> String.format("프로젝트 '%s'이(가) 완료되었습니다.", projectName);
+            default -> String.format("프로젝트 '%s' 업데이트: %s", projectName, event);
+        };
+    }
+
+    /**
+     * 댓글 알림 메시지 포맷팅
+     */
+    private String formatCommentMessage(String commenterName, String content) {
+        return String.format("%s님이 댓글을 남겼습니다: %s", commenterName, content);
     }
 
     /**
      * 결재가 최종 승인되었을 때 기안자에게 알림 발송
      *
      * @param document 승인 완료된 결재 문서
-     *                 <p>
-     *                 발송 대상: 기안자(drafter)
-     *                 메시지 예시: "김철수님이 상신한 '출장비 지출 건'이 최종 승인되었습니다."
      */
     public void sendApprovalCompleteNotification(ApprovalDocument document) {
         Long drafterId = document.getDrafter().getUserId();
         String drafterName = document.getDrafter().getName();
+        String documentTitle = document.getTitle();
 
-        String message = String.format(
-                "%s님이 상신한 '%s'이(가) 최종 승인되었습니다.",
-                drafterName,
-                document.getTitle()
+        // ApprovalNotification Record 생성
+        Notification notification = ApprovalNotification.approved(
+            document.getDocumentId(),
+            drafterName,
+            documentTitle
         );
 
-        sendToUser(drafterId, message, document.getDocumentId());
+        send(drafterId, notification);
 
         log.info("결재 승인 완료 알림 발송 - 문서 ID: {}, 기안자: {}",
                 document.getDocumentId(), drafterName);
@@ -75,22 +153,26 @@ public class NotificationService {
      *
      * @param document     반려된 결재 문서
      * @param rejectReason 반려 사유
-     *                     <p>
-     *                     발송 대상: 기안자(drafter)
-     *                     메시지 예시: "김철수님이 상신한 '출장비 지출 건'이 반려되었습니다. (사유: 증빙 서류 부족)"
      */
     public void sendApprovalRejectedNotification(ApprovalDocument document, String rejectReason) {
         Long drafterId = document.getDrafter().getUserId();
         String drafterName = document.getDrafter().getName();
+        String documentTitle = document.getTitle();
 
-        String message = String.format(
-                "%s님이 상신한 '%s'이(가) 반려되었습니다. (사유: %s)",
-                drafterName,
-                document.getTitle(),
-                rejectReason != null ? rejectReason : "미기재"
+        // 반려 사유를 제목에 포함
+        String titleWithReason = String.format(
+            "%s (사유: %s)",
+            documentTitle,
+            rejectReason != null ? rejectReason : "미기재"
         );
 
-        sendToUser(drafterId, message, document.getDocumentId());
+        Notification notification = ApprovalNotification.rejected(
+            document.getDocumentId(),
+            drafterName,
+            titleWithReason
+        );
+
+        send(drafterId, notification);
 
         log.info("결재 반려 알림 발송 - 문서 ID: {}, 기안자: {}, 사유: {}",
                 document.getDocumentId(), drafterName, rejectReason);
@@ -110,14 +192,16 @@ public class NotificationService {
             String approverName,
             Integer sequence
     ) {
-        String message = String.format(
-                "%s님이 상신한 '%s' 결재 요청이 있습니다. (%d차 결재자)",
-                document.getDrafter().getName(),
-                document.getTitle(),
-                sequence
+        String drafterName = document.getDrafter().getName();
+        String documentTitle = String.format("%s (%d차 결재자)", document.getTitle(), sequence);
+
+        Notification notification = ApprovalNotification.requested(
+            document.getDocumentId(),
+            drafterName,
+            documentTitle
         );
 
-        sendToUser(approverId, message, document.getDocumentId());
+        send(approverId, notification);
 
         log.info("결재 요청 알림 발송 - 문서 ID: {}, 결재자: {} ({}차)",
                 document.getDocumentId(), approverName, sequence);
@@ -135,12 +219,11 @@ public class NotificationService {
      *   <li>100명 병렬 발송: ~50ms (95% 개선)</li>
      * </ul>
      *
-     * @param userIds  수신자 ID 리스트
-     * @param message  알림 메시지 내용
-     * @param targetId 관련 문서/업무 ID
+     * @param userIds      수신자 ID 리스트
+     * @param notification 알림 객체
      */
     @PerformanceLogging
-    public void sendBulkNotification(List<Long> userIds, String message, Long targetId) {
+    public void sendBulk(List<Long> userIds, Notification notification) {
         if (userIds == null || userIds.isEmpty()) {
             log.warn("대량 알림 발송 실패: 수신자 목록이 비어있습니다.");
             return;
@@ -152,7 +235,7 @@ public class NotificationService {
             // 각 사용자에게 비동기로 알림 발송
             List<CompletableFuture<Void>> futures = userIds.stream()
                     .map(userId -> CompletableFuture.runAsync(
-                            () -> sendToUser(userId, message, targetId),
+                            () -> send(userId, notification),
                             executor
                     ))
                     .toList();
@@ -165,4 +248,42 @@ public class NotificationService {
         }
     }
 
+    // ========== 하위 호환성을 위한 레거시 메서드 (Deprecated) ==========
+    
+    /**
+     * @deprecated Use {@link #send(Long, Notification)} instead
+     */
+    @Deprecated(since = "2.0", forRemoval = true)
+    public void sendToUser(Long userId, String message, Long targetId) {
+        NotificationDTO notification = NotificationDTO.from("APPROVAL", message, targetId);
+        String destination = "/sub/notification/" + userId;
+        messagingTemplate.convertAndSend(destination, notification);
+        log.info("알림 발송 [To: User {}] : {}", userId, message);
+    }
+
+    /**
+     * @deprecated Use {@link #sendBulk(List, Notification)} instead
+     */
+    @Deprecated(since = "2.0", forRemoval = true)
+    @PerformanceLogging
+    public void sendBulkNotification(List<Long> userIds, String message, Long targetId) {
+        if (userIds == null || userIds.isEmpty()) {
+            log.warn("대량 알림 발송 실패: 수신자 목록이 비어있습니다.");
+            return;
+        }
+
+        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
+            List<CompletableFuture<Void>> futures = userIds.stream()
+                    .map(userId -> CompletableFuture.runAsync(
+                            () -> sendToUser(userId, message, targetId),
+                            executor
+                    ))
+                    .toList();
+
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        } catch (Exception e) {
+            log.error("대량 알림 발송 중 오류 발생", e);
+        }
+    }
 }
