@@ -152,11 +152,11 @@ CREATE TABLE IF NOT EXISTS approval_line
 CREATE TABLE IF NOT EXISTS chat_message
 (
     id           BIGINT AUTO_INCREMENT PRIMARY KEY,
-    room_id      BIGINT       NOT NULL,
-    sender_id    BIGINT       NOT NULL,
-    content      TEXT         NOT NULL,
-    message_type VARCHAR(20)  NOT NULL DEFAULT 'TEXT',
-    sent_at      DATETIME     NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    room_id      BIGINT      NOT NULL,
+    sender_id    BIGINT      NOT NULL,
+    content      TEXT        NOT NULL,
+    message_type VARCHAR(20) NOT NULL DEFAULT 'TEXT',
+    sent_at      DATETIME    NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (sender_id) REFERENCES users (user_id) ON DELETE CASCADE,
     INDEX idx_room_id (room_id),
     INDEX idx_sender_id (sender_id),

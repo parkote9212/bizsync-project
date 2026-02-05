@@ -8,12 +8,12 @@ BizSync의 백엔드 서버입니다. Spring Boot 기반의 RESTful API와 WebSo
 
 ### 🔐 Demo Account
 
-| 역할 | 이메일 | 비밀번호 |
-|------|--------|----------|
-| 관리자 | admin@bizsync.com | Admin123!@# |
-| 일반 사용자 | test1@test.com | test1234 |
-| 일반 사용자 | test2@test.com | test1234 |
-| 일반 사용자 | test3@test.com | test1234 |
+| 역할     | 이메일               | 비밀번호        |
+|--------|-------------------|-------------|
+| 관리자    | admin@bizsync.com | Admin123!@# |
+| 일반 사용자 | test1@test.com    | test1234    |
+| 일반 사용자 | test2@test.com    | test1234    |
+| 일반 사용자 | test3@test.com    | test1234    |
 
 > ⚠️ 테스트용 계정입니다. 데이터는 주기적으로 초기화됩니다.
 
@@ -21,17 +21,17 @@ BizSync의 백엔드 서버입니다. Spring Boot 기반의 RESTful API와 WebSo
 
 ## 🛠️ 기술 스택
 
-| 기술 | 버전 | 용도 |
-|------|------|------|
-| **Java** | 21 | LTS 버전, Virtual Threads 지원 |
-| **Spring Boot** | 3.5.9 | 프레임워크 |
-| **Spring Security + JWT** | - | 인증/인가 (Access + Refresh Token) |
-| **Spring WebSocket (STOMP)** | - | 실시간 보드 동기화, 채팅, 알림 |
-| **Spring Data JPA** | - | ORM (단순 CRUD) |
-| **MyBatis** | 3.0.5 | 복잡한 조인 쿼리 최적화 |
-| **Spring AOP** | - | 프로젝트 권한 체크 분리 |
-| **Apache POI** | 5.2.5 | Excel 업로드/다운로드 |
-| **MariaDB** | 10.11+ | 관계형 데이터베이스 |
+| 기술                           | 버전     | 용도                             |
+|------------------------------|--------|--------------------------------|
+| **Java**                     | 21     | LTS 버전, Virtual Threads 지원     |
+| **Spring Boot**              | 3.5.9  | 프레임워크                          |
+| **Spring Security + JWT**    | -      | 인증/인가 (Access + Refresh Token) |
+| **Spring WebSocket (STOMP)** | -      | 실시간 보드 동기화, 채팅, 알림             |
+| **Spring Data JPA**          | -      | ORM (단순 CRUD)                  |
+| **MyBatis**                  | 3.0.5  | 복잡한 조인 쿼리 최적화                  |
+| **Spring AOP**               | -      | 프로젝트 권한 체크 분리                  |
+| **Apache POI**               | 5.2.5  | Excel 업로드/다운로드                 |
+| **MariaDB**                  | 10.11+ | 관계형 데이터베이스                     |
 
 ---
 
@@ -162,42 +162,47 @@ Optional<Project> findByIdForUpdate(@Param("projectId") Long projectId);
 ## 📚 API 엔드포인트
 
 ### 인증
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/api/auth/login` | 로그인 |
-| POST | `/api/auth/signup` | 회원가입 |
-| POST | `/api/auth/refresh` | 토큰 갱신 |
+
+| Method | URL                 | 설명    |
+|--------|---------------------|-------|
+| POST   | `/api/auth/login`   | 로그인   |
+| POST   | `/api/auth/signup`  | 회원가입  |
+| POST   | `/api/auth/refresh` | 토큰 갱신 |
 
 ### 프로젝트
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/api/projects` | 목록 조회 |
-| POST | `/api/projects` | 생성 |
-| POST | `/api/projects/{id}/invite` | 멤버 초대 (PL) |
+
+| Method | URL                                   | 설명         |
+|--------|---------------------------------------|------------|
+| GET    | `/api/projects`                       | 목록 조회      |
+| POST   | `/api/projects`                       | 생성         |
+| POST   | `/api/projects/{id}/invite`           | 멤버 초대 (PL) |
 | DELETE | `/api/projects/{id}/members/{userId}` | 멤버 삭제 (PL) |
 
 ### 칸반
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/api/projects/{id}/board` | 보드 조회 |
-| POST | `/api/projects/{id}/columns` | 컬럼 생성 (PL) |
-| DELETE | `/api/columns/{id}` | 컬럼 삭제 (PL) |
-| POST | `/api/columns/{id}/tasks` | 업무 생성 |
-| PUT | `/api/tasks/{id}/move` | 업무 이동 |
+
+| Method | URL                          | 설명         |
+|--------|------------------------------|------------|
+| GET    | `/api/projects/{id}/board`   | 보드 조회      |
+| POST   | `/api/projects/{id}/columns` | 컬럼 생성 (PL) |
+| DELETE | `/api/columns/{id}`          | 컬럼 삭제 (PL) |
+| POST   | `/api/columns/{id}/tasks`    | 업무 생성      |
+| PUT    | `/api/tasks/{id}/move`       | 업무 이동      |
 
 ### 결재
-| Method | URL | 설명 |
-|--------|-----|------|
-| POST | `/api/approvals` | 결재 기안 |
-| GET | `/api/approvals/pending` | 결재 대기함 |
-| POST | `/api/approvals/{id}/process` | 승인/반려 |
+
+| Method | URL                           | 설명     |
+|--------|-------------------------------|--------|
+| POST   | `/api/approvals`              | 결재 기안  |
+| GET    | `/api/approvals/pending`      | 결재 대기함 |
+| POST   | `/api/approvals/{id}/process` | 승인/반려  |
 
 ### 관리자
-| Method | URL | 설명 |
-|--------|-----|------|
-| GET | `/api/admin/users` | 사용자 목록 |
-| PUT | `/api/admin/users/{id}/approve` | 계정 승인 |
-| PUT | `/api/admin/users/{id}/status` | 상태 변경 |
+
+| Method | URL                             | 설명     |
+|--------|---------------------------------|--------|
+| GET    | `/api/admin/users`              | 사용자 목록 |
+| PUT    | `/api/admin/users/{id}/approve` | 계정 승인  |
+| PUT    | `/api/admin/users/{id}/status`  | 상태 변경  |
 
 ---
 
