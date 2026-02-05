@@ -50,6 +50,9 @@ dependencies {
     // AOP (Aspect-Oriented Programming)
     implementation 'org.springframework.boot:spring-boot-starter-aop'
 
+    // Spring Batch
+    implementation 'org.springframework.boot:spring-boot-starter-batch'
+
     // Jackson for LocalDateTime serialization
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 

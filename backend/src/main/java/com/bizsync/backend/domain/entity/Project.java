@@ -116,6 +116,18 @@ public class Project extends BaseEntity {
     }
 
     /**
+     * 프로젝트를 아카이빙 상태로 변경
+     * 
+     * <p>종료된 프로젝트 중 일정 기간이 지난 프로젝트를 아카이빙 처리합니다.
+     * Spring Batch로 매일 새벽 자동 실행됩니다.
+     */
+    public void archive() {
+        if (this.status == ProjectStatus.COMPLETED) {
+            this.status = ProjectStatus.ARCHIVED;
+        }
+    }
+
+    /**
      * 프로젝트 정보 수정
      */
     public void update(String name, String description, LocalDate startDate, LocalDate endDate, BigDecimal totalBudget) {
