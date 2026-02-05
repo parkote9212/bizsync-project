@@ -17,7 +17,9 @@ import java.util.Map;
 public class GlobalExceptionHandler {
 
     /**
-     * 비즈니스 예외 처리 (기본)
+     * 비즈니스 예외 처리 (기본).
+     * <p>결재 락 타임아웃(APPROVAL_LOCK_TIMEOUT), 락 인터럽트(APPROVAL_LOCK_INTERRUPTED) 등
+     * Redisson Lock 관련 예외도 이 핸들러에서 처리됩니다.
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ErrorResponse> handleBusinessException(BusinessException e) {

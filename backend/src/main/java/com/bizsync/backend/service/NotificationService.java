@@ -38,6 +38,14 @@ import java.util.concurrent.Executors;
 @RequiredArgsConstructor
 public class NotificationService {
 
+    private static final String APPROVAL_APPROVED_MESSAGE = "%s님이 상신한 '%s'이(가) 최종 승인되었습니다.";
+    private static final String APPROVAL_REJECTED_MESSAGE = "%s님이 상신한 '%s'이(가) 반려되었습니다.";
+    private static final String APPROVAL_REQUESTED_MESSAGE = "%s님이 상신한 '%s' 결재 요청이 있습니다.";
+    private static final String PROJECT_CREATED_MESSAGE = "새 프로젝트 '%s'이(가) 생성되었습니다.";
+    private static final String PROJECT_COMPLETED_MESSAGE = "프로젝트 '%s'이(가) 완료되었습니다.";
+    private static final String PROJECT_UPDATE_MESSAGE = "프로젝트 '%s' 업데이트: %s";
+    private static final String COMMENT_MESSAGE = "%s님이 댓글을 남겼습니다: %s";
+
     private final SimpMessagingTemplate messagingTemplate;
 
     /**
@@ -72,15 +80,12 @@ public class NotificationService {
             ) -> formatCommentMessage(commenterName, content);
         };
 
-        // NotificationDTO 생성 및 발송
         NotificationDTO dto = NotificationDTO.from(
-            notification.type(),
-            message,
-            notification.targetId()
+                notification.type(),
+                message,
+                notification.targetId()
         );
-
-        String destination = "/sub/notification/" + userId;
-        messagingTemplate.convertAndSend(destination, dto);
+        sendToDestination(userId, dto);
 
         log.info("알림 발송 [To: User {}] Type: {}, Message: {}", 
                 userId, notification.type(), message);
@@ -91,18 +96,9 @@ public class NotificationService {
      */
     private String formatApprovalMessage(String action, String drafterName, String documentTitle) {
         return switch (action) {
-            case "APPROVED" -> String.format(
-                "%s님이 상신한 '%s'이(가) 최종 승인되었습니다.",
-                drafterName, documentTitle
-            );
-            case "REJECTED" -> String.format(
-                "%s님이 상신한 '%s'이(가) 반려되었습니다.",
-                drafterName, documentTitle
-            );
-            case "REQUESTED" -> String.format(
-                "%s님이 상신한 '%s' 결재 요청이 있습니다.",
-                drafterName, documentTitle
-            );
+            case "APPROVED" -> String.format(APPROVAL_APPROVED_MESSAGE, drafterName, documentTitle);
+            case "REJECTED" -> String.format(APPROVAL_REJECTED_MESSAGE, drafterName, documentTitle);
+            case "REQUESTED" -> String.format(APPROVAL_REQUESTED_MESSAGE, drafterName, documentTitle);
             default -> throw new IllegalArgumentException("Unknown approval action: " + action);
         };
     }
@@ -112,9 +108,9 @@ public class NotificationService {
      */
     private String formatProjectMessage(String event, String projectName) {
         return switch (event) {
-            case "CREATED" -> String.format("새 프로젝트 '%s'이(가) 생성되었습니다.", projectName);
-            case "COMPLETED" -> String.format("프로젝트 '%s'이(가) 완료되었습니다.", projectName);
-            default -> String.format("프로젝트 '%s' 업데이트: %s", projectName, event);
+            case "CREATED" -> String.format(PROJECT_CREATED_MESSAGE, projectName);
+            case "COMPLETED" -> String.format(PROJECT_COMPLETED_MESSAGE, projectName);
+            default -> String.format(PROJECT_UPDATE_MESSAGE, projectName, event);
         };
     }
 
@@ -122,7 +118,7 @@ public class NotificationService {
      * 댓글 알림 메시지 포맷팅
      */
     private String formatCommentMessage(String commenterName, String content) {
-        return String.format("%s님이 댓글을 남겼습니다: %s", commenterName, content);
+        return String.format(COMMENT_MESSAGE, commenterName, content);
     }
 
     /**
@@ -251,18 +247,25 @@ public class NotificationService {
     // ========== 하위 호환성을 위한 레거시 메서드 (Deprecated) ==========
     
     /**
-     * @deprecated Use {@link #send(Long, Notification)} instead
+     * @deprecated Use {@link #send(Long, Notification)} instead. 내부적으로 단일 발송 로직을 재사용합니다.
      */
     @Deprecated(since = "2.0", forRemoval = true)
     public void sendToUser(Long userId, String message, Long targetId) {
-        NotificationDTO notification = NotificationDTO.from("APPROVAL", message, targetId);
-        String destination = "/sub/notification/" + userId;
-        messagingTemplate.convertAndSend(destination, notification);
+        NotificationDTO dto = NotificationDTO.from("APPROVAL", message, targetId);
+        sendToDestination(userId, dto);
         log.info("알림 발송 [To: User {}] : {}", userId, message);
     }
 
     /**
-     * @deprecated Use {@link #sendBulk(List, Notification)} instead
+     * 웹소켓 목적지로 알림 DTO를 발송합니다. (send / sendToUser 공통)
+     */
+    private void sendToDestination(Long userId, NotificationDTO dto) {
+        String destination = "/sub/notification/" + userId;
+        messagingTemplate.convertAndSend(destination, dto);
+    }
+
+    /**
+     * @deprecated Use {@link #sendBulk(List, Notification)} instead. 내부적으로 sendBulk와 동일한 Virtual Thread 발송을 사용합니다.
      */
     @Deprecated(since = "2.0", forRemoval = true)
     @PerformanceLogging
@@ -271,17 +274,15 @@ public class NotificationService {
             log.warn("대량 알림 발송 실패: 수신자 목록이 비어있습니다.");
             return;
         }
-
+        NotificationDTO dto = NotificationDTO.from("APPROVAL", message, targetId);
         try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
             List<CompletableFuture<Void>> futures = userIds.stream()
                     .map(userId -> CompletableFuture.runAsync(
-                            () -> sendToUser(userId, message, targetId),
+                            () -> sendToDestination(userId, dto),
                             executor
                     ))
                     .toList();
-
             CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
         } catch (Exception e) {
             log.error("대량 알림 발송 중 오류 발생", e);
         }

@@ -41,6 +41,11 @@ import java.util.stream.Collectors;
 @Transactional
 public class ApprovalService {
 
+    /** 결재 락 대기 시간 (초) */
+    private static final long LOCK_WAIT_TIME = 5;
+    /** 결재 락 점유 시간 (초), 초과 시 자동 해제 */
+    private static final long LOCK_LEASE_TIME = 10;
+
     private final ApprovalDocumentRepository approvalDocumentRepository;
     private final ApprovalLineRepository approvalLineRepository;
     private final UserRepository userRepository;
@@ -95,15 +100,21 @@ public class ApprovalService {
     }
 
     private void createApprovalLines(ApprovalDocument document, List<Long> approverIds) {
-        List<User> approvers = userRepository.findAllById(approverIds);
+        List<User> approvers = validateApprovers(approverIds);
+        Map<Long, User> approverMap = approvers.stream()
+                .collect(Collectors.toMap(User::getUserId, Function.identity()));
+        createAndSaveApprovalLines(document, approverIds, approverMap);
+    }
 
+    private List<User> validateApprovers(List<Long> approverIds) {
+        List<User> approvers = userRepository.findAllById(approverIds);
         if (approvers.size() != approverIds.size()) {
             throw new ResourceNotFoundException(ErrorCode.APPROVAL_APPROVER_NOT_FOUND);
         }
+        return approvers;
+    }
 
-        Map<Long, User> approverMap = approvers.stream()
-                .collect(Collectors.toMap(User::getUserId, Function.identity()));
-
+    private void createAndSaveApprovalLines(ApprovalDocument document, List<Long> approverIds, Map<Long, User> approverMap) {
         int sequence = 1;
         for (Long approverId : approverIds) {
             User approver = approverMap.get(approverId);
@@ -182,8 +193,6 @@ public class ApprovalService {
      * 모든 결재자가 승인하면 문서가 최종 승인됩니다.
      *
      * <p>Redis 분산 락을 사용하여 동시성 이슈를 방지합니다.
-     * 같은 결재 문서에 대한 동시 처리 요청이 들어오면 먼저 락을 획득한 요청만 처리되고,
-     * 나머지는 최대 5초 대기 후 타임아웃 예외를 발생시킵니다.
      *
      * @param approverId 결재자 ID
      * @param documentId 결재 문서 ID
@@ -192,41 +201,71 @@ public class ApprovalService {
      * @throws BusinessException  이미 처리된 결재이거나 이전 결재자가 미승인인 경우, 또는 락 획득 실패
      */
     public void processApproval(Long approverId, Long documentId, ApprovalProcessRequestDTO dto) {
+        RLock lock = acquireApprovalLock(documentId);
+        try {
+            ApprovalRequestContext ctx = validateApprovalRequest(documentId, approverId);
+            executeApprovalAction(ctx.document(), ctx.myLine(), dto);
+        } finally {
+            releaseApprovalLock(lock, documentId);
+        }
+    }
+
+    /**
+     * 결재 문서 처리용 분산 락을 획득합니다.
+     *
+     * @param documentId 결재 문서 ID
+     * @return 획득한 락 (호출자가 finally에서 해제해야 함)
+     * @throws BusinessException 락 획득 실패 시
+     */
+    private RLock acquireApprovalLock(Long documentId) {
         String lockKey = "approval:lock:" + documentId;
         RLock lock = redissonClient.getLock(lockKey);
-
         try {
-            // 최대 5초 대기, 10초 후 자동 해제
-            boolean acquired = lock.tryLock(5, 10, TimeUnit.SECONDS);
-
+            boolean acquired = lock.tryLock(LOCK_WAIT_TIME, LOCK_LEASE_TIME, TimeUnit.SECONDS);
             if (!acquired) {
                 log.warn("Failed to acquire lock for approval documentId: {}", documentId);
                 throw new BusinessException(ErrorCode.APPROVAL_LOCK_TIMEOUT);
             }
-
             log.info("Acquired lock for approval documentId: {}", documentId);
-
-            ApprovalDocument document = approvalDocumentRepository.findByIdOrThrow(documentId);
-            ApprovalLine myLine = getApprovalLine(document, approverId);
-
-            validateApprovalLineStatus(myLine);
-            validatePreviousApprovals(documentId, myLine);
-
-            if (dto.status() == ApprovalStatus.APPROVED) {
-                processApprovalAction(document, myLine, dto.comment());
-            } else if (dto.status() == ApprovalStatus.REJECTED) {
-                processRejectionAction(document, myLine, dto.comment());
-            }
-
+            return lock;
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.error("Lock acquisition interrupted for documentId: {}", documentId, e);
             throw new BusinessException(ErrorCode.APPROVAL_LOCK_INTERRUPTED);
-        } finally {
-            if (lock.isHeldByCurrentThread()) {
-                lock.unlock();
-                log.info("Released lock for approval documentId: {}", documentId);
-            }
+        }
+    }
+
+    /**
+     * 결재 문서 처리용 락을 해제합니다.
+     */
+    private void releaseApprovalLock(RLock lock, Long documentId) {
+        if (lock != null && lock.isHeldByCurrentThread()) {
+            lock.unlock();
+            log.info("Released lock for approval documentId: {}", documentId);
+        }
+    }
+
+    /**
+     * 결재 요청을 검증하고 문서·결재선을 반환합니다.
+     */
+    private ApprovalRequestContext validateApprovalRequest(Long documentId, Long approverId) {
+        ApprovalDocument document = approvalDocumentRepository.findByIdOrThrow(documentId);
+        ApprovalLine myLine = getApprovalLine(document, approverId);
+        validateApprovalLineStatus(myLine);
+        validatePreviousApprovals(documentId, myLine);
+        return new ApprovalRequestContext(document, myLine);
+    }
+
+    private record ApprovalRequestContext(ApprovalDocument document, ApprovalLine myLine) {
+    }
+
+    /**
+     * 승인 또는 반려 액션을 실행합니다.
+     */
+    private void executeApprovalAction(ApprovalDocument document, ApprovalLine myLine, ApprovalProcessRequestDTO dto) {
+        if (dto.status() == ApprovalStatus.APPROVED) {
+            processApprovalAction(document, myLine, dto.comment());
+        } else if (dto.status() == ApprovalStatus.REJECTED) {
+            processRejectionAction(document, myLine, dto.comment());
         }
     }
 
@@ -279,30 +318,30 @@ public class ApprovalService {
      * @param document 승인 완료된 결재 문서
      */
     private void sendBulkApprovalCompleteNotification(ApprovalDocument document) {
-        // 기안자 ID
+        List<Long> allRecipients = collectAllRecipients(document);
+        Notification notification = ApprovalNotification.approved(
+                document.getDocumentId(),
+                document.getDrafter().getName(),
+                document.getTitle()
+        );
+        notificationService.sendBulk(allRecipients, notification);
+    }
+
+    private List<Long> collectAllRecipients(ApprovalDocument document) {
         Long drafterId = document.getDrafter().getUserId();
-        
-        // 모든 결재자 ID 리스트
         List<Long> approverIds = approvalLineRepository.findByDocumentOrderBySequence(document)
                 .stream()
-                .map(approvalLine -> approvalLine.getApprover().getUserId())
+                .map(line -> line.getApprover().getUserId())
                 .toList();
-        
-        // 기안자 + 결재자 통합 (중복 제거)
-        List<Long> allRecipients = new java.util.ArrayList<>(approverIds);
-        if (!allRecipients.contains(drafterId)) {
-            allRecipients.add(0, drafterId);  // 기안자를 맨 앞에 추가
+        return removeDuplicateRecipients(drafterId, approverIds);
+    }
+
+    private List<Long> removeDuplicateRecipients(Long drafterId, List<Long> approverIds) {
+        List<Long> result = new java.util.ArrayList<>(approverIds);
+        if (!result.contains(drafterId)) {
+            result.add(0, drafterId);
         }
-        
-        // ApprovalNotification Record 생성 (Java 21)
-        Notification notification = ApprovalNotification.approved(
-            document.getDocumentId(),
-            document.getDrafter().getName(),
-            document.getTitle()
-        );
-        
-        // 대량 알림 발송 (Pattern Matching + Virtual Threads)
-        notificationService.sendBulk(allRecipients, notification);
+        return result;
     }
 
     private void processRejectionAction(ApprovalDocument document, ApprovalLine line, String comment) {
@@ -330,15 +369,20 @@ public class ApprovalService {
     @Transactional(readOnly = true)
     public ApprovalDetailDTO getApprovalDetail(Long userId, Long documentId) {
         ApprovalDocument document = approvalDocumentRepository.findByIdOrThrow(documentId);
+        validateDrafterOrApprover(userId, documentId, document);
+        List<ApprovalLine> lines = approvalLineRepository.findByDocumentOrderBySequence(document);
+        return ApprovalDetailDTO.from(document, lines);
+    }
 
+    /**
+     * 사용자가 기안자 또는 결재선에 포함된 결재자인지 검증합니다.
+     */
+    private void validateDrafterOrApprover(Long userId, Long documentId, ApprovalDocument document) {
         boolean isDrafter = document.getDrafter().getUserId().equals(userId);
         boolean isApprover = approvalLineRepository.existsByDocumentAndApprover(documentId, userId);
         if (!isDrafter && !isApprover) {
             throw new ForbiddenException(ErrorCode.APPROVAL_VIEW_PERMISSION_DENIED);
         }
-
-        List<ApprovalLine> lines = approvalLineRepository.findByDocumentOrderBySequence(document);
-        return ApprovalDetailDTO.from(document, lines);
     }
 
     /**
