@@ -262,8 +262,44 @@ public class ApprovalService {
                 deductBudget(document);
             }
 
-            notificationService.sendApprovalCompleteNotification(document);
+            // 기안자 + 모든 결재자에게 대량 알림 발송 (Virtual Threads 사용)
+            sendBulkApprovalCompleteNotification(document);
         }
+    }
+
+    /**
+     * 결재 완료 시 기안자와 모든 결재자에게 대량 알림 발송
+     * 
+     * <p>Virtual Threads를 사용하여 병렬로 알림을 발송합니다.
+     * 기존 단건 발송 방식 대비 대량 알림 발송 시 성능이 크게 향상됩니다.
+     * 
+     * @param document 승인 완료된 결재 문서
+     */
+    private void sendBulkApprovalCompleteNotification(ApprovalDocument document) {
+        // 기안자 ID
+        Long drafterId = document.getDrafter().getUserId();
+        
+        // 모든 결재자 ID 리스트
+        List<Long> approverIds = approvalLineRepository.findByDocumentOrderBySequence(document)
+                .stream()
+                .map(approvalLine -> approvalLine.getApprover().getUserId())
+                .toList();
+        
+        // 기안자 + 결재자 통합 (중복 제거)
+        List<Long> allRecipients = new java.util.ArrayList<>(approverIds);
+        if (!allRecipients.contains(drafterId)) {
+            allRecipients.add(0, drafterId);  // 기안자를 맨 앞에 추가
+        }
+        
+        // 알림 메시지 생성
+        String message = String.format(
+                "%s님이 상신한 '%s'이(가) 최종 승인되었습니다.",
+                document.getDrafter().getName(),
+                document.getTitle()
+        );
+        
+        // 대량 알림 발송 (Virtual Threads)
+        notificationService.sendBulkNotification(allRecipients, message, document.getDocumentId());
     }
 
     private void processRejectionAction(ApprovalDocument document, ApprovalLine line, String comment) {
