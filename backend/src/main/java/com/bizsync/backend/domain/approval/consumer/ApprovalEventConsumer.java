@@ -27,6 +27,7 @@ public class ApprovalEventConsumer {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final org.springframework.kafka.core.KafkaTemplate<String, com.bizsync.backend.global.event.EventMessage> kafkaTemplate;
 
     /**
      * 결재 이벤트 수신 및 처리
@@ -60,7 +61,12 @@ public class ApprovalEventConsumer {
         } catch (Exception e) {
             log.error("결재 이벤트 처리 중 오류 발생: eventId={}, error={}",
                     event.getEventId(), e.getMessage(), e);
-            throw e;
+
+            // DLQ로 전송
+            sendToDlq(event, e);
+
+            // ACK하여 재시도 방지
+            acknowledgment.acknowledge();
         }
     }
 
@@ -201,5 +207,24 @@ public class ApprovalEventConsumer {
         // 실제 구현에서는 현재 대기 중인 결재자 목록을 조회하여 알림 전송
         // 여기서는 로그만 남김
         log.info("결재 취소 이벤트: approvalId={}", event.getApprovalId());
+    }
+
+    /**
+     * 처리 실패한 이벤트를 DLQ로 전송
+     */
+    private void sendToDlq(ApprovalEvent event, Exception exception) {
+        try {
+            log.warn("결재 이벤트를 DLQ로 전송: eventId={}, error={}",
+                    event.getEventId(), exception.getMessage());
+
+            kafkaTemplate.send(
+                    KafkaTopicConfig.APPROVAL_DLQ_TOPIC,
+                    event.getEventId(),
+                    event
+            );
+        } catch (Exception dlqException) {
+            log.error("DLQ 전송 실패: eventId={}, error={}",
+                    event.getEventId(), dlqException.getMessage(), dlqException);
+        }
     }
 }

@@ -30,6 +30,11 @@ public class KafkaTopicConfig {
     public static final String ACTIVITY_LOG_TOPIC = "bizsync.activity-log";
     public static final String APPROVAL_TOPIC = "bizsync.approval";
 
+    // DLQ (Dead Letter Queue) 토픽
+    public static final String NOTIFICATION_DLQ_TOPIC = "bizsync.notification.dlq";
+    public static final String ACTIVITY_LOG_DLQ_TOPIC = "bizsync.activity-log.dlq";
+    public static final String APPROVAL_DLQ_TOPIC = "bizsync.approval.dlq";
+
     @Bean
     public KafkaAdmin kafkaAdmin() {
         Map<String, Object> configs = new HashMap<>();
@@ -72,6 +77,42 @@ public class KafkaTopicConfig {
     public NewTopic approvalTopic() {
         return TopicBuilder.name(APPROVAL_TOPIC)
                 .partitions(2)
+                .replicas(1)
+                .build();
+    }
+
+    /**
+     * 알림 DLQ 토픽
+     * 처리 실패한 알림 이벤트를 저장
+     */
+    @Bean
+    public NewTopic notificationDlqTopic() {
+        return TopicBuilder.name(NOTIFICATION_DLQ_TOPIC)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    /**
+     * 활동 로그 DLQ 토픽
+     * 처리 실패한 활동 로그 이벤트를 저장
+     */
+    @Bean
+    public NewTopic activityLogDlqTopic() {
+        return TopicBuilder.name(ACTIVITY_LOG_DLQ_TOPIC)
+                .partitions(1)
+                .replicas(1)
+                .build();
+    }
+
+    /**
+     * 결재 DLQ 토픽
+     * 처리 실패한 결재 이벤트를 저장
+     */
+    @Bean
+    public NewTopic approvalDlqTopic() {
+        return TopicBuilder.name(APPROVAL_DLQ_TOPIC)
+                .partitions(1)
                 .replicas(1)
                 .build();
     }

@@ -29,6 +29,7 @@ public class ActivityLogEventConsumer {
     private final ActivityLogRepository activityLogRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
+    private final org.springframework.kafka.core.KafkaTemplate<String, com.bizsync.backend.global.event.EventMessage> kafkaTemplate;
 
     /**
      * 활동 로그 이벤트 수신 및 처리
@@ -83,8 +84,31 @@ public class ActivityLogEventConsumer {
         } catch (Exception e) {
             log.error("활동 로그 이벤트 처리 중 오류 발생: eventId={}, error={}",
                     event.getEventId(), e.getMessage(), e);
-            // 재처리를 위해 ACK하지 않음
-            throw e;
+
+            // DLQ로 전송
+            sendToDlq(event, e);
+
+            // ACK하여 재시도 방지
+            acknowledgment.acknowledge();
+        }
+    }
+
+    /**
+     * 처리 실패한 이벤트를 DLQ로 전송
+     */
+    private void sendToDlq(ActivityLogEvent event, Exception exception) {
+        try {
+            log.warn("활동 로그 이벤트를 DLQ로 전송: eventId={}, error={}",
+                    event.getEventId(), exception.getMessage());
+
+            kafkaTemplate.send(
+                    KafkaTopicConfig.ACTIVITY_LOG_DLQ_TOPIC,
+                    event.getEventId(),
+                    event
+            );
+        } catch (Exception dlqException) {
+            log.error("DLQ 전송 실패: eventId={}, error={}",
+                    event.getEventId(), dlqException.getMessage(), dlqException);
         }
     }
 }

@@ -26,6 +26,9 @@ public class NotificationEventConsumer {
 
     private final NotificationRepository notificationRepository;
     private final UserRepository userRepository;
+    private final org.springframework.kafka.core.KafkaTemplate<String, com.bizsync.backend.global.event.EventMessage> kafkaTemplate;
+
+    private static final int MAX_RETRY_COUNT = 3;
 
     /**
      * 알림 이벤트 수신 및 처리
@@ -78,8 +81,31 @@ public class NotificationEventConsumer {
         } catch (Exception e) {
             log.error("알림 이벤트 처리 중 오류 발생: eventId={}, error={}",
                     event.getEventId(), e.getMessage(), e);
-            // 재처리를 위해 ACK하지 않음 (DLQ로 이동하거나 재시도)
-            throw e;
+
+            // DLQ로 전송
+            sendToDlq(event, e);
+
+            // ACK하여 재시도 방지
+            acknowledgment.acknowledge();
+        }
+    }
+
+    /**
+     * 처리 실패한 이벤트를 DLQ로 전송
+     */
+    private void sendToDlq(NotificationEvent event, Exception exception) {
+        try {
+            log.warn("알림 이벤트를 DLQ로 전송: eventId={}, error={}",
+                    event.getEventId(), exception.getMessage());
+
+            kafkaTemplate.send(
+                    KafkaTopicConfig.NOTIFICATION_DLQ_TOPIC,
+                    event.getEventId(),
+                    event
+            );
+        } catch (Exception dlqException) {
+            log.error("DLQ 전송 실패: eventId={}, error={}",
+                    event.getEventId(), dlqException.getMessage(), dlqException);
         }
     }
 }
