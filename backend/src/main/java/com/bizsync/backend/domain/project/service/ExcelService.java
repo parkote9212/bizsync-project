@@ -3,7 +3,6 @@ package com.bizsync.backend.domain.project.service;
 import com.bizsync.backend.domain.project.entity.Project;
 import com.bizsync.backend.domain.project.entity.Task;
 import com.bizsync.backend.domain.project.entity.KanbanColumn;
-import com.bizsync.backend.domain.project.mapper.TaskMapper;
 import com.bizsync.backend.domain.project.repository.KanbanColumnRepository;
 import com.bizsync.backend.domain.project.repository.ProjectRepository;
 import com.bizsync.backend.domain.project.repository.TaskRepository;
@@ -44,7 +43,6 @@ import java.util.List;
 public class ExcelService {
 
     private final TaskRepository taskRepository;
-    private final TaskMapper taskMapper;
     private final KanbanColumnRepository kanbanColumnRepository;
     private final UserRepository userRepository;
     private final ProjectRepository projectRepository;
@@ -147,7 +145,7 @@ public class ExcelService {
      */
     @Transactional(readOnly = true)
     public byte[] downloadTasksAsExcel(Long projectId) throws IOException {
-        List<Task> tasks = taskMapper.selectTasksByProjectIdOrderByColumnSequenceAndTaskSequence(projectId);
+        List<Task> tasks = taskRepository.findTasksByProjectIdOrderByColumnSequenceAndTaskSequence(projectId);
 
         Workbook workbook = new XSSFWorkbook();
         Sheet sheet = workbook.createSheet("Tasks");

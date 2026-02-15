@@ -87,10 +87,6 @@ public class AuthService {
             throw new BusinessException(ErrorCode.USER_PASSWORD_MISMATCH);
         }
 
-        if (user.getStatus() == AccountStatus.PENDING) {
-            throw new BusinessException(ErrorCode.ACCOUNT_PENDING_APPROVAL);
-        }
-
         if (user.getStatus() == AccountStatus.SUSPENDED) {
             throw new BusinessException(ErrorCode.ACCOUNT_SUSPENDED);
         }

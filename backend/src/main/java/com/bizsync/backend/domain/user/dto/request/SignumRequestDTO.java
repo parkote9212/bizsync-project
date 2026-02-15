@@ -1,6 +1,5 @@
 package com.bizsync.backend.domain.user.dto.request;
 
-import com.bizsync.backend.domain.user.entity.AccountStatus;
 import com.bizsync.backend.domain.user.entity.Role;
 import com.bizsync.backend.domain.user.entity.User;
 import jakarta.validation.constraints.Email;
@@ -29,7 +28,7 @@ public record SignumRequestDTO(
                 .empNo(this.empNo)
                 .department(this.department())
                 .role(Role.MEMBER)
-                .status(AccountStatus.PENDING)
+                // status는 @Builder.Default로 ACTIVE가 기본값
                 .build();
     }
 }
