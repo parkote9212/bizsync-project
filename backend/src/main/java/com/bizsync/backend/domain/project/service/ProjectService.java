@@ -6,7 +6,6 @@ import com.bizsync.backend.domain.project.dto.request.ProjectUpdateRequestDTO;
 import com.bizsync.backend.domain.project.dto.response.ProjectListResponseDTO;
 import com.bizsync.backend.domain.project.dto.response.kanban.ProjectBoardDTO;
 import com.bizsync.backend.domain.project.entity.ProjectMember;
-import com.bizsync.backend.domain.project.mapper.ProjectMapper;
 import com.bizsync.backend.domain.project.repository.ProjectMemberRepository;
 import com.bizsync.backend.domain.project.repository.ProjectRepository;
 import com.bizsync.backend.domain.user.entity.User;
@@ -41,7 +40,6 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
-    private final ProjectMapper projectMapper;
 
     /**
      * 새로운 프로젝트를 생성합니다.
@@ -93,7 +91,7 @@ public class ProjectService {
     @RequireProjectMember
     @Transactional(readOnly = true)
     public ProjectBoardDTO getProjectBoard(Long projectId) {
-        ProjectBoardDTO boardDTO = projectMapper.selectProjectBoard(projectId)
+        ProjectBoardDTO boardDTO = projectRepository.findProjectBoard(projectId)
                 .orElseThrow(() -> new ResourceNotFoundException(ErrorCode.PROJECT_NOT_FOUND));
 
         Long userId = SecurityUtil.getCurrentUserIdOrThrow();
@@ -111,7 +109,7 @@ public class ProjectService {
      */
     @Transactional(readOnly = true)
     public List<ProjectListResponseDTO> getMyProjects(Long userId) {
-        return projectMapper.selectMyProjects(userId);
+        return projectRepository.findMyProjects(userId);
     }
 
     /**
