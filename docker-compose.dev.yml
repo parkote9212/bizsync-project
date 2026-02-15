@@ -1,0 +1,133 @@
+# ============================================
+# 로컬 개발용 Docker Compose
+# 사용법: docker compose -f docker-compose.dev.yml up -d
+# ============================================
+
+version: '3.8'
+
+services:
+  # ============================================
+  # MariaDB (로컬 개발용 DB)
+  # ============================================
+  db:
+    image: mariadb:10.11
+    container_name: bizsync-db-dev
+    environment:
+      - MYSQL_ROOT_PASSWORD=1234
+      - MYSQL_DATABASE=bizsync
+      - MYSQL_USER=bizsync
+      - MYSQL_PASSWORD=1234
+    volumes:
+      - db-data:/var/lib/mysql
+    ports:
+      - "3306:3306"
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Redis (캐싱 & 분산 락)
+  # ============================================
+  redis:
+    image: redis:7.4-alpine
+    container_name: bizsync-redis-dev
+    ports:
+      - "6379:6379"
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+
+  # ============================================
+  # Zookeeper (Kafka 코디네이터)
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    container_name: bizsync-zookeeper-dev
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "2181"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================
+  # Kafka (이벤트 스트리밍 플랫폼)
+  # ============================================
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    container_name: bizsync-kafka-dev
+    depends_on:
+      zookeeper:
+        condition: service_healthy
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      # 외부 접속용 (호스트에서 접속)
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      # 오프셋 설정
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      # 로그 보관 설정 (개발용)
+      KAFKA_LOG_RETENTION_HOURS: 24
+      KAFKA_LOG_RETENTION_BYTES: 1073741824
+      # 자동 토픽 생성 허용
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: 'true'
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+
+  # ============================================
+  # Kafka UI (선택사항 - Kafka 모니터링)
+  # ============================================
+  kafka-ui:
+    image: provectuslabs/kafka-ui:latest
+    container_name: bizsync-kafka-ui-dev
+    depends_on:
+      kafka:
+        condition: service_healthy
+    ports:
+      - "8090:8080"
+    environment:
+      KAFKA_CLUSTERS_0_NAME: bizsync-local
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+      KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+    restart: unless-stopped
+    networks:
+      - bizsync-network
+
+networks:
+  bizsync-network:
+    driver: bridge
+
+volumes:
+  db-data:

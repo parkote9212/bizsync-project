@@ -63,6 +63,9 @@ dependencies {
     // Spring Batch
     implementation 'org.springframework.boot:spring-boot-starter-batch'
 
+    // Kafka (Event Streaming)
+    implementation 'org.springframework.kafka:spring-kafka'
+
     // Jackson for LocalDateTime serialization
     implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
 
