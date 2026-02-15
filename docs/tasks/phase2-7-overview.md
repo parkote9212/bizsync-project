@@ -115,23 +115,34 @@ KAKAO_CLIENT_SECRET=실제값
 
 ---
 
-## Phase 4-1: Node.js BFF (7주차)
+## Phase 4-1: Next.js API Routes BFF 패턴 + 백엔드 연동 (7주차)
 
-### 생성할 구조
-```bash
-mkdir bff && cd bff
-npm init -y
-npm install express cors helmet redis ws axios
-npm install -D typescript @types/express @types/node ts-node nodemon
-```
+> 별도 Node.js BFF 서버 없이 Next.js API Routes로 BFF 패턴 적용.
+> Spring Boot에 이미 모든 로직이 있으므로 중계 서버는 불필요.
 
-### 핵심 파일
-- [ ] `bff/src/index.ts` — Express 서버
-- [ ] `bff/src/routes/dashboard.ts` — Dashboard 집약 API
-- [ ] `bff/src/routes/project.ts` — Project Board 집약 API
-- [ ] `bff/src/middleware/auth.ts` — JWT 검증 미들웨어
-- [ ] `bff/src/websocket/gateway.ts` — WebSocket Gateway
-- [ ] `bff/Dockerfile`
+### Task 1: API 클라이언트 + 인증 연동
+- [ ] `frontend-next/src/lib/api.ts` — Axios 인스턴스 (Spring Boot baseURL, JWT 헤더)
+- [ ] `frontend-next/src/lib/auth.ts` — 토큰 저장/갱신 유틸
+- [ ] `frontend-next/src/middleware.ts` — 인증 미들웨어 (미인증 시 로그인 리다이렉트)
+
+### Task 2: API Routes (BFF 집약 엔드포인트)
+- [ ] `frontend-next/src/app/api/dashboard/route.ts` — 대시보드 데이터 집약 (통계 + 최근활동 + 알림)
+- [ ] `frontend-next/src/app/api/projects/route.ts` — 프로젝트 CRUD 프록시
+- [ ] `frontend-next/src/app/api/projects/[id]/board/route.ts` — 칸반 보드 데이터
+- [ ] `frontend-next/src/app/api/approvals/route.ts` — 결재 프록시
+- [ ] `frontend-next/src/app/api/auth/[...nextauth]/route.ts` — NextAuth.js (JWT + OAuth2)
+
+### Task 3: 페이지 → 실제 데이터 연동
+- [ ] 대시보드 — 목업 데이터 → Spring Boot API 호출
+- [ ] 프로젝트 목록 — 목업 데이터 → Spring Boot API 호출
+- [ ] 칸반 보드 — WebSocket 직접 연결 (Spring Boot `/ws-kanban`)
+- [ ] 결재 — 목업 데이터 → Spring Boot API 호출
+- [ ] 알림 — WebSocket 직접 연결 (Spring Boot `/ws`)
+- [ ] 채팅 — WebSocket 직접 연결
+
+### Task 4: 환경 설정
+- [ ] `frontend-next/.env.local` — `NEXT_PUBLIC_API_URL`, `NEXT_PUBLIC_WS_URL` 등
+- [ ] `frontend-next/next.config.ts` — API 프록시 rewrites 설정 (CORS 회피)
 
 ---
 
@@ -139,7 +150,7 @@ npm install -D typescript @types/express @types/node ts-node nodemon
 
 - [ ] E2E 테스트 작성
 - [ ] 성능 측정 (v1 vs v2)
-- [ ] `docker-compose.yml` 업데이트 (Kafka, BFF 포함)
+- [ ] `docker-compose.yml` 업데이트 (Kafka, Next.js 포함)
 - [ ] CI/CD 파이프라인 업데이트
 - [ ] **🚀 1차 재배포**
 
