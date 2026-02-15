@@ -44,6 +44,11 @@ dependencies {
     implementation 'io.jsonwebtoken:jjwt-impl:0.12.3'
     implementation 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
+    // OAuth2 Client (소셜 로그인 플로우)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    // OAuth2 Resource Server (JWT 토큰 검증)
+    implementation 'org.springframework.boot:spring-boot-starter-oauth2-resource-server'
+
     // Apach POI (EXEL)
     implementation 'org.apache.poi:poi:5.2.5'
     implementation 'org.apache.poi:poi-ooxml:5.4.0'
