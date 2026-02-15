@@ -66,6 +66,7 @@ public class ApprovalService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final RedissonClient redissonClient;
+    private final com.bizsync.backend.global.event.EventProducer eventProducer;
 
     /**
      * 결재 문서를 생성하고 결재선을 설정합니다.
@@ -89,6 +90,22 @@ public class ApprovalService {
         ApprovalDocument savedDoc = approvalDocumentRepository.save(document);
 
         createApprovalLines(savedDoc, dto.approverIds());
+
+        // 결재 요청 이벤트 발행 (첫 번째 결재자에게)
+        if (!dto.approverIds().isEmpty()) {
+            Long firstApproverId = dto.approverIds().get(0);
+            com.bizsync.backend.global.event.ApprovalEvent approvalEvent =
+                    com.bizsync.backend.global.event.ApprovalEvent.createRequested(
+                            drafterId,
+                            project != null ? project.getProjectId() : null,
+                            savedDoc.getDocumentId(),
+                            savedDoc.getTitle(),
+                            drafterId,
+                            drafter.getName(),
+                            firstApproverId
+                    );
+            eventProducer.publishApprovalEvent(approvalEvent);
+        }
 
         return savedDoc.getDocumentId();
     }
@@ -306,7 +323,10 @@ public class ApprovalService {
     private void processApprovalAction(ApprovalDocument document, ApprovalLine line, String comment) {
         line.approve(comment);
 
-        if (isAllApproved(document)) {
+        boolean isFinalApproval = isAllApproved(document);
+        Long nextApproverId = null;
+
+        if (isFinalApproval) {
             document.approve();
 
             if (document.isExpenseApproval()) {
@@ -315,7 +335,33 @@ public class ApprovalService {
 
             // 기안자 + 모든 결재자에게 대량 알림 발송 (Virtual Threads 사용)
             sendBulkApprovalCompleteNotification(document);
+        } else {
+            // 다음 결재자 찾기
+            nextApproverId = findNextApproverId(document, line.getSequence());
         }
+
+        // 결재 승인 이벤트 발행
+        com.bizsync.backend.global.event.ApprovalEvent approvalEvent =
+                com.bizsync.backend.global.event.ApprovalEvent.createApproved(
+                        line.getApprover().getUserId(),
+                        document.getProject() != null ? document.getProject().getProjectId() : null,
+                        document.getDocumentId(),
+                        document.getTitle(),
+                        line.getApprover().getUserId(),
+                        line.getApprover().getName(),
+                        comment,
+                        nextApproverId
+                );
+        eventProducer.publishApprovalEvent(approvalEvent);
+    }
+
+    private Long findNextApproverId(ApprovalDocument document, Integer currentSequence) {
+        List<ApprovalLine> allLines = approvalLineRepository.findByDocumentOrderBySequence(document);
+        return allLines.stream()
+                .filter(line -> line.getSequence() == currentSequence + 1)
+                .findFirst()
+                .map(line -> line.getApprover().getUserId())
+                .orElse(null);
     }
 
     /**
@@ -358,6 +404,19 @@ public class ApprovalService {
         line.reject(comment);
         document.reject();
         notificationService.sendApprovalRejectedNotification(document, comment);
+
+        // 결재 반려 이벤트 발행
+        com.bizsync.backend.global.event.ApprovalEvent approvalEvent =
+                com.bizsync.backend.global.event.ApprovalEvent.createRejected(
+                        line.getApprover().getUserId(),
+                        document.getProject() != null ? document.getProject().getProjectId() : null,
+                        document.getDocumentId(),
+                        document.getTitle(),
+                        line.getApprover().getUserId(),
+                        line.getApprover().getName(),
+                        comment
+                );
+        eventProducer.publishApprovalEvent(approvalEvent);
     }
 
     private boolean isAllApproved(ApprovalDocument document) {
