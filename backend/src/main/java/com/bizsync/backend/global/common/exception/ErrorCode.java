@@ -64,8 +64,12 @@ public enum ErrorCode {
     INVALID_REFRESH_TOKEN(HttpStatus.UNAUTHORIZED, "유효하지 않은 Refresh Token입니다."),
     NOT_REFRESH_TOKEN(HttpStatus.BAD_REQUEST, "Refresh Token이 아닙니다."),
 
+    // OAuth2
+    OAUTH_NOT_LINKED(HttpStatus.NOT_FOUND, "연동되지 않은 OAuth2 계정입니다."),
+
     // Common
-    INVALID_INPUT(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다.");
+    INVALID_INPUT(HttpStatus.BAD_REQUEST, "입력값이 올바르지 않습니다."),
+    INVALID_INPUT_VALUE(HttpStatus.BAD_REQUEST, "유효하지 않은 입력값입니다.");
 
     private final HttpStatus httpStatus;
     private final String message;
