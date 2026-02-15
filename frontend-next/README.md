@@ -4,10 +4,11 @@
 
 ## 기술 스택
 
-- **Framework**: Next.js 15.1 (App Router)
+- **Framework**: Next.js 15.1 (App Router + API Routes)
 - **Language**: TypeScript 5.9
 - **Styling**: Tailwind CSS 4.1
 - **HTTP Client**: Axios
+- **Architecture**: BFF (Backend for Frontend) Pattern
 - **Build Tool**: Turbopack
 
 ## 주요 기능
@@ -33,9 +34,11 @@ npm install
 \`.env.local\` 파일을 생성하고 다음 내용을 추가하세요:
 
 \`\`\`env
-NEXT_PUBLIC_API_URL=http://localhost:8080/api
+BACKEND_API_URL=http://localhost:8080/api
 NEXT_PUBLIC_WS_URL=http://localhost:8080/ws
 \`\`\`
+
+**중요**: `BACKEND_API_URL`은 서버사이드(Next.js API Routes)에서만 사용되며, 클라이언트는 `/api/*` 경로로 BFF를 통해 백엔드와 통신합니다.
 
 ### 개발 서버 실행
 

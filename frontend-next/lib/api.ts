@@ -1,16 +1,17 @@
 /**
  * API 클라이언트 설정
- * Axios 기반 HTTP 클라이언트
+ * Next.js API Routes (BFF)를 통해 백엔드와 통신
  */
 
 import axios, { AxiosInstance } from 'axios';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+// Next.js API Routes 기본 URL (BFF)
+const API_BASE_URL = '/api';
 
 // Axios 인스턴스 생성
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
-  timeout: 10000,
+  timeout: 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -44,6 +45,7 @@ apiClient.interceptors.response.use(
       try {
         const refreshToken = localStorage.getItem('refreshToken');
         if (refreshToken) {
+          // BFF를 통한 토큰 갱신
           const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
             refreshToken,
           });
