@@ -37,8 +37,8 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 | Phase | 기간 | 핵심 작업 | 상태 |
 |-------|------|----------|------|
 | **1-1** | 1주 | MyBatis → QueryDSL 전환, 회원가입 변경 | ✅ 완료 |
-| **1-2** | 2주 | OAuth2 인증 도입 (Google/GitHub/Kakao) | 🔜 다음 |
-| 2 | 3~4주 | Kafka 이벤트 아키텍처 (알림, 결재, 활동 로그) | |
+| **1-2** | 2주 | OAuth2 인증 도입 (Google/GitHub/Kakao) | ✅ 완료 |
+| **2** | 3~4주 | Kafka 이벤트 아키텍처 (알림, 결재, 활동 로그) | 🔜 다음 |
 | 3 | 5~6주 | Next.js 15 프론트엔드 전환 | |
 | 4 | 7~8주 | Node.js BFF + 통합 테스트 + 1차 재배포 | |
 | 5 | 9~10주 | 파일 첨부 (S3), 댓글/코멘트 시스템 | |
@@ -47,8 +47,8 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 
 ## 현재 진행 Phase
 
-> **Phase 1-2: OAuth2 인증 도입**
-> 상세 태스크: `docs/tasks/phase1-2-oauth2.md`
+> **Phase 2-1: Kafka 인프라 + 알림 시스템**
+> 상세 태스크: `docs/tasks/phase2-7-overview.md`
 
 ---
 
@@ -60,6 +60,15 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 - MyBatis 의존성 제거 완료 (build.gradle)
 - MyBatis mapper 파일 제거 완료 (ProjectMapper, TaskMapper)
 - 회원가입 기본 상태 PENDING → ACTIVE 변경 완료
+
+## Phase 1-2 완료 내역 (참고)
+
+- OAuth2 Client/Resource Server 의존성 추가 완료
+- `OAuthProvider.java` enum, `UserOAuth.java` 엔티티 생성
+- `UserOAuthRepository.java` 리포지토리 생성
+- `CustomOAuth2UserService.java`, `CustomOAuth2User.java` 구현
+- `OAuth2Controller.java` API 엔드포인트 구현
+- `SecurityConfig.java` OAuth2 설정 추가 (기존 JWT 병행)
 
 ### ⚠️ 잔여 정리 사항
 - `application-dev.yml`에 mybatis 설정 블록이 아직 남아있음 (제거 필요)
@@ -212,5 +221,5 @@ APP_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 
 `docs/tasks/` 디렉토리 참조:
 - `docs/tasks/phase1-1-querydsl.md` ✅ 완료
-- `docs/tasks/phase1-2-oauth2.md` 🔜 다음
+- `docs/tasks/phase1-2-oauth2.md` ✅ 완료
 - `docs/tasks/phase2-7-overview.md` (Phase 2~7 요약)
