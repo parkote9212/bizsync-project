@@ -36,6 +36,7 @@ public class ProjectMemberService {
     private final ProjectMemberRepository projectMemberRepository;
     private final ProjectRepository projectRepository;
     private final UserRepository userRepository;
+    private final com.bizsync.backend.global.event.EventProducer eventProducer;
 
     /**
      * 프로젝트에 멤버를 초대합니다.
@@ -70,6 +71,36 @@ public class ProjectMemberService {
                 .build();
 
         projectMemberRepository.save(newMember);
+
+        // 5. 이벤트 발행
+        Long inviterId = SecurityUtil.getCurrentUserIdOrThrow();
+
+        // 활동 로그
+        com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                com.bizsync.backend.global.event.ActivityLogEvent.create(
+                        inviterId,
+                        projectId,
+                        com.bizsync.backend.global.event.EventType.PROJECT_MEMBER_ADDED,
+                        String.format("%s님을 프로젝트에 초대했습니다", user.getName()),
+                        "PROJECT",
+                        projectId,
+                        project.getName()
+                );
+        eventProducer.publishActivityLogEvent(activityLogEvent);
+
+        // 알림 (초대된 사용자에게)
+        com.bizsync.backend.global.event.NotificationEvent notificationEvent =
+                com.bizsync.backend.global.event.NotificationEvent.create(
+                        inviterId,
+                        user.getUserId(),
+                        com.bizsync.backend.global.event.EventType.PROJECT_MEMBER_ADDED,
+                        "프로젝트 초대",
+                        String.format("[%s] 프로젝트에 초대되었습니다", project.getName()),
+                        "PROJECT",
+                        projectId,
+                        "/projects/" + projectId
+                );
+        eventProducer.publishNotificationEvent(notificationEvent);
     }
 
     /**
@@ -120,8 +151,38 @@ public class ProjectMemberService {
 
         // 2. 멤버 조회 및 삭제
         ProjectMember member = projectMemberRepository.findByProjectIdAndUserIdOrThrow(projectId, memberId);
+        User removedUser = member.getUser();
+        Project project = member.getProject();
 
         projectMemberRepository.delete(member);
+
+        // 3. 이벤트 발행
+        // 활동 로그
+        com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                com.bizsync.backend.global.event.ActivityLogEvent.create(
+                        currentUserId,
+                        projectId,
+                        com.bizsync.backend.global.event.EventType.PROJECT_MEMBER_REMOVED,
+                        String.format("%s님을 프로젝트에서 제거했습니다", removedUser.getName()),
+                        "PROJECT",
+                        projectId,
+                        project.getName()
+                );
+        eventProducer.publishActivityLogEvent(activityLogEvent);
+
+        // 알림 (제거된 사용자에게)
+        com.bizsync.backend.global.event.NotificationEvent notificationEvent =
+                com.bizsync.backend.global.event.NotificationEvent.create(
+                        currentUserId,
+                        removedUser.getUserId(),
+                        com.bizsync.backend.global.event.EventType.PROJECT_MEMBER_REMOVED,
+                        "프로젝트 제거",
+                        String.format("[%s] 프로젝트에서 제거되었습니다", project.getName()),
+                        "PROJECT",
+                        projectId,
+                        "/projects"
+                );
+        eventProducer.publishNotificationEvent(notificationEvent);
     }
 
     /**

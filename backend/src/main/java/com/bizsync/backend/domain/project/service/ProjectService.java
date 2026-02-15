@@ -40,6 +40,7 @@ public class ProjectService {
     private final ProjectRepository projectRepository;
     private final ProjectMemberRepository projectMemberRepository;
     private final UserRepository userRepository;
+    private final com.bizsync.backend.global.event.EventProducer eventProducer;
 
     /**
      * 새로운 프로젝트를 생성합니다.
@@ -74,6 +75,19 @@ public class ProjectService {
                 .build();
 
         projectMemberRepository.save(member);
+
+        // 활동 로그 이벤트 발행
+        com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                com.bizsync.backend.global.event.ActivityLogEvent.create(
+                        userId,
+                        savedProject.getProjectId(),
+                        com.bizsync.backend.global.event.EventType.PROJECT_CREATED,
+                        "새 프로젝트를 생성했습니다",
+                        "PROJECT",
+                        savedProject.getProjectId(),
+                        savedProject.getName()
+                );
+        eventProducer.publishActivityLogEvent(activityLogEvent);
 
         return savedProject.getProjectId();
 
@@ -184,6 +198,20 @@ public class ProjectService {
     public void updateProject(Long projectId, ProjectUpdateRequestDTO dto) {
         Project project = projectRepository.findByIdOrThrow(projectId);
         project.update(dto.name(), dto.description(), dto.startDate(), dto.endDate(), dto.totalBudget());
+
+        // 활동 로그 이벤트 발행
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                com.bizsync.backend.global.event.ActivityLogEvent.create(
+                        userId,
+                        projectId,
+                        com.bizsync.backend.global.event.EventType.PROJECT_UPDATED,
+                        "프로젝트 정보를 수정했습니다",
+                        "PROJECT",
+                        projectId,
+                        project.getName()
+                );
+        eventProducer.publishActivityLogEvent(activityLogEvent);
     }
 
     /**
@@ -201,6 +229,20 @@ public class ProjectService {
     public void deleteProject(Long projectId) {
         Project project = projectRepository.findByIdOrThrow(projectId);
         project.cancel();
+
+        // 활동 로그 이벤트 발행
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                com.bizsync.backend.global.event.ActivityLogEvent.create(
+                        userId,
+                        projectId,
+                        com.bizsync.backend.global.event.EventType.PROJECT_DELETED,
+                        "프로젝트를 취소했습니다",
+                        "PROJECT",
+                        projectId,
+                        project.getName()
+                );
+        eventProducer.publishActivityLogEvent(activityLogEvent);
     }
 
 }
