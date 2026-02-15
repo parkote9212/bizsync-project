@@ -24,6 +24,7 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 - Spring Data JPA + **QueryDSL 5.1.0** (Phase 1-1에서 전환 완료)
 - Spring WebSocket (STOMP)
 - Spring Batch, Spring AOP
+- **Spring Kafka** (이벤트 스트리밍 — Phase 2-1에서 도입)
 - Redis + Redisson (캐싱, 분산 락)
 - MariaDB, Lombok, SpringDoc OpenAPI 2.8.3
 
@@ -38,16 +39,20 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 |-------|------|----------|------|
 | **1-1** | 1주 | MyBatis → QueryDSL 전환, 회원가입 변경 | ✅ 완료 |
 | **1-2** | 2주 | OAuth2 인증 도입 (Google/GitHub/Kakao) | ✅ 완료 |
-| **2** | 3~4주 | Kafka 이벤트 아키텍처 (알림, 결재, 활동 로그) | 🔜 다음 |
-| 3 | 5~6주 | Next.js 15 프론트엔드 전환 | |
-| 4 | 7~8주 | Node.js BFF + 통합 테스트 + 1차 재배포 | |
+| **2-1** | 3주 | Kafka 인프라 + 알림/활동 로그 이벤트 통합 | ✅ 완료 |
+| **2-2** | 4주 | 결재 이벤트 + DLQ | 🔜 다음 |
+| 3-1 | 5주 | Next.js 프로젝트 셈업 + 핵심 페이지 | |
+| 3-2 | 6주 | 칸반/결재/실시간 전환 | |
+| **3.5** | 6주+ | **OAuth2 실제 계정 연동 + 소셜 로그인 UI** | |
+| 4-1 | 7주 | Node.js BFF | |
+| 4-2 | 8주 | 통합 테스트 + 1차 재배포 | |
 | 5 | 9~10주 | 파일 첨부 (S3), 댓글/코멘트 시스템 | |
 | 6 | 11~12주 | 통합 검색 API, 알림 읽음/목록, 대시보드 통계 | |
 | 7 | 13주 | 통합 테스트 + 2차 재배포 | |
 
 ## 현재 진행 Phase
 
-> **Phase 2-1: Kafka 인프라 + 알림 시스템**
+> **Phase 2-2: 결재 이벤트 + Dead Letter Queue**
 > 상세 태스크: `docs/tasks/phase2-7-overview.md`
 
 ---
@@ -70,8 +75,19 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 - `OAuth2Controller.java` API 엔드포인트 구현
 - `SecurityConfig.java` OAuth2 설정 추가 (기존 JWT 병행)
 
+## Phase 2-1 완료 내역 (참고)
+
+- `docker-compose.dev.yml` 생성 (MariaDB + Redis + Kafka + Zookeeper + Kafka UI)
+- Spring Kafka 의존성 추가, `KafkaConfig.java` + `KafkaTopicConfig.java` 설정
+- `notification/entity/Notification.java` 엔티티 + Repository + Controller
+- `notification/consumer/NotificationEventConsumer.java` — Kafka Consumer → DB 저장 + WebSocket
+- `notification/service/NotificationQueryService.java` — 알림 조회 서비스
+- `activitylog/` 도메인 신규 생성 (entity, repository, consumer, service, controller, dto)
+- 비즈니스 서비스에서 Kafka 이벤트 발행 → 알림/활동 로그 자동 생성 통합
+
 ### ⚠️ 잔여 정리 사항
-- `application-dev.yml`에 mybatis 설정 블록이 아직 남아있음 (제거 필요)
+- `application-dev.yml`에 OAuth2 설정(`security.oauth2`) 인덴테이션 버그: `spring:` 하위가 아닌 `logging:` 하위에 잘못 위치 → **Phase 3.5 전에 반드시 수정**
+- `application-dev.yml`에 mybatis 설정 블록 잔여 (제거 필요)
 - `application-prod.yml`도 동일하게 확인 필요
 
 ---

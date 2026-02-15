@@ -69,6 +69,52 @@ npx create-next-app@latest frontend-v2 --typescript --tailwind --app --src-dir
 
 ---
 
+## Phase 3.5: OAuth2 실제 계정 연동 + 소셜 로그인 UI (6주차+)
+
+> Phase 1-2에서 코드 구현은 완료. 여기서는 실제 플랫폼 등록 + 프론트엔드 UI를 추가합니다.
+
+### 필수 선행 작업: YAML 인덴테이션 버그 수정
+- [ ] `application-dev.yml` — OAuth2 설정이 `logging:` 하위에 잘못 위치 → `spring:` 하위로 이동
+- [ ] `application-prod.yml` — 동일하게 확인/수정
+- [ ] `application-dev.yml` — mybatis 설정 잔여 블록 제거
+
+### Task 1: 플랫폼별 앱 등록 + 키 발급 (웹 콘솔 작업)
+
+| 플랫폼 | 개발자 콘솔 | 등록할 Redirect URI |
+|--------|-----------|--------------------|
+| Google | console.cloud.google.com | `http://localhost:8080/login/oauth2/code/google` |
+| GitHub | github.com/settings/developers | `http://localhost:8080/login/oauth2/code/github` |
+| Kakao | developers.kakao.com | `http://localhost:8080/api/auth/oauth2/callback/kakao` |
+
+발급받은 키를 `.env`에 설정:
+```env
+GOOGLE_CLIENT_ID=실제값
+GOOGLE_CLIENT_SECRET=실제값
+GITHUB_CLIENT_ID=실제값
+GITHUB_CLIENT_SECRET=실제값
+KAKAO_CLIENT_ID=실제값
+KAKAO_CLIENT_SECRET=실제값
+```
+
+### Task 2: 프론트엔드 소셜 로그인 버튼 추가
+
+- [ ] 로그인 페이지에 "구글로 로그인" / "GitHub로 로그인" / "카카오로 로그인" 버튼 추가
+- [ ] 버튼 클릭 시 리다이렉트:
+  - Google: `http://localhost:8080/oauth2/authorization/google`
+  - GitHub: `http://localhost:8080/oauth2/authorization/github`
+  - Kakao: `http://localhost:8080/oauth2/authorization/kakao`
+- [ ] OAuth2 콜백 후 JWT 토큰 수신 처리 (redirect 페이지)
+- [ ] 프로필 페이지에 연동된 소셜 계정 표시 + 연동 해제 기능
+
+### Task 3: E2E 테스트
+
+- [ ] 소셜 로그인 → JWT 발급 → API 접근 플로우 확인
+- [ ] 기존 이메일/비밀번호 로그인 정상 동작 확인
+- [ ] 신규 OAuth2 사용자 자동 생성 확인
+- [ ] 기존 사용자 이메일 매칭 연동 확인
+
+---
+
 ## Phase 4-1: Node.js BFF (7주차)
 
 ### 생성할 구조

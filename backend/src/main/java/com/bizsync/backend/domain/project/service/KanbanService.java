@@ -41,6 +41,7 @@ public class KanbanService {
     private final TaskRepository taskRepository;
     private final UserRepository userRepository;
     private final ProjectMemberRepository projectMemberRepository;
+    private final com.bizsync.backend.global.event.EventProducer eventProducer;
 
     /**
      * 칸반 컬럼을 생성합니다.
@@ -149,7 +150,41 @@ public class KanbanService {
                 .sequence(nextSequence)
                 .build();
 
-        return taskRepository.save(task).getTaskId();
+        Task savedTask = taskRepository.save(task);
+
+        // 이벤트 발행
+        Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
+
+        // 활동 로그
+        com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                com.bizsync.backend.global.event.ActivityLogEvent.create(
+                        currentUserId,
+                        projectId,
+                        com.bizsync.backend.global.event.EventType.TASK_CREATED,
+                        String.format("새 업무 '%s'를 생성했습니다", task.getTitle()),
+                        "TASK",
+                        savedTask.getTaskId(),
+                        task.getTitle()
+                );
+        eventProducer.publishActivityLogEvent(activityLogEvent);
+
+        // 담당자에게 알림 (본인이 아닌 경우)
+        if (!workerId.equals(currentUserId)) {
+            com.bizsync.backend.global.event.NotificationEvent notificationEvent =
+                    com.bizsync.backend.global.event.NotificationEvent.create(
+                            currentUserId,
+                            workerId,
+                            com.bizsync.backend.global.event.EventType.TASK_ASSIGNED,
+                            "업무 할당",
+                            String.format("'%s' 업무가 할당되었습니다", task.getTitle()),
+                            "TASK",
+                            savedTask.getTaskId(),
+                            "/projects/" + projectId
+                    );
+            eventProducer.publishNotificationEvent(notificationEvent);
+        }
+
+        return savedTask.getTaskId();
     }
 
     /**
@@ -181,6 +216,7 @@ public class KanbanService {
             throw new BusinessException(ErrorCode.PROJECT_NOT_LINKED);
         }
 
+        User previousWorker = task.getWorker();
         User worker = null;
         if (dto.workerId() != null) {
             worker = userRepository.findByIdOrThrow(dto.workerId());
@@ -194,6 +230,40 @@ public class KanbanService {
                 dto.content(),
                 dto.deadline() != null ? dto.deadline() : null,
                 worker);
+
+        // 이벤트 발행
+        Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
+
+        // 활동 로그
+        com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                com.bizsync.backend.global.event.ActivityLogEvent.create(
+                        currentUserId,
+                        projectId,
+                        com.bizsync.backend.global.event.EventType.TASK_UPDATED,
+                        String.format("업무 '%s'를 수정했습니다", task.getTitle()),
+                        "TASK",
+                        taskId,
+                        task.getTitle()
+                );
+        eventProducer.publishActivityLogEvent(activityLogEvent);
+
+        // 담당자 변경 시 알림 (새 담당자에게)
+        if (worker != null && !worker.getUserId().equals(previousWorker.getUserId())) {
+            if (!worker.getUserId().equals(currentUserId)) {
+                com.bizsync.backend.global.event.NotificationEvent notificationEvent =
+                        com.bizsync.backend.global.event.NotificationEvent.create(
+                                currentUserId,
+                                worker.getUserId(),
+                                com.bizsync.backend.global.event.EventType.TASK_ASSIGNED,
+                                "업무 재할당",
+                                String.format("'%s' 업무가 재할당되었습니다", task.getTitle()),
+                                "TASK",
+                                taskId,
+                                "/projects/" + projectId
+                        );
+                eventProducer.publishNotificationEvent(notificationEvent);
+            }
+        }
     }
 
     /**
@@ -203,7 +273,27 @@ public class KanbanService {
      */
     @Transactional
     public void deleteTask(Long taskId) {
+        Task task = taskRepository.findByIdOrThrow(taskId);
+        Long projectId = task.getProjectId();
+        String taskTitle = task.getTitle();
+
         taskRepository.deleteById(taskId);
+
+        // 활동 로그 이벤트 발행
+        if (projectId != null) {
+            Long currentUserId = SecurityUtil.getCurrentUserIdOrThrow();
+            com.bizsync.backend.global.event.ActivityLogEvent activityLogEvent =
+                    com.bizsync.backend.global.event.ActivityLogEvent.create(
+                            currentUserId,
+                            projectId,
+                            com.bizsync.backend.global.event.EventType.TASK_DELETED,
+                            String.format("업무 '%s'를 삭제했습니다", taskTitle),
+                            "TASK",
+                            taskId,
+                            taskTitle
+                    );
+            eventProducer.publishActivityLogEvent(activityLogEvent);
+        }
     }
 
     /**
