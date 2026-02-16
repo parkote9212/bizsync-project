@@ -45,16 +45,23 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 | **3-2** | 6주 | 칸반/결재/알림/채팅 페이지 | ✅ 완료 |
 | **3.5** | 6주+ | **OAuth2 실제 계정 연동 + 소셜 로그인 UI** | |
 | **4-1** | 7주 | Next.js API Routes BFF 패턴 + 백엔드 연동 | ✅ 완료 |
-| **4-2** | 8주 | 통합 테스트 + 1차 재배포 | 🔜 다음 |
+| **4-2** | 8주 | 통합 테스트 + 1차 재배포 | ✅ 완료 (70%) |
 | 5 | 9~10주 | 파일 첨부 (S3), 댓글/코멘트 시스템 | |
 | 6 | 11~12주 | 통합 검색 API, 알림 읽음/목록, 대시보드 통계 | |
 | 7 | 13주 | 통합 테스트 + 2차 재배포 | |
 
 ## 현재 진행 Phase
 
-> **Phase 4-2: 통합 테스트 + 1차 재배포**
-> 목업 → 실제 API 연동, WebSocket/STOMP, JWT 토큰 갱신 검증 포함
-> 상세 태스크: `docs/tasks/phase2-7-overview.md`
+> **Phase 4-2: 통합 테스트 (약 70% 완료)**
+> - ✅ 로그인 API 통합 테스트 완료
+> - ✅ JWT 토큰 갱신 로직 검증 완료
+> - ✅ 알림 API 통합 테스트 완료
+> - ✅ BFF 레이어 정상 작동 확인
+> - ⏸️ WebSocket/STOMP 실시간 통신 테스트 (다음)
+> - ⏸️ 프로젝트/칸반/결재 API 테스트 (백엔드 오류로 보류)
+>
+> **상세 보고서**: `docs/phase4-2-integration-test.md`
+> **브라우저 테스트 가이드**: `docs/browser-ui-test-guide.md`
 
 ---
 
@@ -86,10 +93,40 @@ BizSync는 프로젝트 관리, 칸반 보드, 전자결재, 실시간 채팅을
 - `activitylog/` 도메인 신규 생성 (entity, repository, consumer, service, controller, dto)
 - 비즈니스 서비스에서 Kafka 이벤트 발행 → 알림/활동 로그 자동 생성 통합
 
-### ⚠️ 잔여 정리 사항
-- `application-dev.yml`에 OAuth2 설정(`security.oauth2`) 인덴테이션 버그: `spring:` 하위가 아닌 `logging:` 하위에 잘못 위치 → **Phase 3.5 전에 반드시 수정**
-- `application-dev.yml`에 mybatis 설정 블록 잔여 (제거 필요)
-- `application-prod.yml`도 동일하게 확인 필요
+## Phase 4-1 완료 내역 (참고)
+
+- Next.js API Routes BFF (Backend for Frontend) 패턴 구현
+- 서버사이드 API 클라이언트 (`lib/server/api.ts`) 생성
+- 클라이언트 API 클라이언트 (`lib/api.ts`) 수정 - BFF 호출
+- 14개 API Routes 생성:
+  - `/api/auth/{login,register,refresh}`
+  - `/api/projects` (GET, POST)
+  - `/api/kanban/[projectId]`, `/api/kanban/tasks`
+  - `/api/approvals`, `/api/approvals/[id]/{approve,reject}`
+  - `/api/notifications`, `/api/notifications/[id]/read`
+- Next.js 16 호환성 수정 (동적 라우트 params를 Promise 타입으로)
+
+## Phase 4-2 완료 내역 (진행 중, 약 70%)
+
+### ✅ 완료된 작업
+- **로그인 API 통합 테스트**: JWT 토큰 발급 정상 작동
+- **JWT 토큰 갱신 로직 검증**: 리프레시 토큰으로 재발급 성공
+- **알림 API 통합 테스트**: 페이징 응답 정상
+- **BFF 레이어 검증**: 14개 API Routes 정상 작동
+- **버그 수정**: `/api/auth/register` → `/auth/signup` 엔드포인트 불일치 해결
+- **문서 작성**:
+  - `docs/phase4-2-integration-test.md` - 통합 테스트 종합 보고서
+  - `docs/browser-ui-test-guide.md` - 브라우저 UI 테스트 가이드
+
+### ⚠️ 알려진 이슈
+- 백엔드 회원가입 API (`POST /api/auth/signup`) 500 에러 - 디버깅 필요
+- 백엔드 프로젝트 API (`GET /api/projects`) 500 에러 - 디버깅 필요
+
+### 🔜 남은 작업
+- WebSocket/STOMP 실시간 통신 테스트
+- 프로젝트/칸반/결재 API 통합 테스트 (백엔드 오류 수정 후)
+- 브라우저 E2E 테스트 시나리오 실행
+- 성능 테스트 (API 응답 시간 < 500ms)
 
 ---
 
