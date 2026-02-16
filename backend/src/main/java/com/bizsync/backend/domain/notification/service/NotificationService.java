@@ -244,47 +244,11 @@ public class NotificationService {
         }
     }
 
-    // ========== 하위 호환성을 위한 레거시 메서드 (Deprecated) ==========
-
     /**
-     * @deprecated Use {@link #send(Long, Notification)} instead. 내부적으로 단일 발송 로직을 재사용합니다.
-     */
-    @Deprecated(since = "2.0", forRemoval = true)
-    public void sendToUser(Long userId, String message, Long targetId) {
-        NotificationDTO dto = NotificationDTO.from("APPROVAL", message, targetId);
-        sendToDestination(userId, dto);
-        log.info("알림 발송 [To: User {}] : {}", userId, message);
-    }
-
-    /**
-     * 웹소켓 목적지로 알림 DTO를 발송합니다. (send / sendToUser 공통)
+     * 웹소켓 목적지로 알림 DTO를 발송합니다. ({@link #send(Long, Notification)}에서 사용)
      */
     private void sendToDestination(Long userId, NotificationDTO dto) {
         String destination = "/sub/notification/" + userId;
         messagingTemplate.convertAndSend(destination, dto);
-    }
-
-    /**
-     * @deprecated Use {@link #sendBulk(List, Notification)} instead. 내부적으로 sendBulk와 동일한 Virtual Thread 발송을 사용합니다.
-     */
-    @Deprecated(since = "2.0", forRemoval = true)
-    @PerformanceLogging
-    public void sendBulkNotification(List<Long> userIds, String message, Long targetId) {
-        if (userIds == null || userIds.isEmpty()) {
-            log.warn("대량 알림 발송 실패: 수신자 목록이 비어있습니다.");
-            return;
-        }
-        NotificationDTO dto = NotificationDTO.from("APPROVAL", message, targetId);
-        try (ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor()) {
-            List<CompletableFuture<Void>> futures = userIds.stream()
-                    .map(userId -> CompletableFuture.runAsync(
-                            () -> sendToDestination(userId, dto),
-                            executor
-                    ))
-                    .toList();
-            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-        } catch (Exception e) {
-            log.error("대량 알림 발송 중 오류 발생", e);
-        }
     }
 }

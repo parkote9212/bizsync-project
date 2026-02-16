@@ -5,8 +5,8 @@ export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
 
-    // 백엔드 회원가입 API 호출
-    const response = await backendApi.post('/auth/register', body);
+    // 백엔드 회원가입 API 호출 (signup 엔드포인트)
+    const response = await backendApi.post('/auth/signup', body);
 
     return NextResponse.json(response, { status: 201 });
   } catch (error: any) {
