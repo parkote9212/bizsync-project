@@ -55,10 +55,11 @@ export default function ProjectDetailPage() {
 
   // 폼 상태
   const [newColumnName, setNewColumnName] = useState('');
+  const [newColumnDescription, setNewColumnDescription] = useState('');
   const [newColumnType, setNewColumnType] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
-  const [newTaskDescription, setNewTaskDescription] = useState('');
-  const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('MEDIUM');
+  const [newTaskContent, setNewTaskContent] = useState('');
+  const [newTaskDeadline, setNewTaskDeadline] = useState('');
   const [inviteEmail, setInviteEmail] = useState('');
 
   useEffect(() => {
@@ -175,13 +176,16 @@ export default function ProjectDetailPage() {
     try {
       const payload: any = {
         name: newColumnName,
-        sequence: columns.length,
       };
+      if (newColumnDescription) {
+        payload.description = newColumnDescription;
+      }
       if (newColumnType) {
         payload.columnType = newColumnType;
       }
       await apiClient.post(`/projects/${projectId}/columns`, payload);
       setNewColumnName('');
+      setNewColumnDescription('');
       setNewColumnType('');
       setShowColumnModal(false);
       loadKanbanBoard();
@@ -194,14 +198,19 @@ export default function ProjectDetailPage() {
   const handleAddTask = async () => {
     if (!newTaskTitle.trim() || selectedColumnId === null) return;
     try {
-      await apiClient.post(`/columns/${selectedColumnId}/tasks`, {
+      const payload: any = {
         title: newTaskTitle,
-        content: newTaskDescription,
-        priority: newTaskPriority,
-      });
+      };
+      if (newTaskContent) {
+        payload.content = newTaskContent;
+      }
+      if (newTaskDeadline) {
+        payload.deadline = newTaskDeadline;
+      }
+      await apiClient.post(`/columns/${selectedColumnId}/tasks`, payload);
       setNewTaskTitle('');
-      setNewTaskDescription('');
-      setNewTaskPriority('MEDIUM');
+      setNewTaskContent('');
+      setNewTaskDeadline('');
       setShowTaskModal(false);
       setSelectedColumnId(null);
       loadKanbanBoard();
@@ -301,16 +310,16 @@ export default function ProjectDetailPage() {
             {project?.status && (
               <div className="flex items-center gap-2">
                 <span
-                  className={`inline-flex px-2 py-0.5 text-xs font-medium rounded ${
+                  className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded ${
                     project.status === 'PLANNING'
-                      ? 'bg-gray-100 text-gray-700'
+                      ? 'bg-gray-100 text-gray-800'
                       : project.status === 'IN_PROGRESS'
-                        ? 'bg-blue-100 text-blue-700'
+                        ? 'bg-blue-100 text-blue-800'
                         : project.status === 'COMPLETED'
-                          ? 'bg-emerald-100 text-emerald-700'
+                          ? 'bg-emerald-100 text-emerald-800'
                           : project.status === 'ON_HOLD'
-                            ? 'bg-amber-100 text-amber-700'
-                            : 'bg-gray-100 text-gray-600'
+                            ? 'bg-amber-100 text-amber-800'
+                            : 'bg-gray-100 text-gray-800'
                   }`}
                 >
                   {statusLabel[project.status] ?? project.status}
@@ -507,7 +516,7 @@ export default function ProjectDetailPage() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
                   placeholder="메시지 입력..."
-                  className="flex-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500"
+                  className="flex-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-600"
                 />
                 <button
                   onClick={sendChatMessage}
@@ -534,21 +543,31 @@ export default function ProjectDetailPage() {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">컬럼 이름</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">컬럼 이름</label>
                 <input
                   type="text"
                   value={newColumnName}
                   onChange={(e) => setNewColumnName(e.target.value)}
                   placeholder="예: 진행중"
-                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
+                  className="w-full px-3 py-2 text-gray-900 font-medium border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">상태</label>
+                <label className="block text-sm font-medium text-gray-900 mb-1">설명</label>
+                <textarea
+                  value={newColumnDescription}
+                  onChange={(e) => setNewColumnDescription(e.target.value)}
+                  placeholder="이 컬럼에 대한 설명을 입력하세요 (선택)"
+                  rows={3}
+                  className="w-full px-3 py-2 text-gray-900 font-medium border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-900 mb-1">상태</label>
                 <select
                   value={newColumnType}
                   onChange={(e) => setNewColumnType(e.target.value)}
-                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 font-semibold bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 [&_option]:text-gray-900 [&_option]:bg-white"
                 >
                   <option value="">자동 판별</option>
                   <option value="TODO">할 일 (TODO)</option>
@@ -593,30 +612,27 @@ export default function ProjectDetailPage() {
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="태스크 제목"
-                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">설명</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">내용</label>
                 <textarea
-                  value={newTaskDescription}
-                  onChange={(e) => setNewTaskDescription(e.target.value)}
-                  placeholder="태스크 설명 (선택)"
+                  value={newTaskContent}
+                  onChange={(e) => setNewTaskContent(e.target.value)}
+                  placeholder="태스크 내용 (선택)"
                   rows={3}
-                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">우선순위</label>
-                <select
-                  value={newTaskPriority}
-                  onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
+                <label className="block text-sm font-medium text-gray-700 mb-1">마감일</label>
+                <input
+                  type="date"
+                  value={newTaskDeadline}
+                  onChange={(e) => setNewTaskDeadline(e.target.value)}
                   className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
-                >
-                  <option value="LOW">낮음</option>
-                  <option value="MEDIUM">보통</option>
-                  <option value="HIGH">높음</option>
-                </select>
+                />
               </div>
               <div className="flex gap-2">
                 <button
@@ -655,7 +671,7 @@ export default function ProjectDetailPage() {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="example@company.com"
-                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
                 />
               </div>
               <div className="flex gap-2">
