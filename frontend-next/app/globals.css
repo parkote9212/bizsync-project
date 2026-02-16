@@ -29,23 +29,28 @@ select {
   color: #111827 !important; /* 항상 gray-900 검정색 */
 }
 
+/* select 옵션(할 일, 진행 중 등) 글자 진하게 */
+select option {
+  color: #111827 !important;
+  background: #ffffff !important;
+}
+
 .dark input,
 .dark textarea,
 .dark select {
   color: #f3f4f6 !important; /* 다크모드에서는 gray-100 */
 }
 
+/* 전체 placeholder 진하게 (gray-600) */
 input::placeholder,
-textarea::placeholder,
-select::placeholder {
-  color: #9ca3af !important; /* gray-400 */
+textarea::placeholder {
+  color: #4b5563 !important; /* gray-600 */
   opacity: 1;
 }
 
 .dark input::placeholder,
-.dark textarea::placeholder,
-.dark select::placeholder {
-  color: #6b7280 !important; /* 다크모드 placeholder는 gray-500 */
+.dark textarea::placeholder {
+  color: #9ca3af !important; /* 다크모드 gray-400 */
   opacity: 1;
 }
 
