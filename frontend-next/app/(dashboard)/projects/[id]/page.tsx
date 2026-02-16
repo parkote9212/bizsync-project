@@ -136,7 +136,7 @@ export default function ProjectDetailPage() {
       content: newMessage,
       createdAt: new Date().toISOString(),
     };
-    setChatMessages([...chatMessages, tempMsg]);
+    setChatMessages((prev) => [...prev, tempMsg]);
     setNewMessage('');
   };
 
