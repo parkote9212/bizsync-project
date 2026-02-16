@@ -68,13 +68,7 @@ spring:
     listener:
       ack-mode: manual
 
-logging:
-  level:
-    org.hibernate.SQL: DEBUG
-    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # 파라미터 표시
-    org.springframework.cache: TRACE  # 캐시 로깅
-
-  # OAuth2 설정
+  # OAuth2 클라이언트 (ClientRegistrationRepository 빈 생성에 필요)
   security:
     oauth2:
       client:
@@ -100,6 +94,12 @@ logging:
             token-uri: https://kauth.kakao.com/oauth/token
             user-info-uri: https://kapi.kakao.com/v2/user/me
             user-name-attribute: id
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE  # 파라미터 표시
+    org.springframework.cache: TRACE  # 캐시 로깅
 
 servlet:
   encoding:
