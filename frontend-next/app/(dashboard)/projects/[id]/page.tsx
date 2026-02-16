@@ -567,12 +567,13 @@ export default function ProjectDetailPage() {
                 <select
                   value={newColumnType}
                   onChange={(e) => setNewColumnType(e.target.value)}
-                  className="w-full px-3 py-2 text-gray-900 font-semibold bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 [&_option]:text-gray-900 [&_option]:bg-white"
+                  className="w-full px-3 py-2 text-gray-900 font-semibold bg-white border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  style={{ color: '#111827' }}
                 >
-                  <option value="">자동 판별</option>
-                  <option value="TODO">할 일 (TODO)</option>
-                  <option value="IN_PROGRESS">진행 중 (IN_PROGRESS)</option>
-                  <option value="DONE">완료 (DONE)</option>
+                  <option value="" style={{ color: '#111827' }}>자동 판별</option>
+                  <option value="TODO" style={{ color: '#111827' }}>할 일 (TODO)</option>
+                  <option value="IN_PROGRESS" style={{ color: '#111827' }}>진행 중 (IN_PROGRESS)</option>
+                  <option value="DONE" style={{ color: '#111827' }}>완료 (DONE)</option>
                 </select>
               </div>
               <div className="flex gap-2">
