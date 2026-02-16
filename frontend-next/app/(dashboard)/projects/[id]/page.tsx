@@ -263,16 +263,19 @@ export default function ProjectDetailPage() {
 
   const sendChatMessage = async () => {
     if (!newMessage.trim()) return;
+
+    const msgContent = newMessage;
+    setNewMessage(''); // 먼저 입력란 비우기
+
     // TODO: WebSocket 연동 (현재는 임시)
     const tempMsg: ChatMessage = {
-      messageId: Date.now(),
+      messageId: Date.now() + Math.random(), // 더 유니크한 ID
       senderId: 1,
       senderName: '나',
-      content: newMessage,
+      content: msgContent,
       createdAt: new Date().toISOString(),
     };
     setChatMessages((prev) => [...prev, tempMsg]);
-    setNewMessage('');
   };
 
   const formatCurrency = (amount?: number) => {
