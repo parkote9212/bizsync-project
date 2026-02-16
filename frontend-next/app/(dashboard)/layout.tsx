@@ -10,7 +10,10 @@ import {
   ApprovalIcon,
   OrganizationIcon,
   BellIcon,
+  SunIcon,
+  MoonIcon,
 } from '@/components/icons';
+import UserMenu from '@/components/UserMenu';
 
 interface Notification {
   notificationId: number;
@@ -32,7 +35,17 @@ export default function DashboardLayout({
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [notificationOpen, setNotificationOpen] = useState(false);
+  const [darkMode, setDarkMode] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  // 다크모드 초기화
+  useEffect(() => {
+    const savedMode = localStorage.getItem('darkMode') === 'true';
+    setDarkMode(savedMode);
+    if (savedMode) {
+      document.documentElement.classList.add('dark');
+    }
+  }, []);
 
   useEffect(() => {
     // 인증 확인 (BFF 응답이 data 래핑일 수 있으므로 유효한 토큰만 허용)
@@ -93,6 +106,17 @@ export default function DashboardLayout({
     localStorage.removeItem('userName');
     localStorage.removeItem('userEmail');
     router.push('/login');
+  };
+
+  const toggleDarkMode = () => {
+    const newMode = !darkMode;
+    setDarkMode(newMode);
+    localStorage.setItem('darkMode', String(newMode));
+    if (newMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
   };
 
   const navItems = [
@@ -194,10 +218,19 @@ export default function DashboardLayout({
                 )}
               </div>
 
-              <div className="text-sm text-gray-700">
-                <span className="font-medium text-gray-900">{user.name}</span>
-                {user.email && <span className="text-gray-500"> · {user.email}</span>}
-              </div>
+              {/* 다크모드 토글 */}
+              <button
+                onClick={toggleDarkMode}
+                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                title={darkMode ? '라이트 모드' : '다크 모드'}
+              >
+                {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
+              </button>
+
+              {/* 사용자 메뉴 */}
+              <UserMenu userName={user.name} userEmail={user.email} />
+
+              {/* 로그아웃 버튼 */}
               <button
                 onClick={handleLogout}
                 className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
