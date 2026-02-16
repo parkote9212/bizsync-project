@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import serverApiClient from '@/lib/server/api';
+import { backendApi } from '@/lib/server/api';
 
 export async function POST(
   request: NextRequest,
@@ -17,13 +17,9 @@ export async function POST(
 
     const body = await request.json();
 
-    const response = await serverApiClient.post(`/projects/${id}/invite`, body, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await backendApi.withAuth(accessToken).post(`/projects/${id}/invite`, body);
 
-    return NextResponse.json(response.data);
+    return NextResponse.json(response);
   } catch (error: any) {
     console.error('팀원 초대 실패:', error.response?.data || error.message);
     return NextResponse.json(

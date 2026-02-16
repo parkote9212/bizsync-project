@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import serverApiClient from '@/lib/server/api';
+import { backendApi } from '@/lib/server/api';
 
 export async function PUT(
   request: NextRequest,
@@ -17,13 +17,9 @@ export async function PUT(
 
     const body = await request.json();
 
-    const response = await serverApiClient.put(`/tasks/${id}/move`, body, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await backendApi.withAuth(accessToken).put(`/tasks/${id}/move`, body);
 
-    return NextResponse.json(response.data);
+    return NextResponse.json(response);
   } catch (error: any) {
     console.error('태스크 이동 실패:', error.response?.data || error.message);
     return NextResponse.json(

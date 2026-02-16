@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { cookies } from 'next/headers';
-import serverApiClient from '@/lib/server/api';
+import { backendApi } from '@/lib/server/api';
 
 export async function GET(
   request: NextRequest,
@@ -15,13 +15,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await serverApiClient.get(`/projects/${id}/board`, {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    });
+    const response = await backendApi.withAuth(accessToken).get(`/projects/${id}/board`);
 
-    return NextResponse.json(response.data);
+    return NextResponse.json(response);
   } catch (error: any) {
     console.error('칸반 보드 조회 실패:', error.response?.data || error.message);
     return NextResponse.json(
