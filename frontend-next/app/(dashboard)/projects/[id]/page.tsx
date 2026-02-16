@@ -55,6 +55,7 @@ export default function ProjectDetailPage() {
 
   // 폼 상태
   const [newColumnName, setNewColumnName] = useState('');
+  const [newColumnType, setNewColumnType] = useState('');
   const [newTaskTitle, setNewTaskTitle] = useState('');
   const [newTaskDescription, setNewTaskDescription] = useState('');
   const [newTaskPriority, setNewTaskPriority] = useState<TaskPriority>('MEDIUM');
@@ -172,11 +173,16 @@ export default function ProjectDetailPage() {
   const handleAddColumn = async () => {
     if (!newColumnName.trim()) return;
     try {
-      await apiClient.post(`/projects/${projectId}/columns`, {
+      const payload: any = {
         name: newColumnName,
         sequence: columns.length,
-      });
+      };
+      if (newColumnType) {
+        payload.columnType = newColumnType;
+      }
+      await apiClient.post(`/projects/${projectId}/columns`, payload);
       setNewColumnName('');
+      setNewColumnType('');
       setShowColumnModal(false);
       loadKanbanBoard();
     } catch (error) {
@@ -501,7 +507,7 @@ export default function ProjectDetailPage() {
                   onChange={(e) => setNewMessage(e.target.value)}
                   onKeyDown={(e) => e.key === 'Enter' && sendChatMessage()}
                   placeholder="메시지 입력..."
-                  className="flex-1 px-3 py-2 text-sm border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="flex-1 px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 placeholder:text-gray-500"
                 />
                 <button
                   onClick={sendChatMessage}
@@ -518,7 +524,7 @@ export default function ProjectDetailPage() {
 
       {/* 컬럼 추가 모달 */}
       {showColumnModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">컬럼 추가</h3>
@@ -534,8 +540,21 @@ export default function ProjectDetailPage() {
                   value={newColumnName}
                   onChange={(e) => setNewColumnName(e.target.value)}
                   placeholder="예: 진행중"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">상태</label>
+                <select
+                  value={newColumnType}
+                  onChange={(e) => setNewColumnType(e.target.value)}
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <option value="">자동 판별</option>
+                  <option value="TODO">할 일 (TODO)</option>
+                  <option value="IN_PROGRESS">진행 중 (IN_PROGRESS)</option>
+                  <option value="DONE">완료 (DONE)</option>
+                </select>
               </div>
               <div className="flex gap-2">
                 <button
@@ -558,7 +577,7 @@ export default function ProjectDetailPage() {
 
       {/* 태스크 추가 모달 */}
       {showTaskModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">태스크 추가</h3>
@@ -574,7 +593,7 @@ export default function ProjectDetailPage() {
                   value={newTaskTitle}
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="태스크 제목"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
                 />
               </div>
               <div>
@@ -584,7 +603,7 @@ export default function ProjectDetailPage() {
                   onChange={(e) => setNewTaskDescription(e.target.value)}
                   placeholder="태스크 설명 (선택)"
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
                 />
               </div>
               <div>
@@ -592,7 +611,7 @@ export default function ProjectDetailPage() {
                 <select
                   value={newTaskPriority}
                   onChange={(e) => setNewTaskPriority(e.target.value as TaskPriority)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
                 >
                   <option value="LOW">낮음</option>
                   <option value="MEDIUM">보통</option>
@@ -620,7 +639,7 @@ export default function ProjectDetailPage() {
 
       {/* 팀원 초대 모달 */}
       {showInviteModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
           <div className="bg-white rounded-lg p-6 w-96">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-gray-900">팀원 초대</h3>
@@ -636,7 +655,7 @@ export default function ProjectDetailPage() {
                   value={inviteEmail}
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="example@company.com"
-                  className="w-full px-3 py-2 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-500"
                 />
               </div>
               <div className="flex gap-2">
