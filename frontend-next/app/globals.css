@@ -1,9 +1,12 @@
 @import "tailwindcss";
 @config "../tailwind.config.ts";
 
+/* Tailwind v4: class 기반 다크모드 (상단 메뉴 토글용) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 :root {
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #111827; /* gray-900, 진한 기본 글자 */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -17,6 +20,33 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+}
+
+/* 입력 필드 기본 글자 진하게 (매번 text-gray-900 안 써도 됨) */
+input,
+textarea,
+select {
+  color: #111827 !important; /* 항상 gray-900 검정색 */
+}
+
+.dark input,
+.dark textarea,
+.dark select {
+  color: #f3f4f6 !important; /* 다크모드에서는 gray-100 */
+}
+
+input::placeholder,
+textarea::placeholder,
+select::placeholder {
+  color: #9ca3af !important; /* gray-400 */
+  opacity: 1;
+}
+
+.dark input::placeholder,
+.dark textarea::placeholder,
+.dark select::placeholder {
+  color: #6b7280 !important; /* 다크모드 placeholder는 gray-500 */
+  opacity: 1;
 }
 
 @layer utilities {
