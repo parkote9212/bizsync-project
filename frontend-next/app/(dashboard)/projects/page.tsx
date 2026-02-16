@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import apiClient from '@/lib/api';
 import type { Project, ProjectStatus } from '@/types';
+import { CalendarIcon, CashIcon, PlusIcon } from '@/components/icons';
 
 export default function ProjectsPage() {
   const [projects, setProjects] = useState<Project[]>([]);
@@ -84,9 +85,10 @@ export default function ProjectsPage() {
         </div>
         <button
           onClick={() => setCreateModalOpen(true)}
-          className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 rounded-md"
+          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 rounded-md"
         >
-          + 새 프로젝트
+          <PlusIcon className="w-4 h-4" />
+          새 프로젝트
         </button>
       </div>
 
@@ -242,8 +244,8 @@ function ProjectCard({ project }: { project: Project }) {
 
       <div className="space-y-3 text-sm">
         {project.startDate && project.endDate && (
-          <div className="flex items-center text-gray-500 text-xs">
-            <span className="mr-2">📅</span>
+          <div className="flex items-center gap-2 text-gray-500 text-xs">
+            <CalendarIcon className="w-4 h-4 flex-shrink-0" />
             <span className="tabular-nums">
               {new Date(project.startDate).toLocaleDateString()} ~{' '}
               {new Date(project.endDate).toLocaleDateString()}
@@ -254,8 +256,8 @@ function ProjectCard({ project }: { project: Project }) {
         {project.budget && (
           <div>
             <div className="flex items-center justify-between text-gray-500 text-xs mb-1.5">
-              <span className="flex items-center">
-                <span className="mr-2">💰</span>
+              <span className="flex items-center gap-2">
+                <CashIcon className="w-4 h-4 flex-shrink-0" />
                 예산 사용률
               </span>
               <span className="font-medium tabular-nums">{budgetPercentage}%</span>

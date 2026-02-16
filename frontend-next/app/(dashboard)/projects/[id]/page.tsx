@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { DragDropContext, Droppable, Draggable, DropResult } from '@hello-pangea/dnd';
 import apiClient from '@/lib/api';
 import type { Task, TaskPriority } from '@/types';
+import { ArrowLeftIcon, PlusIcon, ChatIcon, SendIcon } from '@/components/icons';
 
 interface Column {
   columnId: number;
@@ -154,25 +155,29 @@ export default function ProjectDetailPage() {
         <div className="flex items-center gap-4">
           <button
             onClick={() => router.push('/projects')}
-            className="text-sm text-gray-600 hover:text-gray-900"
+            className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-900"
           >
-            ← 프로젝트 목록
+            <ArrowLeftIcon className="w-4 h-4" />
+            프로젝트 목록
           </button>
           <h1 className="text-lg font-semibold text-gray-900">프로젝트 보드</h1>
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-3 py-1.5 text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
-            + 컬럼 추가
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-md">
+            <PlusIcon className="w-4 h-4" />
+            컬럼 추가
           </button>
-          <button className="px-3 py-1.5 text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50">
-            + 태스크 추가
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 rounded-md">
+            <PlusIcon className="w-4 h-4" />
+            태스크 추가
           </button>
           <button
             onClick={() => setChatOpen(!chatOpen)}
-            className={`px-3 py-1.5 text-sm border ${
+            className={`flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-md ${
               chatOpen ? 'bg-blue-600 text-white border-blue-600' : 'bg-white text-gray-700 border-gray-300 hover:bg-gray-50'
             }`}
           >
+            <ChatIcon className="w-4 h-4" />
             {chatOpen ? '채팅 닫기' : '채팅 열기'}
           </button>
         </div>
@@ -277,8 +282,9 @@ export default function ProjectDetailPage() {
                 />
                 <button
                   onClick={sendChatMessage}
-                  className="px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+                  className="flex items-center gap-1.5 px-4 py-2 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
                 >
+                  <SendIcon className="w-4 h-4" />
                   전송
                 </button>
               </div>

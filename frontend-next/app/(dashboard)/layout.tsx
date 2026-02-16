@@ -4,6 +4,13 @@ import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState, useRef } from 'react';
 import apiClient from '@/lib/api';
+import {
+  DashboardIcon,
+  ProjectIcon,
+  ApprovalIcon,
+  OrganizationIcon,
+  BellIcon,
+} from '@/components/icons';
 
 interface Notification {
   notificationId: number;
@@ -89,10 +96,10 @@ export default function DashboardLayout({
   };
 
   const navItems = [
-    { name: '대시보드', path: '/dashboard', icon: '📊' },
-    { name: '프로젝트', path: '/projects', icon: '📁' },
-    { name: '결재', path: '/approvals', icon: '✅' },
-    { name: '조직도', path: '/organization', icon: '👥' },
+    { name: '대시보드', path: '/dashboard', Icon: DashboardIcon },
+    { name: '프로젝트', path: '/projects', Icon: ProjectIcon },
+    { name: '결재', path: '/approvals', Icon: ApprovalIcon },
+    { name: '조직도', path: '/organization', Icon: OrganizationIcon },
   ];
 
   if (!user) {
@@ -120,12 +127,12 @@ export default function DashboardLayout({
               <div className="relative" ref={notificationRef}>
                 <button
                   onClick={() => setNotificationOpen(!notificationOpen)}
-                  className="relative flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+                  className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
                   title="알림"
                 >
-                  <span className="text-lg" aria-hidden>🔔</span>
+                  <BellIcon className="w-5 h-5" />
                   {unreadCount > 0 && (
-                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center tabular-nums">
+                    <span className="absolute top-0 right-0 bg-red-600 text-white text-xs font-semibold rounded-full w-5 h-5 flex items-center justify-center tabular-nums">
                       {unreadCount > 9 ? '9+' : unreadCount}
                     </span>
                   )}
@@ -206,20 +213,23 @@ export default function DashboardLayout({
         {/* 사이드바 */}
         <aside className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-[calc(100vh-4rem)]">
           <nav className="p-4 space-y-1">
-            {navItems.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                className={`flex items-center px-4 py-3 text-sm font-medium rounded-md transition-colors ${
-                  pathname === item.path
-                    ? 'bg-blue-50 text-blue-700'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <span className="mr-3 text-lg">{item.icon}</span>
-                {item.name}
-              </Link>
-            ))}
+            {navItems.map((item) => {
+              const isActive = pathname === item.path;
+              return (
+                <Link
+                  key={item.path}
+                  href={item.path}
+                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
+                    isActive
+                      ? 'bg-blue-50 text-blue-700'
+                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+                  }`}
+                >
+                  <item.Icon className="w-5 h-5" />
+                  {item.name}
+                </Link>
+              );
+            })}
           </nav>
         </aside>
 
