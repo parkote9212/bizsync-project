@@ -268,14 +268,22 @@ export default function ProjectDetailPage() {
     setNewMessage(''); // 먼저 입력란 비우기
 
     // TODO: WebSocket 연동 (현재는 임시)
+    const msgId = Date.now() + Math.random(); // 유니크한 ID
     const tempMsg: ChatMessage = {
-      messageId: Date.now() + Math.random(), // 더 유니크한 ID
+      messageId: msgId,
       senderId: 1,
       senderName: '나',
       content: msgContent,
       createdAt: new Date().toISOString(),
     };
-    setChatMessages((prev) => [...prev, tempMsg]);
+
+    setChatMessages((prev) => {
+      // 중복 체크: 같은 ID의 메시지가 이미 있으면 추가하지 않음 (React Strict Mode 대응)
+      if (prev.some((msg) => msg.messageId === msgId)) {
+        return prev;
+      }
+      return [...prev, tempMsg];
+    });
   };
 
   const formatCurrency = (amount?: number) => {
