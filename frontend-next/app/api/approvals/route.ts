@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { backendApi } from '@/lib/server/api';
 
 /**
- * GET /api/approvals - 결재 문서 목록 조회
+ * GET /api/approvals - 결재 문서 목록 조회 (백엔드 GET /api/approvals 프록시)
  */
 export async function GET(request: NextRequest) {
   try {
@@ -15,19 +15,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 쿼리 파라미터 추출
     const { searchParams } = new URL(request.url);
-    const status = searchParams.get('status');
     const page = searchParams.get('page') || '0';
     const size = searchParams.get('size') || '20';
 
-    const queryParams: any = { page, size };
-    if (status && status !== 'all') {
-      queryParams.status = status.toUpperCase();
-    }
-
     const response = await backendApi.withAuth(token).get('/approvals', {
-      params: queryParams,
+      params: { page, size, sort: 'createdAt,desc' },
     });
 
     return NextResponse.json(response, { status: 200 });

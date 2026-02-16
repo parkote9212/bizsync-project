@@ -16,8 +16,8 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // 백엔드 API 호출 (인증 토큰 포함)
-    const response = await backendApi.withAuth(token).get('/projects/my');
+    // 백엔드 API 호출 (인증 토큰 포함) - GET /api/projects 가 내 프로젝트 목록
+    const response = await backendApi.withAuth(token).get('/projects');
 
     return NextResponse.json(response, { status: 200 });
   } catch (error: any) {
