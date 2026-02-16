@@ -28,79 +28,26 @@ export default function NotificationsPage() {
 
   const loadNotifications = async () => {
     try {
-      // 추후 실제 API 연동
-      // const response = await apiClient.get('/notifications', {
-      //   params: { unread: filter === 'unread' },
-      // });
-      // setNotifications(response.data.content);
+      const response = await apiClient.get('/notifications');
+      let allNotifications = response.data.content || [];
 
-      // 임시 데이터
-      setTimeout(() => {
-        const allNotifications: Notification[] = [
-          {
-            notificationId: 1,
-            senderName: '시스템',
-            title: '새 업무 배정',
-            message: '칸반 보드 구현 업무가 배정되었습니다.',
-            entityType: 'TASK',
-            entityId: 3,
-            url: '/kanban',
-            isRead: false,
-            createdAt: '2025-02-15T14:30:00',
-          },
-          {
-            notificationId: 2,
-            senderName: '김팀장',
-            title: '결재 요청',
-            message: '서버 증설 비용 결재 요청이 도착했습니다.',
-            entityType: 'APPROVAL',
-            entityId: 1,
-            url: '/approvals/1',
-            isRead: false,
-            createdAt: '2025-02-15T10:15:00',
-          },
-          {
-            notificationId: 3,
-            senderName: '홍길동',
-            title: '프로젝트 초대',
-            message: 'BizSync v2 프로젝트에 초대되었습니다.',
-            entityType: 'PROJECT',
-            entityId: 1,
-            url: '/projects/1',
-            isRead: true,
-            readAt: '2025-02-15T09:00:00',
-            createdAt: '2025-02-15T08:00:00',
-          },
-          {
-            notificationId: 4,
-            senderName: '시스템',
-            title: '업무 마감 임박',
-            message: 'Next.js 프로젝트 셋업 업무의 마감일이 5일 남았습니다.',
-            entityType: 'TASK',
-            entityId: 1,
-            url: '/kanban',
-            isRead: true,
-            readAt: '2025-02-14T15:00:00',
-            createdAt: '2025-02-14T09:00:00',
-          },
-        ];
+      // 필터 적용
+      if (filter === 'unread') {
+        allNotifications = allNotifications.filter((n: Notification) => !n.isRead);
+      }
 
-        const filtered = filter === 'unread'
-          ? allNotifications.filter((n) => !n.isRead)
-          : allNotifications;
-
-        setNotifications(filtered);
-        setLoading(false);
-      }, 500);
+      setNotifications(allNotifications);
+      setLoading(false);
     } catch (error) {
       console.error('알림 로딩 실패:', error);
+      setNotifications([]);
       setLoading(false);
     }
   };
 
   const handleMarkAsRead = async (notificationId: number) => {
     try {
-      // await apiClient.patch(`/notifications/${notificationId}/read`);
+      await apiClient.patch(`/notifications/${notificationId}/read`);
       setNotifications((prev) =>
         prev.map((n) =>
           n.notificationId === notificationId
@@ -155,15 +102,15 @@ export default function NotificationsPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">알림</h1>
-          <p className="mt-2 text-gray-600">
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">알림</h1>
+          <p className="text-sm text-gray-500 tabular-nums">
             읽지 않은 알림 {unreadCount}개
           </p>
         </div>
         {unreadCount > 0 && (
           <button
             onClick={handleMarkAllAsRead}
-            className="px-4 py-2 text-sm text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-md transition-colors"
+            className="px-4 py-2 text-sm text-blue-600 hover:bg-blue-50 font-medium"
           >
             모두 읽음
           </button>
@@ -171,24 +118,24 @@ export default function NotificationsPage() {
       </div>
 
       {/* 필터 */}
-      <div className="mb-6">
-        <div className="flex space-x-4">
+      <div className="mb-5">
+        <div className="flex gap-2">
           <button
             onClick={() => setFilter('all')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 text-sm font-medium ${
               filter === 'all'
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             전체
           </button>
           <button
             onClick={() => setFilter('unread')}
-            className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-4 py-2 text-sm font-medium ${
               filter === 'unread'
                 ? 'bg-blue-600 text-white'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-50'
             }`}
           >
             읽지 않음
@@ -197,7 +144,7 @@ export default function NotificationsPage() {
       </div>
 
       {/* 알림 목록 */}
-      <div className="space-y-3">
+      <div className="space-y-2">
         {notifications.length === 0 ? (
           <div className="text-center py-12 text-gray-500">
             알림이 없습니다.
@@ -237,8 +184,10 @@ function NotificationCard({
 
   return (
     <div
-      className={`bg-white rounded-lg shadow-sm p-4 transition-all ${
-        notification.isRead ? 'opacity-70' : 'border-l-4 border-blue-500'
+      className={`bg-white border p-4 ${
+        notification.isRead
+          ? 'border-gray-200 opacity-60'
+          : 'border-l-4 border-l-blue-600 border-t border-r border-b border-gray-200'
       }`}
     >
       <div className="flex items-start justify-between">
@@ -246,35 +195,35 @@ function NotificationCard({
           onClick={handleClick}
           className={`flex-1 ${notification.url ? 'cursor-pointer' : ''}`}
         >
-          <div className="flex items-center space-x-2 mb-1">
+          <div className="flex items-center gap-2 mb-1">
             {!notification.isRead && (
-              <span className="w-2 h-2 bg-blue-500 rounded-full" />
+              <span className="w-2 h-2 bg-blue-600" />
             )}
-            <h3 className="font-semibold text-gray-900">
+            <h3 className="text-sm font-semibold text-gray-900">
               {notification.title}
             </h3>
           </div>
           <p className="text-sm text-gray-600 mb-2">{notification.message}</p>
-          <div className="flex items-center space-x-4 text-xs text-gray-500">
+          <div className="flex items-center gap-4 text-xs text-gray-500">
             {notification.senderName && (
               <span>발신: {notification.senderName}</span>
             )}
-            <span>{new Date(notification.createdAt).toLocaleString()}</span>
+            <span className="tabular-nums">{new Date(notification.createdAt).toLocaleString()}</span>
           </div>
         </div>
 
-        <div className="flex items-center space-x-2 ml-4">
+        <div className="flex items-center gap-2 ml-4">
           {!notification.isRead && (
             <button
               onClick={() => onMarkAsRead(notification.notificationId)}
-              className="px-3 py-1 text-xs text-blue-600 hover:bg-blue-50 rounded transition-colors"
+              className="px-2 py-1 text-xs text-blue-600 hover:bg-blue-50"
             >
               읽음
             </button>
           )}
           <button
             onClick={() => onDelete(notification.notificationId)}
-            className="px-3 py-1 text-xs text-red-600 hover:bg-red-50 rounded transition-colors"
+            className="px-2 py-1 text-xs text-red-600 hover:bg-red-50"
           >
             삭제
           </button>

@@ -23,87 +23,12 @@ export default function KanbanPage() {
 
   const loadKanbanBoard = async () => {
     try {
-      // 추후 실제 API 연동
-      // const response = await apiClient.get(`/projects/${selectedProjectId}/kanban`);
-      // setColumns(response.data.columns);
-
-      // 임시 데이터
-      setTimeout(() => {
-        setColumns([
-          {
-            columnId: 1,
-            name: 'To Do',
-            position: 0,
-            tasks: [
-              {
-                taskId: 1,
-                title: 'Next.js 프로젝트 셋업',
-                description: 'Next.js 15 초기 설정 및 기본 구조 구성',
-                priority: 'HIGH' as TaskPriority,
-                dueDate: '2025-02-20',
-                columnId: 1,
-                position: 0,
-                workerId: 1,
-                workerName: '홍길동',
-                createdAt: '2025-02-15T00:00:00',
-              },
-              {
-                taskId: 2,
-                title: 'API 클라이언트 구현',
-                description: 'Axios 기반 HTTP 클라이언트',
-                priority: 'MEDIUM' as TaskPriority,
-                columnId: 1,
-                position: 1,
-                createdAt: '2025-02-15T00:00:00',
-              },
-            ],
-          },
-          {
-            columnId: 2,
-            name: 'In Progress',
-            position: 1,
-            tasks: [
-              {
-                taskId: 3,
-                title: '칸반 보드 구현',
-                description: '드래그 앤 드롭 기능 포함',
-                priority: 'HIGH' as TaskPriority,
-                dueDate: '2025-02-18',
-                columnId: 2,
-                position: 0,
-                workerId: 2,
-                workerName: '김철수',
-                createdAt: '2025-02-15T00:00:00',
-              },
-            ],
-          },
-          {
-            columnId: 3,
-            name: 'Review',
-            position: 2,
-            tasks: [],
-          },
-          {
-            columnId: 4,
-            name: 'Done',
-            position: 3,
-            tasks: [
-              {
-                taskId: 4,
-                title: '프로젝트 구조 설계',
-                description: 'DDD 구조로 리팩토링',
-                priority: 'HIGH' as TaskPriority,
-                columnId: 4,
-                position: 0,
-                createdAt: '2025-02-10T00:00:00',
-              },
-            ],
-          },
-        ]);
-        setLoading(false);
-      }, 500);
+      const response = await apiClient.get(`/kanban/${selectedProjectId}`);
+      setColumns(response.data.columns || []);
+      setLoading(false);
     } catch (error) {
       console.error('칸반 보드 로딩 실패:', error);
+      setColumns([]);
       setLoading(false);
     }
   };
@@ -190,16 +115,16 @@ export default function KanbanPage() {
     <div>
       <div className="mb-6 flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">칸반 보드</h1>
-          <p className="mt-2 text-gray-600">프로젝트 업무를 드래그하여 관리하세요</p>
+          <h1 className="text-2xl font-semibold text-gray-900 mb-1">칸반 보드</h1>
+          <p className="text-sm text-gray-500">프로젝트 업무를 드래그하여 관리하세요</p>
         </div>
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
+        <button className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700">
           + 새 업무
         </button>
       </div>
 
       <DragDropContext onDragEnd={handleDragEnd}>
-        <div className="flex gap-4 overflow-x-auto pb-4">
+        <div className="flex gap-3 overflow-x-auto pb-4">
           {columns.map((column) => (
             <KanbanColumn key={column.columnId} column={column} />
           ))}
@@ -211,11 +136,11 @@ export default function KanbanPage() {
 
 function KanbanColumn({ column }: { column: Column }) {
   return (
-    <div className="flex-shrink-0 w-80 bg-gray-100 rounded-lg p-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-semibold text-gray-900">
+    <div className="flex-shrink-0 w-80 bg-gray-50 border border-gray-200 p-4">
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-sm font-semibold text-gray-900 uppercase tracking-wider">
           {column.name}
-          <span className="ml-2 text-sm text-gray-500">({column.tasks.length})</span>
+          <span className="ml-2 text-xs text-gray-500 font-medium tabular-nums">({column.tasks.length})</span>
         </h3>
       </div>
 
@@ -224,9 +149,9 @@ function KanbanColumn({ column }: { column: Column }) {
           <div
             ref={provided.innerRef}
             {...provided.droppableProps}
-            className={`min-h-[200px] space-y-3 ${
-              snapshot.isDraggingOver ? 'bg-blue-50' : ''
-            } rounded-md transition-colors`}
+            className={`min-h-[200px] space-y-2 ${
+              snapshot.isDraggingOver ? 'bg-blue-50 border border-blue-200 p-2' : ''
+            }`}
           >
             {column.tasks.map((task, index) => (
               <TaskCard key={task.taskId} task={task} index={index} />
@@ -241,10 +166,10 @@ function KanbanColumn({ column }: { column: Column }) {
 
 function TaskCard({ task, index }: { task: Task; index: number }) {
   const priorityColors = {
-    LOW: 'bg-gray-100 text-gray-700',
-    MEDIUM: 'bg-blue-100 text-blue-700',
-    HIGH: 'bg-orange-100 text-orange-700',
-    URGENT: 'bg-red-100 text-red-700',
+    LOW: 'bg-gray-50 text-gray-700 border-gray-200',
+    MEDIUM: 'bg-blue-50 text-blue-700 border-blue-200',
+    HIGH: 'bg-amber-50 text-amber-700 border-amber-200',
+    URGENT: 'bg-red-50 text-red-700 border-red-200',
   };
 
   const priorityLabels = {
@@ -261,8 +186,8 @@ function TaskCard({ task, index }: { task: Task; index: number }) {
           ref={provided.innerRef}
           {...provided.draggableProps}
           {...provided.dragHandleProps}
-          className={`bg-white p-4 rounded-md shadow-sm hover:shadow-md transition-shadow cursor-move ${
-            snapshot.isDragging ? 'shadow-lg rotate-2' : ''
+          className={`bg-white border border-gray-200 p-3 cursor-move ${
+            snapshot.isDragging ? 'border-blue-400 shadow-sm' : 'hover:border-gray-300'
           }`}
         >
           <div className="flex items-start justify-between mb-2">
@@ -270,7 +195,7 @@ function TaskCard({ task, index }: { task: Task; index: number }) {
               {task.title}
             </h4>
             <span
-              className={`px-2 py-1 rounded text-xs font-medium flex-shrink-0 ml-2 ${
+              className={`inline-flex px-2 py-0.5 border text-xs font-medium flex-shrink-0 ml-2 ${
                 priorityColors[task.priority]
               }`}
             >
@@ -279,24 +204,22 @@ function TaskCard({ task, index }: { task: Task; index: number }) {
           </div>
 
           {task.description && (
-            <p className="text-xs text-gray-600 mb-3 line-clamp-2">
+            <p className="text-xs text-gray-500 mb-2 line-clamp-2">
               {task.description}
             </p>
           )}
 
-          <div className="flex items-center justify-between text-xs text-gray-500">
-            <div className="flex items-center space-x-3">
-              {task.dueDate && (
-                <span className="flex items-center">
-                  📅 {new Date(task.dueDate).toLocaleDateString()}
-                </span>
-              )}
-              {task.workerName && (
-                <span className="flex items-center">
-                  👤 {task.workerName}
-                </span>
-              )}
-            </div>
+          <div className="flex items-center gap-3 text-xs text-gray-500">
+            {task.dueDate && (
+              <span className="flex items-center tabular-nums">
+                📅 {new Date(task.dueDate).toLocaleDateString()}
+              </span>
+            )}
+            {task.workerName && (
+              <span className="flex items-center">
+                👤 {task.workerName}
+              </span>
+            )}
           </div>
         </div>
       )}

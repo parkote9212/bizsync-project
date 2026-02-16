@@ -8,6 +8,9 @@ import axios, { AxiosInstance } from 'axios';
 // Next.js API Routes 기본 URL (BFF)
 const API_BASE_URL = '/api';
 
+/** 동시 401 시 한 번만 refresh 시도하기 위한 공유 Promise */
+let refreshPromise: Promise<string> | null = null;
+
 // Axios 인스턴스 생성
 const apiClient: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
@@ -42,26 +45,45 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !originalRequest._retry) {
       originalRequest._retry = true;
 
+      const refreshToken = localStorage.getItem('refreshToken');
+      if (!refreshToken) {
+        localStorage.removeItem('accessToken');
+        window.location.href = '/login';
+        return Promise.reject(error);
+      }
+
       try {
-        const refreshToken = localStorage.getItem('refreshToken');
-        if (refreshToken) {
-          // BFF를 통한 토큰 갱신
-          const response = await axios.post(`${API_BASE_URL}/auth/refresh`, {
-            refreshToken,
+        // 이미 refresh 중이면 그 결과를 기다림 (한 번만 호출)
+        if (!refreshPromise) {
+          refreshPromise = (async () => {
+            const response = await axios.post<{ data?: { accessToken: string } }>(
+              `${API_BASE_URL}/auth/refresh`,
+              { refreshToken }
+            );
+            const accessToken = response.data?.data?.accessToken ?? response.data?.accessToken;
+            if (accessToken) {
+              localStorage.setItem('accessToken', accessToken);
+              return accessToken;
+            }
+            throw new Error('No access token in refresh response');
+          })();
+          refreshPromise.finally(() => {
+            refreshPromise = null;
           });
-
-          const { accessToken } = response.data;
-          localStorage.setItem('accessToken', accessToken);
-
-          // 원래 요청 재시도
-          originalRequest.headers.Authorization = `Bearer ${accessToken}`;
-          return apiClient(originalRequest);
         }
+
+        const newAccessToken = await refreshPromise;
+
+        // 원래 요청 재시도
+        originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+        return apiClient(originalRequest);
       } catch (refreshError) {
-        // 토큰 갱신 실패 시 로그아웃 처리
+        refreshPromise = null;
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
-        window.location.href = '/login';
+        if (typeof window !== 'undefined' && !window.location.pathname.startsWith('/login')) {
+          window.location.href = '/login';
+        }
         return Promise.reject(refreshError);
       }
     }

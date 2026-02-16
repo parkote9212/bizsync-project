@@ -108,24 +108,24 @@ export default function ChatPage() {
 
   return (
     <div className="h-[calc(100vh-12rem)]">
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">채팅</h1>
-        <p className="mt-2 text-gray-600">팀원들과 실시간으로 소통하세요</p>
+      <div className="mb-5">
+        <h1 className="text-2xl font-semibold text-gray-900 mb-1">채팅</h1>
+        <p className="text-sm text-gray-500">팀원들과 실시간으로 소통하세요</p>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm h-[calc(100%-5rem)] flex flex-col">
+      <div className="bg-white border border-gray-200 h-[calc(100%-4.5rem)] flex flex-col">
         {/* 채팅 헤더 */}
-        <div className="p-4 border-b border-gray-200">
+        <div className="p-4 border-b border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="font-semibold text-gray-900">BizSync v2 팀</h2>
-              <p className="text-sm text-gray-500">온라인 3명</p>
+              <h2 className="text-sm font-semibold text-gray-900">BizSync v2 팀</h2>
+              <p className="text-xs text-gray-500 tabular-nums">온라인 3명</p>
             </div>
-            <div className="flex space-x-2">
-              <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-md">
+            <div className="flex gap-1">
+              <button className="p-1.5 text-gray-600 hover:bg-gray-100 text-sm">
                 🔍
               </button>
-              <button className="p-2 text-gray-600 hover:bg-gray-100 rounded-md">
+              <button className="p-1.5 text-gray-600 hover:bg-gray-100 text-sm">
                 ⚙️
               </button>
             </div>
@@ -133,7 +133,7 @@ export default function ChatPage() {
         </div>
 
         {/* 메시지 목록 */}
-        <div className="flex-1 overflow-y-auto p-4 space-y-4">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-gray-50">
           {messages.map((message) => (
             <MessageBubble key={message.messageId} message={message} />
           ))}
@@ -141,11 +141,11 @@ export default function ChatPage() {
         </div>
 
         {/* 메시지 입력 */}
-        <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-200">
-          <div className="flex items-center space-x-2">
+        <form onSubmit={handleSendMessage} className="p-3 border-t border-gray-200 bg-white">
+          <div className="flex items-center gap-2">
             <button
               type="button"
-              className="p-2 text-gray-600 hover:bg-gray-100 rounded-md"
+              className="p-2 text-gray-600 hover:bg-gray-100 text-sm"
             >
               📎
             </button>
@@ -154,12 +154,12 @@ export default function ChatPage() {
               value={inputMessage}
               onChange={(e) => setInputMessage(e.target.value)}
               placeholder="메시지를 입력하세요..."
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="flex-1 px-3 py-2 text-sm border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             />
             <button
               type="submit"
               disabled={!inputMessage.trim()}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-blue-600 text-white text-sm font-medium hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               전송
             </button>
@@ -175,18 +175,18 @@ function MessageBubble({ message }: { message: Message }) {
     <div className={`flex ${message.isOwn ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-md ${message.isOwn ? 'order-2' : ''}`}>
         {!message.isOwn && (
-          <p className="text-xs text-gray-600 mb-1 px-1">{message.senderName}</p>
+          <p className="text-xs text-gray-500 mb-1">{message.senderName}</p>
         )}
         <div
-          className={`px-4 py-2 rounded-lg ${
+          className={`px-3 py-2 ${
             message.isOwn
               ? 'bg-blue-600 text-white'
-              : 'bg-gray-100 text-gray-900'
+              : 'bg-white text-gray-900 border border-gray-200'
           }`}
         >
           <p className="text-sm">{message.content}</p>
         </div>
-        <p className="text-xs text-gray-400 mt-1 px-1">
+        <p className="text-xs text-gray-400 mt-1 tabular-nums">
           {new Date(message.createdAt).toLocaleTimeString([], {
             hour: '2-digit',
             minute: '2-digit',
