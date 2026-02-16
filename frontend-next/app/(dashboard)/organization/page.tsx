@@ -24,8 +24,9 @@ export default function OrganizationPage() {
 
   const loadUsers = async () => {
     try {
-      const response = await apiClient.get<User[]>('/users');
-      setUsers(response.data || []);
+      const response = await apiClient.get<{ data?: User[] }>('/users');
+      const list = response.data?.data ?? response.data;
+      setUsers(Array.isArray(list) ? list : []);
       setLoading(false);
     } catch (error) {
       console.error('사용자 목록 조회 실패:', error);
