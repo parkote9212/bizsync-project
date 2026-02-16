@@ -7,7 +7,7 @@ import com.bizsync.backend.domain.user.entity.User;
 import com.bizsync.backend.domain.user.repository.UserRepository;
 import com.bizsync.backend.domain.user.service.UserService;
 import com.bizsync.backend.global.common.dto.ApiResponse;
-import com.bizsync.backend.global.security.util.SecurityUtil;
+import com.bizsync.backend.global.common.util.SecurityUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;

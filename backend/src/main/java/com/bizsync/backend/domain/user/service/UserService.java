@@ -6,7 +6,7 @@ import com.bizsync.backend.domain.user.entity.AccountStatus;
 import com.bizsync.backend.domain.user.entity.User;
 import com.bizsync.backend.domain.user.repository.UserOAuthRepository;
 import com.bizsync.backend.domain.user.repository.UserRepository;
-import com.bizsync.backend.global.common.exception.custom.BusinessException;
+import com.bizsync.backend.global.common.exception.BusinessException;
 import com.bizsync.backend.global.common.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -62,7 +62,7 @@ public class UserService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
         // 현재 비밀번호 확인
-        if (!passwordEncoder.matches(dto.currentPassword(), user.getPassword())) {
+        if (!user.matchesPassword(dto.currentPassword(), passwordEncoder)) {
             throw new BusinessException(ErrorCode.USER_PASSWORD_MISMATCH);
         }
 
