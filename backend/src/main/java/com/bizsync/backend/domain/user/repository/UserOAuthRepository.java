@@ -59,4 +59,20 @@ public interface UserOAuthRepository extends JpaRepository<UserOAuth, Long> {
      * @return 연동 존재 여부
      */
     boolean existsByUser_UserIdAndProvider(Long userId, OAuthProvider provider);
+
+    /**
+     * 사용자의 OAuth 연동 존재 여부 확인 (모든 provider)
+     *
+     * @param userId 사용자 ID
+     * @return 연동 존재 여부
+     */
+    boolean existsByUser_UserId(Long userId);
+
+    /**
+     * 사용자의 모든 OAuth 연동 삭제
+     *
+     * @param userId 사용자 ID
+     * @return 삭제된 레코드 수
+     */
+    int deleteByUser_UserId(Long userId);
 }
