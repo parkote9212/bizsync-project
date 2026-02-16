@@ -35,10 +35,21 @@ select option {
   background: #ffffff !important;
 }
 
-.dark input,
-.dark textarea,
-.dark select {
+/* 다크모드 입력 필드 - 단, bg-white 내부는 제외 (모달) */
+.dark input:not(.bg-white input):not([class*="bg-white"] input),
+.dark textarea:not(.bg-white textarea):not([class*="bg-white"] textarea),
+.dark select:not(.bg-white select):not([class*="bg-white"] select) {
   color: #f3f4f6 !important; /* 다크모드에서는 gray-100 */
+}
+
+/* bg-white 내부의 input은 항상 검정색 (모달 등) */
+.bg-white input,
+.bg-white textarea,
+.bg-white select,
+[class*="bg-white"] input,
+[class*="bg-white"] textarea,
+[class*="bg-white"] select {
+  color: #111827 !important;
 }
 
 /* 전체 placeholder 진하게 (gray-600) */

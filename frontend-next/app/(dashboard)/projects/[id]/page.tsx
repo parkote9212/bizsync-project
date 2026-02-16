@@ -614,6 +614,7 @@ export default function ProjectDetailPage() {
                   onChange={(e) => setNewTaskTitle(e.target.value)}
                   placeholder="태스크 제목"
                   className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
+                  style={{ color: '#111827' }}
                 />
               </div>
               <div>
@@ -673,6 +674,7 @@ export default function ProjectDetailPage() {
                   onChange={(e) => setInviteEmail(e.target.value)}
                   placeholder="example@company.com"
                   className="w-full px-3 py-2 text-gray-900 border border-gray-300 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-gray-600"
+                  style={{ color: '#111827' }}
                 />
               </div>
               <div className="flex gap-2">
