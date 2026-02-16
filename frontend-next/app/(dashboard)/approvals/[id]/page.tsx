@@ -144,11 +144,11 @@ export default function ApprovalDetailPage() {
     );
   }
 
-  const statusColors = {
-    PENDING: 'bg-yellow-100 text-yellow-700',
-    APPROVED: 'bg-green-100 text-green-700',
-    REJECTED: 'bg-red-100 text-red-700',
-    CANCELED: 'bg-gray-100 text-gray-700',
+  const statusColors: Record<string, string> = {
+    PENDING: 'bg-amber-100 text-amber-800',
+    APPROVED: 'bg-emerald-100 text-emerald-800',
+    REJECTED: 'bg-red-100 text-red-800',
+    CANCELED: 'bg-gray-100 text-gray-800',
   };
 
   const statusLabels = {
@@ -172,11 +172,11 @@ export default function ApprovalDetailPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">{approval.title}</h1>
           <span
-            className={`px-4 py-2 rounded-full text-sm font-medium ${
-              statusColors[approval.status]
+            className={`px-4 py-2 rounded-full text-sm font-semibold ${
+              statusColors[approval.status] ?? 'bg-gray-100 text-gray-800'
             }`}
           >
-            {statusLabels[approval.status]}
+            {statusLabels[approval.status] ?? approval.status}
           </span>
         </div>
       </div>
@@ -240,7 +240,7 @@ export default function ApprovalDetailPage() {
                   <p className="text-sm font-medium text-gray-900 mt-2">
                     {line.approverName}
                   </p>
-                  <p className="text-xs text-gray-500">
+                  <p className="text-xs font-medium text-gray-700">
                     {line.status === 'APPROVED'
                       ? '승인'
                       : line.status === 'REJECTED'

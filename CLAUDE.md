@@ -271,6 +271,63 @@ APP_CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:3000
 5. **커밋**: 파일 단위 작은 커밋 (Atomic Commit), Conventional Commits 준수
 6. **테스트**: 커밋 전 `./gradlew test` 통과 확인
 
+## 프론트엔드 UI/UX 디자인 가이드
+
+### 디자인 컨셈
+- **스타일**: 업무용 ERP/SaaS (Notion, Linear, Jira 참고)
+- **톤**: 미니멀하고 전문적, 정보 밀도 높지만 정돈된 느낌
+- **원칙**: 깨끗한 여백, 명확한 계층 구조, 일관된 간격
+
+### 색상 시스템
+```
+Primary: #2563EB (blue-600) — 주요 액션, 활성 상태
+Secondary: #6B7280 (gray-500) — 보조 텍스트
+Success: #059669 (emerald-600) — 완료/승인
+Warning: #D97706 (amber-600) — 대기/주의
+Danger: #DC2626 (red-600) — 반려/삭제/오류
+
+Background: #F9FAFB (gray-50) — 페이지 배경
+Surface: #FFFFFF — 카드/패널 배경
+Border: #E5E7EB (gray-200) — 구분선
+Text Primary: #111827 (gray-900)
+Text Secondary: #6B7280 (gray-500)
+```
+
+### 타이포그래피
+```
+본문: Inter 또는 Pretendard (14px, leading-relaxed)
+소제목: 13px semibold, text-gray-500, uppercase tracking-wider
+제목: 18~20px semibold
+숫자/통계: tabular-nums (고정폭 숫자)
+```
+
+### 레이아웃 규칙
+```
+사이드바: 고정 240px, 배경 흰색, 오른쪽 border
+헤더: 고정 56px, 흰색, 하단 border, shadow-sm
+콘텐츠 영역: 최대 1280px, mx-auto, px-6, py-6
+카드: bg-white, rounded-lg, border border-gray-200, p-5 (shadow 없음 또는 shadow-sm)
+간격: 4px 단위 일관 (gap-1=4px, gap-2=8px, gap-4=16px, gap-6=24px)
+```
+
+### 컴포넌트 패턴
+```
+버튼 (Primary): bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-700
+버튼 (Secondary): bg-white text-gray-700 px-4 py-2 rounded-md text-sm border border-gray-300 hover:bg-gray-50
+입력 필드: border border-gray-300 rounded-md px-3 py-2 text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500
+상태 배지: inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium
+테이블: text-sm, 헤더 bg-gray-50 text-gray-500 font-medium, 행 border-b hover:bg-gray-50
+탭: border-b-2 활성 색상 표시, 비활성은 text-gray-500
+```
+
+### 금지 사항
+- ❌ shadow-lg, shadow-xl 남용 (최대 shadow-sm)
+- ❌ 과도한 그라데이션, 그라디언트 배경
+- ❌ 둥근 모서리 rounded-2xl 이상 (최대 rounded-lg)
+- ❌ 네온 색상, 과도한 색상 대비
+- ❌ 애니메이션 남용 (transition 최소한)
+- ❌ 아이콘 남용 (필수 기능성 아이콘만 사용)
+
 ## Phase별 상세 태스크
 
 `docs/tasks/` 디렉토리 참조:

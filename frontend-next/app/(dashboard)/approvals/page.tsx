@@ -23,12 +23,13 @@ export default function ApprovalsPage() {
         response = await apiClient.get('/approvals');
       }
 
-      let allApprovals = response.data.content || [];
+      const raw = response.data?.data ?? response.data;
+      let allApprovals = Array.isArray(raw?.content) ? raw.content : raw || [];
 
-      // 필터 적용
+      // 필터 적용 (전체/대기 제외)
       if (filter !== 'all' && filter !== 'pending') {
         allApprovals = allApprovals.filter((a: ApprovalDocument) =>
-          a.status.toLowerCase() === filter
+          (a.status ?? '').toLowerCase() === filter
         );
       }
 
@@ -102,11 +103,11 @@ export default function ApprovalsPage() {
 }
 
 function ApprovalCard({ approval }: { approval: ApprovalDocument }) {
-  const statusColors = {
-    PENDING: 'bg-amber-50 text-amber-700 border-amber-200',
-    APPROVED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    REJECTED: 'bg-red-50 text-red-700 border-red-200',
-    CANCELED: 'bg-gray-50 text-gray-700 border-gray-200',
+  const statusColors: Record<string, string> = {
+    PENDING: 'bg-amber-50 text-amber-800 border-amber-200',
+    APPROVED: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    REJECTED: 'bg-red-50 text-red-800 border-red-200',
+    CANCELED: 'bg-gray-50 text-gray-800 border-gray-200',
   };
 
   const statusLabels = {
@@ -146,11 +147,11 @@ function ApprovalCard({ approval }: { approval: ApprovalDocument }) {
           </div>
         </div>
         <span
-          className={`inline-flex px-2 py-0.5 border text-xs font-medium flex-shrink-0 ml-4 ${
-            statusColors[approval.status]
+          className={`inline-flex px-2 py-0.5 border text-xs font-semibold shrink-0 ml-4 text-gray-900 ${
+            statusColors[approval.status] ?? 'bg-gray-100 text-gray-800 border-gray-200'
           }`}
         >
-          {statusLabels[approval.status]}
+          {statusLabels[approval.status] ?? approval.status}
         </span>
       </div>
 

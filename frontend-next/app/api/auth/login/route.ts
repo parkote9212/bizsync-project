@@ -7,13 +7,34 @@ export async function POST(request: NextRequest) {
     const { email, password } = body;
 
     // 백엔드 로그인 API 호출
-    const response = await backendApi.post('/auth/login', {
+    const response = await backendApi.post<{
+      success: boolean;
+      data: {
+        accessToken: string;
+        refreshToken: string;
+        userId: number;
+        name: string;
+        email: string;
+        role: string;
+        position?: string;
+        department?: string;
+      };
+      message?: string;
+    }>('/auth/login', {
       email,
       password,
     });
 
+    // ApiResponse 형식에서 데이터 추출
+    if (!response.success || !response.data) {
+      return NextResponse.json(
+        { message: response.message || '로그인에 실패했습니다.' },
+        { status: 401 }
+      );
+    }
+
     // 응답에서 토큰 추출
-    const { accessToken, refreshToken, ...userData } = response;
+    const { accessToken, refreshToken, ...userData } = response.data;
 
     // NextResponse 생성
     const res = NextResponse.json({ success: true, user: userData }, { status: 200 });

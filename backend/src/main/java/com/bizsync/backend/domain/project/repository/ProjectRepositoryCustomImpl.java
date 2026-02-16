@@ -121,13 +121,13 @@ public class ProjectRepositoryCustomImpl implements ProjectRepositoryCustom {
     @Override
     public List<ProjectListResponseDTO> findMyProjects(Long userId) {
         return queryFactory
-                .select(Projections.fields(ProjectListResponseDTO.class,
+                .select(Projections.constructor(ProjectListResponseDTO.class,
                         project.projectId,
                         project.name,
                         project.description,
                         project.startDate,
                         project.endDate,
-                        project.status.stringValue().as("status"),
+                        project.status.stringValue(),
                         project.totalBudget,
                         project.usedBudget
                 ))
@@ -148,7 +148,7 @@ public class ProjectRepositoryCustomImpl implements ProjectRepositoryCustom {
     @lombok.Data
     @lombok.NoArgsConstructor
     @lombok.AllArgsConstructor
-    private static class ColumnTaskProjection {
+    public static class ColumnTaskProjection {
         private Long columnId;
         private String columnName;
         private Integer columnSequence;

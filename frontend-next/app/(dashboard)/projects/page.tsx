@@ -15,7 +15,6 @@ export default function ProjectsPage() {
     description: '',
     startDate: '',
     endDate: '',
-    status: 'PLANNED' as ProjectStatus,
     totalBudget: '',
   });
 
@@ -28,10 +27,12 @@ export default function ProjectsPage() {
       const response = await apiClient.get<{ data?: Project[]; content?: Project[] }>('/projects');
       const raw = response.data?.data ?? response.data?.content ?? [];
       const list = Array.isArray(raw) ? raw : [];
-      // 백엔드 ProjectListResponseDTO는 totalBudget 필드 사용 → budget으로 매핑
+      // 백엔드 ProjectListResponseDTO: totalBudget, usedBudget
       setProjects(list.map((p: any) => ({
         ...p,
         budget: p.budget ?? p.totalBudget,
+        totalBudget: p.totalBudget ?? p.budget,
+        usedBudget: p.usedBudget ?? 0,
         status: p.status ?? 'PLANNED',
       })));
       setLoading(false);
@@ -49,7 +50,6 @@ export default function ProjectsPage() {
         description: formData.description,
         startDate: formData.startDate,
         endDate: formData.endDate,
-        status: formData.status,
         totalBudget: formData.totalBudget ? Number(formData.totalBudget) : 0,
       });
       setCreateModalOpen(false);
@@ -58,7 +58,6 @@ export default function ProjectsPage() {
         description: '',
         startDate: '',
         endDate: '',
-        status: 'PLANNED',
         totalBudget: '',
       });
       loadProjects();
@@ -98,10 +97,10 @@ export default function ProjectsPage() {
         ))}
       </div>
 
-      {/* 프로젝트 생성 모달 */}
+      {/* 프로젝트 생성 모달 - 배경 블러 처리 */}
       {createModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 w-full max-w-md shadow-xl">
             <h2 className="text-lg font-semibold text-gray-900 mb-4">새 프로젝트 생성</h2>
             <form onSubmit={handleCreateProject} className="space-y-4">
               <div>
@@ -113,7 +112,7 @@ export default function ProjectsPage() {
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -123,7 +122,7 @@ export default function ProjectsPage() {
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   rows={3}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -137,7 +136,7 @@ export default function ProjectsPage() {
                     required
                     value={formData.startDate}
                     onChange={(e) => setFormData({ ...formData, startDate: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
 
@@ -150,25 +149,9 @@ export default function ProjectsPage() {
                     required
                     value={formData.endDate}
                     onChange={(e) => setFormData({ ...formData, endDate: e.target.value })}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                   />
                 </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">상태</label>
-                <select
-                  value={formData.status}
-                  onChange={(e) =>
-                    setFormData({ ...formData, status: e.target.value as ProjectStatus })
-                  }
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                >
-                  <option value="PLANNED">계획</option>
-                  <option value="IN_PROGRESS">진행 중</option>
-                  <option value="COMPLETED">완료</option>
-                  <option value="HOLD">보류</option>
-                </select>
               </div>
 
               <div>
@@ -178,7 +161,7 @@ export default function ProjectsPage() {
                   value={formData.totalBudget}
                   onChange={(e) => setFormData({ ...formData, totalBudget: e.target.value })}
                   placeholder="0"
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
 
@@ -205,19 +188,32 @@ export default function ProjectsPage() {
   );
 }
 
+function formatBudget(value: number | undefined | null): string {
+  if (value == null || Number.isNaN(value)) return '0원';
+  return `${Number(value).toLocaleString('ko-KR')}원`;
+}
+
 function ProjectCard({ project }: { project: Project }) {
-  const statusColors = {
-    PLANNED: 'bg-gray-100 text-gray-700 border-gray-200',
-    IN_PROGRESS: 'bg-blue-50 text-blue-700 border-blue-200',
-    COMPLETED: 'bg-emerald-50 text-emerald-700 border-emerald-200',
-    HOLD: 'bg-amber-50 text-amber-700 border-amber-200',
+  const statusColors: Record<string, string> = {
+    PLANNED: 'bg-gray-100 text-gray-800 border-gray-200',
+    PLANNING: 'bg-gray-100 text-gray-800 border-gray-200',
+    IN_PROGRESS: 'bg-blue-50 text-blue-800 border-blue-200',
+    COMPLETED: 'bg-emerald-50 text-emerald-800 border-emerald-200',
+    HOLD: 'bg-amber-50 text-amber-800 border-amber-200',
+    ON_HOLD: 'bg-amber-50 text-amber-800 border-amber-200',
+    CANCELLED: 'bg-gray-100 text-gray-600 border-gray-200',
+    ARCHIVED: 'bg-gray-100 text-gray-600 border-gray-200',
   };
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     PLANNED: '계획',
+    PLANNING: '기획',
     IN_PROGRESS: '진행 중',
     COMPLETED: '완료',
     HOLD: '보류',
+    ON_HOLD: '보류',
+    CANCELLED: '취소',
+    ARCHIVED: '아카이브',
   };
 
   const budgetPercentage = project.budget && project.usedBudget
@@ -233,8 +229,8 @@ function ProjectCard({ project }: { project: Project }) {
         <h3 className="text-base font-semibold text-gray-900 line-clamp-1">
           {project.name}
         </h3>
-        <span className={`inline-flex px-2 py-0.5 border text-xs font-medium ${statusColors[project.status]}`}>
-          {statusLabels[project.status]}
+        <span className={`inline-flex px-2 py-0.5 border text-xs font-medium text-gray-900 ${statusColors[project.status] ?? 'bg-gray-100 text-gray-800 border-gray-200'}`}>
+          {statusLabels[project.status] ?? project.status}
         </span>
       </div>
 
@@ -245,7 +241,7 @@ function ProjectCard({ project }: { project: Project }) {
       <div className="space-y-3 text-sm">
         {project.startDate && project.endDate && (
           <div className="flex items-center gap-2 text-gray-500 text-xs">
-            <CalendarIcon className="w-4 h-4 flex-shrink-0" />
+            <CalendarIcon className="w-4 h-4 shrink-0" />
             <span className="tabular-nums">
               {new Date(project.startDate).toLocaleDateString()} ~{' '}
               {new Date(project.endDate).toLocaleDateString()}
@@ -253,14 +249,17 @@ function ProjectCard({ project }: { project: Project }) {
           </div>
         )}
 
-        {project.budget && (
+        {(project.budget != null || project.usedBudget != null) && (
           <div>
-            <div className="flex items-center justify-between text-gray-500 text-xs mb-1.5">
-              <span className="flex items-center gap-2">
-                <CashIcon className="w-4 h-4 flex-shrink-0" />
-                예산 사용률
+            <div className="flex items-center gap-2 text-gray-500 text-xs mb-1">
+              <CashIcon className="w-4 h-4 shrink-0" />
+              <span className="tabular-nums text-gray-900">
+                총 예산 {formatBudget(project.totalBudget ?? project.budget)} · 소진 {formatBudget(project.usedBudget ?? 0)}
               </span>
-              <span className="font-medium tabular-nums">{budgetPercentage}%</span>
+            </div>
+            <div className="flex items-center justify-between text-gray-500 text-xs mb-1.5">
+              <span>예산 사용률</span>
+              <span className="font-medium tabular-nums text-gray-900">{budgetPercentage}%</span>
             </div>
             <div className="w-full bg-gray-100 border border-gray-200 h-1.5">
               <div

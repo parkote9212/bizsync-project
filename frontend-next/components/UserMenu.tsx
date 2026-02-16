@@ -110,39 +110,39 @@ export default function UserMenu({ userName, userEmail }: UserMenuProps) {
     <div className="relative" ref={menuRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+        className="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
       >
-        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-          <span className="text-blue-600 font-semibold text-sm">{userName.charAt(0)}</span>
+        <div className="w-8 h-8 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center">
+          <span className="text-blue-600 dark:text-blue-300 font-semibold text-sm">{userName.charAt(0)}</span>
         </div>
         <div className="text-left">
-          <div className="font-medium text-gray-900">
+          <div className="font-medium text-gray-900 dark:text-gray-100">
             {userDetail?.position ? `${userDetail.position} ` : ''}{userName} 님
           </div>
         </div>
-        <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </button>
 
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-72 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
+        <div className="absolute right-0 mt-2 w-72 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
           {/* 사용자 정보 */}
-          <div className="px-4 py-3 border-b border-gray-200">
+          <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700">
             <div className="flex items-start gap-3">
-              <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-blue-600 font-semibold text-lg">{userName.charAt(0)}</span>
+              <div className="w-12 h-12 bg-blue-100 dark:bg-blue-900/50 rounded-full flex items-center justify-center shrink-0">
+                <span className="text-blue-600 dark:text-blue-300 font-semibold text-lg">{userName.charAt(0)}</span>
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-semibold text-gray-900">{userName}</div>
-                <div className="text-xs text-gray-600 mt-0.5">{userEmail}</div>
+                <div className="font-semibold text-gray-900 dark:text-gray-100">{userName}</div>
+                <div className="text-xs text-gray-600 dark:text-gray-400 mt-0.5">{userEmail}</div>
                 {userDetail?.department && (
-                  <div className="text-xs text-gray-500 mt-1">
+                  <div className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {userDetail.department} · {userDetail.position}
                   </div>
                 )}
                 {userDetail?.empNo && (
-                  <div className="text-xs text-gray-500">사번: {userDetail.empNo}</div>
+                  <div className="text-xs text-gray-500 dark:text-gray-400">사번: {userDetail.empNo}</div>
                 )}
               </div>
             </div>
@@ -155,7 +155,7 @@ export default function UserMenu({ userName, userEmail }: UserMenuProps) {
                 setShowPasswordModal(true);
                 setIsOpen(false);
               }}
-              className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+              className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
             >
               비밀번호 변경
             </button>
@@ -165,7 +165,7 @@ export default function UserMenu({ userName, userEmail }: UserMenuProps) {
                   setShowUnlinkModal(true);
                   setIsOpen(false);
                 }}
-                className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50"
+                className="w-full px-4 py-2 text-left text-sm text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
               >
                 소셜 계정 연동 해제
               </button>
@@ -175,7 +175,7 @@ export default function UserMenu({ userName, userEmail }: UserMenuProps) {
                 setShowDeleteModal(true);
                 setIsOpen(false);
               }}
-              className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50"
+              className="w-full px-4 py-2 text-left text-sm text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/30"
             >
               회원 탈퇴
             </button>
@@ -235,7 +235,7 @@ function PasswordChangeModal({
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">비밀번호 변경</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -308,7 +308,7 @@ function DeleteAccountModal({
   const [confirmText, setConfirmText] = useState('');
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">회원 탈퇴</h2>
         <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-md">
@@ -356,7 +356,7 @@ function UnlinkOAuthModal({
   onConfirm: () => void;
 }) {
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div className="fixed inset-0 bg-black/20 backdrop-blur-sm flex items-center justify-center z-50">
       <div className="bg-white rounded-lg p-6 w-full max-w-md">
         <h2 className="text-lg font-semibold text-gray-900 mb-4">소셜 계정 연동 해제</h2>
         <p className="text-sm text-gray-600 mb-4">

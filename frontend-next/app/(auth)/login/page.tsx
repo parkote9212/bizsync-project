@@ -42,10 +42,16 @@ function GitHubIcon({ className }: { className?: string }) {
   );
 }
 
-/** Kakao 아이콘 */
+/** Kakao 아이콘 (말풍선 전체가 보이도록 viewBox 여백) */
 function KakaoIcon({ className }: { className?: string }) {
   return (
-    <svg className={className} viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <svg
+      className={className}
+      viewBox="-2 0 28 24"
+      fill="currentColor"
+      aria-hidden
+      style={{ overflow: 'visible' }}
+    >
       <path d="M12 3c-5.52 0-10 3.59-10 8 0 2.87 1.89 5.39 4.73 6.84-.2.73-.74 2.66-.84 3.09-.12.5.2.49.41.36.15-.1 2.36-1.56 3.25-2.14.44-.29.88-.43 1.32-.43h.06c3.34 0 6.26-2.39 6.26-5.72C17 5.59 14.8 3 12 3z" />
     </svg>
   );
@@ -66,11 +72,28 @@ export default function LoginPage() {
     setLoading(true);
 
     try {
-      const response = await apiClient.post('/auth/login', formData);
-      const { accessToken, refreshToken } = response.data;
+      const response = await apiClient.post<{
+        data?: { accessToken: string; refreshToken: string; name?: string; email?: string };
+        accessToken?: string;
+        refreshToken?: string;
+        name?: string;
+        email?: string;
+      }>('/auth/login', formData);
+      const data = response.data?.data ?? response.data;
+      const accessToken = data?.accessToken;
+      const refreshToken = data?.refreshToken;
+      const name = data?.name;
+      const email = data?.email;
+
+      if (!accessToken || !refreshToken) {
+        setError('로그인 응답 형식이 올바르지 않습니다.');
+        return;
+      }
 
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
+      if (name) localStorage.setItem('userName', name);
+      if (email) localStorage.setItem('userEmail', email);
 
       router.push('/dashboard');
     } catch (err: any) {
@@ -113,7 +136,7 @@ export default function LoginPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="your@email.com"
               />
             </div>
@@ -128,7 +151,7 @@ export default function LoginPage() {
                 required
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                className="w-full px-3 py-2 text-sm text-gray-900 bg-white border border-gray-300 rounded-md placeholder:text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 placeholder="••••••••"
               />
             </div>

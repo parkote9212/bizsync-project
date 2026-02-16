@@ -128,30 +128,54 @@ export default function DashboardLayout({
 
   if (!user) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-gray-600">로딩 중...</div>
+      <div className="min-h-screen flex items-center justify-center bg-gray-50 dark:bg-gray-900">
+        <div className="text-gray-600 dark:text-gray-400">로딩 중...</div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* 상단 헤더 */}
-      <header className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Link href="/dashboard" className="text-2xl font-bold text-blue-600">
-                BizSync
+    <div className="min-h-screen flex bg-gray-50 dark:bg-gray-900">
+      {/* 사이드바: 타이틀 + 네비 */}
+      <aside className="w-64 shrink-0 bg-gray-100 dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col min-h-screen">
+        <div className="p-4 text-center">
+          <Link
+            href="/dashboard"
+            className="text-2xl font-bold text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
+          >
+            BizSync
+          </Link>
+        </div>
+        <nav className="p-4 space-y-1 flex-1">
+          {navItems.map((item) => {
+            const isActive = pathname === item.path;
+            return (
+              <Link
+                key={item.path}
+                href={item.path}
+                className={`flex items-center gap-3 px-4 py-3 text-base font-medium rounded-md transition-colors ${
+                  isActive
+                    ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 dark:text-blue-300'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 hover:text-gray-900 dark:hover:text-white'
+                }`}
+              >
+                <item.Icon className="w-6 h-6" />
+                {item.name}
               </Link>
-            </div>
+            );
+          })}
+        </nav>
+      </aside>
 
-            <div className="flex items-center gap-4">
+      {/* 오른쪽 영역: 상단 헤더 + 메인 */}
+      <div className="flex-1 flex flex-col min-w-0">
+        <header className="h-16 shrink-0 bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+          <div className="h-full px-4 sm:px-6 flex justify-end items-center gap-4">
               {/* 알림 드롭다운 */}
               <div className="relative" ref={notificationRef}>
                 <button
                   onClick={() => setNotificationOpen(!notificationOpen)}
-                  className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                  className="relative p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                   title="알림"
                 >
                   <BellIcon className="w-5 h-5" />
@@ -163,20 +187,20 @@ export default function DashboardLayout({
                 </button>
 
                 {notificationOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white border border-gray-200 rounded-lg shadow-lg z-50">
-                    <div className="px-4 py-3 border-b border-gray-200 flex items-center justify-between">
-                      <h3 className="text-sm font-semibold text-gray-900">알림</h3>
+                  <div className="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg z-50">
+                    <div className="px-4 py-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+                      <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-100">알림</h3>
                       <Link
                         href="/notifications"
                         onClick={() => setNotificationOpen(false)}
-                        className="text-xs text-blue-600 hover:text-blue-700"
+                        className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-700 dark:hover:text-blue-300"
                       >
                         전체보기
                       </Link>
                     </div>
                     <div className="max-h-96 overflow-y-auto">
                       {notifications.length === 0 ? (
-                        <div className="px-4 py-8 text-center text-sm text-gray-500">
+                        <div className="px-4 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                           알림이 없습니다
                         </div>
                       ) : (
@@ -188,19 +212,19 @@ export default function DashboardLayout({
                                 markAsRead(notification.notificationId);
                               }
                             }}
-                            className={`px-4 py-3 border-b border-gray-100 hover:bg-gray-50 cursor-pointer ${
-                              !notification.isRead ? 'bg-blue-50' : ''
+                            className={`px-4 py-3 border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700 cursor-pointer ${
+                              !notification.isRead ? 'bg-blue-50 dark:bg-blue-900/30' : ''
                             }`}
                           >
                             <div className="flex items-start gap-2">
                               {!notification.isRead && (
-                                <div className="flex-shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-1.5"></div>
+                                <div className="shrink-0 w-2 h-2 bg-blue-600 rounded-full mt-1.5" />
                               )}
                               <div className="flex-1 min-w-0">
-                                <p className="text-sm text-gray-900 line-clamp-2">
+                                <p className="text-sm text-gray-900 dark:text-gray-100 line-clamp-2">
                                   {notification.message}
                                 </p>
-                                <p className="text-xs text-gray-500 mt-1">
+                                <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                                   {new Date(notification.createdAt).toLocaleString('ko-KR', {
                                     month: 'short',
                                     day: 'numeric',
@@ -221,7 +245,7 @@ export default function DashboardLayout({
               {/* 다크모드 토글 */}
               <button
                 onClick={toggleDarkMode}
-                className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                className="p-2 text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
                 title={darkMode ? '라이트 모드' : '다크 모드'}
               >
                 {darkMode ? <SunIcon className="w-5 h-5" /> : <MoonIcon className="w-5 h-5" />}
@@ -233,41 +257,15 @@ export default function DashboardLayout({
               {/* 로그아웃 버튼 */}
               <button
                 onClick={handleLogout}
-                className="px-4 py-2 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+                className="px-4 py-2 text-sm text-gray-700 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white hover:bg-gray-100 dark:hover:bg-gray-700 rounded-md transition-colors"
               >
                 로그아웃
               </button>
-            </div>
           </div>
-        </div>
-      </header>
-
-      <div className="flex">
-        {/* 사이드바 */}
-        <aside className="w-64 bg-white shadow-sm border-r border-gray-200 min-h-[calc(100vh-4rem)]">
-          <nav className="p-4 space-y-1">
-            {navItems.map((item) => {
-              const isActive = pathname === item.path;
-              return (
-                <Link
-                  key={item.path}
-                  href={item.path}
-                  className={`flex items-center gap-3 px-4 py-2.5 text-sm font-medium rounded-md transition-colors ${
-                    isActive
-                      ? 'bg-blue-50 text-blue-700'
-                      : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                  }`}
-                >
-                  <item.Icon className="w-5 h-5" />
-                  {item.name}
-                </Link>
-              );
-            })}
-          </nav>
-        </aside>
+        </header>
 
         {/* 메인 콘텐츠 */}
-        <main className="flex-1 p-8">
+        <main className="flex-1 p-8 bg-gray-50 dark:bg-gray-900 overflow-auto">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>

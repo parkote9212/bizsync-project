@@ -62,6 +62,7 @@ export interface Project {
   startDate?: string;
   endDate?: string;
   budget?: number;
+  totalBudget?: number;
   usedBudget?: number;
   createdAt: string;
 }

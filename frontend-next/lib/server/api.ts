@@ -101,4 +101,6 @@ class BackendApiClient {
   }
 }
 
-export const backendApi = new BackendApiClient();
+const backendApi = new BackendApiClient();
+export { backendApi };
+export default backendApi;

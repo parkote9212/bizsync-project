@@ -455,6 +455,19 @@ public class ApprovalService {
     }
 
     /**
+     * 사용자가 관여한 결재 문서 전체 목록을 조회합니다 (기안 + 결재선 참여).
+     *
+     * @param userId   사용자 ID
+     * @param pageable 페이지 정보
+     * @return 결재 문서 목록 (페이징)
+     */
+    @Transactional(readOnly = true)
+    public Page<ApprovalSummaryDTO> getMyApprovals(Long userId, Pageable pageable) {
+        return approvalDocumentRepository.findMyApprovals(userId, pageable)
+                .map(ApprovalSummaryDTO::from);
+    }
+
+    /**
      * 사용자가 기안한 결재 문서 목록을 조회합니다.
      *
      * @param userId   사용자 ID

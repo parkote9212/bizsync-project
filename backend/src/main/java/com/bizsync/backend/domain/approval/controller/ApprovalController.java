@@ -87,6 +87,21 @@ public class ApprovalController {
     }
 
     /**
+     * 사용자가 관여한 결재 문서 전체 목록을 조회합니다 (기안 + 결재선 참여).
+     *
+     * @param pageable 페이지 정보
+     * @return 결재 문서 목록
+     */
+    @GetMapping
+    public ResponseEntity<ApiResponse<Page<ApprovalSummaryDTO>>> getMyApprovals(
+            @ParameterObject
+            @PageableDefault(size = 20, sort = "createdAt", direction = Sort.Direction.DESC) Pageable pageable
+    ) {
+        Long userId = SecurityUtil.getCurrentUserIdOrThrow();
+        return ResponseEntity.ok(ApiResponse.success(approvalService.getMyApprovals(userId, pageable)));
+    }
+
+    /**
      * 결재 문서 상세 정보를 조회합니다.
      *
      * @param documentId 조회할 결재 문서 ID
