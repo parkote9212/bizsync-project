@@ -38,7 +38,8 @@ export default function LoginPage() {
 
   const handleOAuthLogin = (provider: string) => {
     // OAuth2 로그인 (백엔드 OAuth2 엔드포인트로 리다이렉트)
-    window.location.href = `${process.env.NEXT_PUBLIC_API_URL}/oauth2/authorization/${provider}`;
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080/api';
+    window.location.href = `${backendUrl.replace('/api', '')}/oauth2/authorization/${provider}`;
   };
 
   return (
