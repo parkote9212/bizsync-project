@@ -12,7 +12,34 @@ export async function POST(request: NextRequest) {
       password,
     });
 
-    return NextResponse.json(response, { status: 200 });
+    // 응답에서 토큰 추출
+    const { accessToken, refreshToken, ...userData } = response;
+
+    // NextResponse 생성
+    const res = NextResponse.json({ success: true, user: userData }, { status: 200 });
+
+    // 쿠키 설정
+    if (accessToken) {
+      res.cookies.set('accessToken', accessToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60, // 1시간
+        path: '/',
+      });
+    }
+
+    if (refreshToken) {
+      res.cookies.set('refreshToken', refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: 60 * 60 * 24 * 7, // 7일
+        path: '/',
+      });
+    }
+
+    return res;
   } catch (error: any) {
     console.error('Login error:', error);
 
