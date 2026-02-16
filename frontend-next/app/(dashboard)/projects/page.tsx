@@ -15,8 +15,15 @@ export default function ProjectsPage() {
 
   const loadProjects = async () => {
     try {
-      const response = await apiClient.get('/projects');
-      setProjects(response.data.content || []);
+      const response = await apiClient.get<{ data?: Project[]; content?: Project[] }>('/projects');
+      const raw = response.data?.data ?? response.data?.content ?? [];
+      const list = Array.isArray(raw) ? raw : [];
+      // 백엔드 ProjectListResponseDTO는 totalBudget 필드 사용 → budget으로 매핑
+      setProjects(list.map((p: any) => ({
+        ...p,
+        budget: p.budget ?? p.totalBudget,
+        status: p.status ?? 'PLANNED',
+      })));
       setLoading(false);
     } catch (error) {
       console.error('프로젝트 목록 로딩 실패:', error);

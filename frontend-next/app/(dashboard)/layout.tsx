@@ -14,30 +14,32 @@ export default function DashboardLayout({
   const [user, setUser] = useState<{ name: string; email: string } | null>(null);
 
   useEffect(() => {
-    // 인증 확인
+    // 인증 확인 (BFF 응답이 data 래핑일 수 있으므로 유효한 토큰만 허용)
     const token = localStorage.getItem('accessToken');
-    if (!token) {
+    if (!token || token === 'undefined') {
       router.push('/login');
       return;
     }
 
-    // 임시 사용자 정보 (추후 API에서 가져오기)
-    setUser({ name: '사용자', email: 'user@example.com' });
+    // 로그인 시 저장된 사용자 이름·이메일 사용
+    const name = localStorage.getItem('userName') || '사용자';
+    const email = localStorage.getItem('userEmail') || '';
+    setUser({ name, email: email || 'user@example.com' });
   }, [router]);
 
   const handleLogout = () => {
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
+    localStorage.removeItem('userName');
+    localStorage.removeItem('userEmail');
     router.push('/login');
   };
 
   const navItems = [
     { name: '대시보드', path: '/dashboard', icon: '📊' },
     { name: '프로젝트', path: '/projects', icon: '📁' },
-    { name: '칸반 보드', path: '/kanban', icon: '📋' },
     { name: '결재', path: '/approvals', icon: '✅' },
-    { name: '채팅', path: '/chat', icon: '💬' },
-    { name: '알림', path: '/notifications', icon: '🔔' },
+    { name: '조직도', path: '/organization', icon: '👥' },
   ];
 
   if (!user) {
@@ -60,9 +62,18 @@ export default function DashboardLayout({
               </Link>
             </div>
 
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center gap-4">
+              <Link
+                href="/notifications"
+                className="flex items-center gap-1.5 text-sm text-gray-600 hover:text-gray-900"
+                title="알림"
+              >
+                <span className="text-lg" aria-hidden>🔔</span>
+                <span className="hidden sm:inline">알림</span>
+              </Link>
               <div className="text-sm text-gray-700">
-                {user.name} ({user.email})
+                <span className="font-medium text-gray-900">{user.name}</span>
+                {user.email && <span className="text-gray-500"> · {user.email}</span>}
               </div>
               <button
                 onClick={handleLogout}
